@@ -8,7 +8,7 @@ From Coq Require Import
 
 Require Import Coq.Logic.ProofIrrelevance.
 
-From Vellvm.Utils Require Import
+From SE.Utils Require Import
   Error
   Util
   Monads

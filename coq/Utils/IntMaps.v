@@ -7,11 +7,11 @@ From Coq Require Import
      List
      Lia.
 
-From Vellvm Require Import
+From SE Require Import
      Utils.Tactics
      Utils.Monads
      Utils.VellvmRelations
-     Numeric.Coqlib
+     Coqlib
      ListUtil.
 
 From ExtLib Require Import

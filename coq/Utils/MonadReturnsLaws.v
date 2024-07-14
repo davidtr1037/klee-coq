@@ -8,14 +8,14 @@ From ExtLib Require Import
      Data.Monads.IdentityMonad
      Structures.Monads.
 
-From Vellvm.Utils Require Import MonadExcLaws PropT Monads Inhabited.
+From SE.Utils Require Import MonadExcLaws PropT Monads Inhabited.
 
 From ITree Require Import
   ITree.
 
 Import Monads.
 
-From Vellvm Require Import Utils.StateMonads.
+From SE Require Import Utils.StateMonads.
 
 Local Open Scope monad_scope.
 

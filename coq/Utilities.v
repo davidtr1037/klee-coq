@@ -6,7 +6,7 @@
    - `Import AlistNotations.` for notations related to `alist` used to lookup blocks.
  *)
 
-From Vellvm Require Export
+From SE Require Export
      Utils.Tactics
      Utils.Util
      Utils.AListFacts

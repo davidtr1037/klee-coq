@@ -1,4 +1,4 @@
-From Vellvm Require Import
+From SE Require Import
      Utils.Tactics.
 
 From SE Require Coqlib.
@@ -1446,8 +1446,7 @@ Tactic Notation "inv_bind" hyp(H) :=
       destruct o eqn:hy; [|discriminate]; simpl in H
     end.
 
-From Vellvm Require Import
-     Numeric.Coqlib.
+From SE Require Import Coqlib.
  
 Infix "⊍" := list_disjoint (at level 60).
 
