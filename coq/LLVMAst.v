@@ -1,5 +1,5 @@
 (* begin hide *)
-Require Import Floats.
+From SE Require Import Floats.
 From Coq Require Import
      List
      String

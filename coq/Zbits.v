@@ -17,7 +17,7 @@
     on top of the ZArith standard library. *)
 
 Require Import Psatz Zquot.
-Require Import Coqlib.
+From SE Require Import Coqlib.
 
 
 (** ** Modulo arithmetic *)

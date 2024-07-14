@@ -2,4 +2,10 @@
 
 Archi.v
 Coqlib.v
+Floats.v
+IEEE754_extra.v
 Integers.v
+LLVMAst.v
+Utilities.v
+Utils/
+Zbits.v

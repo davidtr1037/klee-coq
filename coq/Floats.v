@@ -19,11 +19,11 @@
 
 Require Import Psatz.
 Require Import Reals.
-Require Import Coqlib Zbits Integers.
+From SE Require Import Coqlib Zbits Integers.
 From Flocq Require Import BinarySingleNaN Binary Bits Core.
-Require Import IEEE754_extra.
+From SE Require Import IEEE754_extra.
 Require Import Program.
-Require Archi.
+From SE Require Archi.
 Import ListNotations.
 
 Close Scope R_scope.
