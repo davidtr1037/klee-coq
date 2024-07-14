@@ -3,10 +3,10 @@ Require Import Equalities.
 
 From Coq Require Import ZArith List String.
 
-From Vellvm Require Import
+From SE Require Import
      Utilities
-     Syntax.LLVMAst
-     Syntax.AstLib.
+     LLVMAst
+     AstLib.
 
 From ExtLib Require Import
      Programming.Eqv

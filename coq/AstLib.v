@@ -3,9 +3,9 @@ From Coq Require Import
      ZArith.ZArith
      String.
 
-From Vellvm Require Import
+From SE Require Import
      Utilities
-     Syntax.LLVMAst.
+     LLVMAst.
 
 From QuickChick Require Import Show.
 
