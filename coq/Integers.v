@@ -18,11 +18,11 @@
 
 Require Import Eqdep_dec Zquot.
 
-Require Import Coqlib.
+From SE Require Import Coqlib.
 
 Require Import Coq.micromega.Lia.
 
-Require Archi.
+From SE Require Archi.
 
 (** * Comparisons *)
 
