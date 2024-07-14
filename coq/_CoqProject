@@ -1,6 +1,8 @@
 -Q . SE
 
+AstLib.v
 Archi.v
+CFG.v
 Coqlib.v
 Floats.v
 IEEE754_extra.v
