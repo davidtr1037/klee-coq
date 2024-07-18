@@ -34,11 +34,10 @@ Definition int_ast := Z.
 Definition float := Floats.float.  (* 64-bit floating point value *)
 Definition float32 := Floats.float32.
 
-
 Variant raw_id : Set :=
-| Name (s:string)     (* Named identifiers are strings: %argc, %val, %x, @foo, @bar etc. *)
-| Anon (n:int_ast)        (* Anonymous identifiers must be sequentially numbered %0, %1, %2, etc. *)
-| Raw  (n:int_ast)        (* Used for code generation -- serializes as %_RAW_0 %_RAW_1 etc. *)
+| Name (s:string) (* Named identifiers are strings: %argc, %val, %x, @foo, @bar etc. *)
+| Anon (n:int_ast) (* Anonymous identifiers must be sequentially numbered %0, %1, %2, etc. *)
+| Raw  (n:int_ast) (* Used for code generation -- serializes as %_RAW_0 %_RAW_1 etc. *)
 .
 
 (* TODO: use a module type / class *)
@@ -70,7 +69,6 @@ Variant ident : Set :=
 | ID_Global (id:raw_id)   (* @id *)
 | ID_Local  (id:raw_id)   (* %id *)
 .
-
 
 Unset Elimination Schemes.
 Inductive typ : Set :=
@@ -117,7 +115,6 @@ Variant preemption_specifier : Set :=
   | PREEMPTION_Dso_preemptable
   | PREEMPTION_Dso_local
 .
-
 
 Variant dll_storage : Set :=
 | DLLSTORAGE_Dllimport
@@ -281,7 +278,6 @@ Definition global_id := raw_id.
 Definition block_id := raw_id.
 Definition function_id := global_id.
 
-
 (* NOTE:
    We could separate return types from types, but that needs mutually recursive types.
    This would entail a lot of down-stream changes to the semantics, but might simplify or
@@ -299,37 +295,94 @@ Definition function_id := global_id.
 
 Set Elimination Schemes.
 
-Variant icmp : Set := Eq|Ne|Ugt|Uge|Ult|Ule|Sgt|Sge|Slt|Sle.
-Variant fcmp : Set := FFalse|FOeq|FOgt|FOge|FOlt|FOle|FOne|FOrd|FUno|FUeq|FUgt|FUge|FUlt|FUle|FUne|FTrue.
+Variant icmp : Set :=
+  | Eq
+  | Ne
+  | Ugt
+  | Uge
+  | Ult
+  | Ule
+  | Sgt
+  | Sge
+  | Slt
+  | Sle
+.
+
+Variant fcmp : Set :=
+  | FFalse
+  | FOeq
+  | FOgt
+  | FOge
+  | FOlt
+  | FOle
+  | FOne
+  | FOrd
+  | FUno
+  | FUeq
+  | FUgt
+  | FUge
+  | FUlt
+  | FUle
+  | FUne
+  | FTrue
+.
 
 Variant ibinop : Set :=
-| Add (nuw:bool) (nsw:bool)
-| Sub (nuw:bool) (nsw:bool)
-| Mul (nuw:bool) (nsw:bool)
-| Shl (nuw:bool) (nsw:bool)
-| UDiv (exact:bool)
-| SDiv (exact:bool)
-| LShr (exact:bool)
-| AShr (exact:bool)
-| URem | SRem | And | Or | Xor
+  | Add (nuw:bool) (nsw:bool)
+  | Sub (nuw:bool) (nsw:bool)
+  | Mul (nuw:bool) (nsw:bool)
+  | Shl (nuw:bool) (nsw:bool)
+  | UDiv (exact:bool)
+  | SDiv (exact:bool)
+  | LShr (exact:bool)
+  | AShr (exact:bool)
+  | URem
+  | SRem
+  | And
+  | Or
+  | Xor
 .
 
 Variant fbinop : Set :=
-  FAdd | FSub | FMul | FDiv | FRem.
+  | FAdd
+  | FSub
+  | FMul
+  | FDiv
+  | FRem
+.
 
 Variant fast_math : Set :=
-  Nnan | Ninf | Nsz | Arcp | Contract | Afn | Reassoc | Fast.
+  | Nnan
+  | Ninf
+  | Nsz
+  | Arcp
+  | Contract
+  | Afn
+  | Reassoc
+  | Fast
+.
 
 Variant conversion_type : Set :=
-  Trunc | Zext | Sext | Fptrunc | Fpext | Uitofp | Sitofp | Fptoui |
-  Fptosi | Inttoptr | Ptrtoint | Bitcast | Addrspacecast.
+  | Trunc
+  | Zext
+  | Sext
+  | Fptrunc
+  | Fpext
+  | Uitofp
+  | Sitofp
+  | Fptoui
+  | Fptosi
+  | Inttoptr
+  | Ptrtoint
+  | Bitcast
+  | Addrspacecast
+.
 
 Section TypedSyntax.
 
   Context {T:Set}.
 
   Definition tident : Set := (T * ident)%type.
-
 
 (* NOTES:
   This datatype is more permissive than legal in LLVM:
@@ -358,39 +411,39 @@ Section TypedSyntax.
 Unset Elimination Schemes.
 
 Inductive exp : Set :=
-| EXP_Ident   (id:ident)
+| EXP_Ident (id:ident)
 | EXP_Integer (x:int_ast)
-| EXP_Float   (f:float32)  (* 32-bit floating point values *)
-| EXP_Double  (f:float)    (* 64-bit floating point values *)
-| EXP_Hex     (f:float)    (* See LLVM documentation about hex float constants. *)
-| EXP_Bool    (b:bool)
+| EXP_Float (f:float32)  (* 32-bit floating point values *)
+| EXP_Double (f:float)    (* 64-bit floating point values *)
+| EXP_Hex (f:float)    (* See LLVM documentation about hex float constants. *)
+| EXP_Bool (b:bool)
 | EXP_Null
 | EXP_Zero_initializer
     (* change type of Cstring to string *)
-| EXP_Cstring         (elts: list (T * exp))
+| EXP_Cstring (elts: list (T * exp))
                       (* parsing guarantees that the elts of a Cstring will be of the form
                          ((TYPE_I 8), Exp_Integer <byte>)
                       *)
 
 | EXP_Undef
 | EXP_Poison
-| EXP_Struct          (fields: list (T * exp))
-| EXP_Packed_struct   (fields: list (T * exp))
-| EXP_Array           (elts: list (T * exp))
-| EXP_Vector          (elts: list (T * exp))
-| OP_IBinop           (iop:ibinop) (t:T) (v1:exp) (v2:exp)
-| OP_ICmp             (cmp:icmp)   (t:T) (v1:exp) (v2:exp)
-| OP_FBinop           (fop:fbinop) (fm:list fast_math) (t:T) (v1:exp) (v2:exp)
-| OP_FCmp             (cmp:fcmp)   (t:T) (v1:exp) (v2:exp)
-| OP_Conversion       (conv:conversion_type) (t_from:T) (v:exp) (t_to:T)
-| OP_GetElementPtr    (t:T) (ptrval:(T * exp)) (idxs:list (T * exp))
-| OP_ExtractElement   (vec:(T * exp)) (idx:(T * exp))
-| OP_InsertElement    (vec:(T * exp)) (elt:(T * exp)) (idx:(T * exp))
-| OP_ShuffleVector    (vec1:(T * exp)) (vec2:(T * exp)) (idxmask:(T * exp))
-| OP_ExtractValue     (vec:(T * exp)) (idxs:list int_ast)
-| OP_InsertValue      (vec:(T * exp)) (elt:(T * exp)) (idxs:list int_ast)
-| OP_Select           (cnd:(T * exp)) (v1:(T * exp)) (v2:(T * exp)) (* if * then * else *)
-| OP_Freeze           (v:(T * exp))
+| EXP_Struct (fields: list (T * exp))
+| EXP_Packed_struct (fields: list (T * exp))
+| EXP_Array (elts: list (T * exp))
+| EXP_Vector (elts: list (T * exp))
+| OP_IBinop (iop:ibinop) (t:T) (v1:exp) (v2:exp)
+| OP_ICmp (cmp:icmp)   (t:T) (v1:exp) (v2:exp)
+| OP_FBinop (fop:fbinop) (fm:list fast_math) (t:T) (v1:exp) (v2:exp)
+| OP_FCmp (cmp:fcmp)   (t:T) (v1:exp) (v2:exp)
+| OP_Conversion (conv:conversion_type) (t_from:T) (v:exp) (t_to:T)
+| OP_GetElementPtr (t:T) (ptrval:(T * exp)) (idxs:list (T * exp))
+| OP_ExtractElement (vec:(T * exp)) (idx:(T * exp))
+| OP_InsertElement (vec:(T * exp)) (elt:(T * exp)) (idx:(T * exp))
+| OP_ShuffleVector (vec1:(T * exp)) (vec2:(T * exp)) (idxmask:(T * exp))
+| OP_ExtractValue (vec:(T * exp)) (idxs:list int_ast)
+| OP_InsertValue (vec:(T * exp)) (elt:(T * exp)) (idxs:list int_ast)
+| OP_Select (cnd:(T * exp)) (v1:(T * exp)) (v2:(T * exp)) (* if * then * else *)
+| OP_Freeze (v:(T * exp))
 .
 
 Set Elimination Schemes.
@@ -398,7 +451,7 @@ Set Elimination Schemes.
 Definition texp : Set := T * exp.
 
 Inductive metadata : Set :=
-| METADATA_Const  (tv:texp)
+| METADATA_Const (tv:texp)
 | METADATA_Null
 | METADATA_Nontemporal
 | METADATA_Invariant_load
@@ -408,25 +461,24 @@ Inductive metadata : Set :=
 | METADATA_Dereferenceable_or_null
 | METADATA_Align
 | METADATA_Noundef
-| METADATA_Id     (id:raw_id)  (* local or global? *)
+| METADATA_Id (id:raw_id)  (* local or global? *)
 | METADATA_String (str:string)
-| METADATA_Named  (strs:list string)
-| METADATA_Node   (mds:list metadata)
+| METADATA_Named (strs:list string)
+| METADATA_Node (mds:list metadata)
 .
-
 
 (* Used in switch branches which insist on integer literals *)
 Variant tint_literal : Set :=
   | TInt_Literal (sz:N) (x:int_ast).
 
 Variant instr_id : Set :=
-  | IId   (id:raw_id)    (* "Anonymous" or explicitly named instructions *)
-  | IVoid (n:int_ast)        (* "Void" return type, for "store",  "void call", and terminators.
-                            Each with unique number (NOTE: these are distinct from Anon raw_id) *)
+  | IId (id:raw_id) (* "Anonymous" or explicitly named instructions *)
+  | IVoid (n:int_ast) (* "Void" return type, for "store",  "void call", and terminators.
+                         Each with unique number (NOTE: these are distinct from Anon raw_id) *)
 .
 
 Variant phi : Set :=
-  | Phi  (t:T) (args:list (block_id * exp))
+  | Phi (t:T) (args:list (block_id * exp))
 .
 
 Variant ordering : Set :=
@@ -438,19 +490,18 @@ Variant ordering : Set :=
   | Seq_cst
 .
 
-Record cmpxchg : Set :=
-  mk_cmpxchg {
-      c_weak              : option bool;
-      c_volatile          : option bool;
-      c_ptr               : texp;
-      c_cmp               : icmp;
-      c_cmp_type          : T;
-      c_new               : texp;
-      c_syncscope            : option string;
-      c_success_ordering     : ordering;
-      c_failure_ordering     : ordering;
-      c_align                : option int_ast;
-    }.
+Record cmpxchg : Set := mk_cmpxchg {
+  c_weak : option bool;
+  c_volatile : option bool;
+  c_ptr : texp;
+  c_cmp : icmp;
+  c_cmp_type : T;
+  c_new : texp;
+  c_syncscope : option string;
+  c_success_ordering : ordering;
+  c_failure_ordering : ordering;
+  c_align : option int_ast;
+}.
 
 Variant atomic_rmw_operation : Set :=
   | Axchg
@@ -468,19 +519,16 @@ Variant atomic_rmw_operation : Set :=
   | Afsub
 .
 
-Record atomicrmw : Set :=
-  mk_atomicrmw {
-      a_volatile             : option bool;
-      a_operation            : atomic_rmw_operation;
-      a_ptr                  : texp;
-      a_val                  : texp;
-      a_syncscope            : option string;
-      a_ordering             : ordering;
-      a_align                : option int_ast;
-      a_type                 : T;
-    }.
-
-
+Record atomicrmw : Set := mk_atomicrmw {
+  a_volatile : option bool;
+  a_operation : atomic_rmw_operation;
+  a_ptr : texp;
+  a_val : texp;
+  a_syncscope : option string;
+  a_ordering : ordering;
+  a_align : option int_ast;
+  a_type : T;
+}.
 
 Variant unnamed_addr : Set :=
   | Unnamed_addr
@@ -522,7 +570,7 @@ Variant annotation : Set :=
   | ANN_prefix (t:texp) (* declaration / definitions only *)
   | ANN_prologue (t:texp) (* declaration / definitions only *)
   | ANN_personality (t:texp) (* declaration / definitions only *)
-  | ANN_inalloca  (* alloca instruction only *)
+  | ANN_inalloca (* alloca instruction only *)
   | ANN_num_elements (t:texp) (* alloca instruction only *)
   | ANN_volatile (* load / store *)
   | ANN_tail (t:tailcall)
@@ -701,10 +749,10 @@ Definition ann_fun_attribute (a:annotation) : option fn_attr :=
 
 Variant instr : Set :=
 | INSTR_Comment (msg:string)
-| INSTR_Op   (op:exp)                                             (* INVARIANT: op must be of the form (OP_ ...) *)
-| INSTR_Call (fn:texp) (args:list (texp * (list param_attr))) (anns:list annotation)    (* CORNER CASE: return type is void treated specially *)
+| INSTR_Op (op:exp) (* INVARIANT: op must be of the form (OP_ ...) *)
+| INSTR_Call (fn:texp) (args:list (texp * (list param_attr))) (anns:list annotation) (* CORNER CASE: return type is void treated specially *)
 | INSTR_Alloca (t:T) (anns: list annotation)
-| INSTR_Load  (t:T) (ptr:texp) (anns: list annotation)
+| INSTR_Load (t:T) (ptr:texp) (anns: list annotation)
 | INSTR_Store (val:texp) (ptr:texp) (anns: list annotation)
 | INSTR_Fence (syncscope:option string) (o:ordering)
 | INSTR_AtomicCmpXchg (c : cmpxchg)
@@ -716,26 +764,24 @@ Variant instr : Set :=
 Variant terminator : Set :=
 (* Terminators *)
 (* Types in branches are TYPE_Label constant *)
-| TERM_Ret        (v:texp)
+| TERM_Ret (v:texp)
 | TERM_Ret_void
-| TERM_Br         (v:texp) (br1:block_id) (br2:block_id)
-| TERM_Br_1       (br:block_id)
-| TERM_Switch     (v:texp) (default_dest:block_id) (brs: list (tint_literal * block_id))
+| TERM_Br (v:texp) (br1:block_id) (br2:block_id)
+| TERM_Br_1 (br:block_id)
+| TERM_Switch (v:texp) (default_dest:block_id) (brs: list (tint_literal * block_id))
 | TERM_IndirectBr (v:texp) (brs:list block_id) (* address * possible addresses (labels) *)
-| TERM_Resume     (v:texp)
-| TERM_Invoke     (fnptrval:tident) (args:list (texp * (list param_attr))) (to_label:block_id) (unwind_label:block_id)
+| TERM_Resume (v:texp)
+| TERM_Invoke (fnptrval:tident) (args:list (texp * (list param_attr))) (to_label:block_id) (unwind_label:block_id)
 | TERM_Unreachable
 .
 
-
-Record global : Set :=
-  mk_global {
-      g_ident        : global_id;
-      g_typ          : T;
-      g_constant     : bool;              (* true = constant, false = global *)
-      g_exp          : option exp;     (* InitializerConstant *)
-      g_externally_initialized: bool;
-      g_annotations : list annotation  (* Invariant: the list list of annotations is in the same order as is valid for the LLVM IR grammar *)
+Record global : Set := mk_global {
+  g_ident : global_id;
+  g_typ : T;
+  g_constant : bool; (* true = constant, false = global *)
+  g_exp : option exp; (* InitializerConstant *)
+  g_externally_initialized: bool;
+  g_annotations : list annotation (* Invariant: the list list of annotations is in the same order as is valid for the LLVM IR grammar *)
 }.
 
 Definition g_linkage (g:global) : option linkage :=
@@ -783,15 +829,13 @@ Definition g_sanitize_address_dyninit (g:global) : option unit :=
 Definition g_metadata (g:global) : (list (list metadata)) :=
   filter_option ann_metadata (g_annotations g).
 
-Record declaration : Set :=
-  mk_declaration
-  {
-    dc_name         : function_id;
-    dc_type         : T;    (* INVARIANT: should be TYPE_Function (ret_t * args_t * vararg) *)
-    dc_param_attrs  : list param_attr * list (list param_attr); (* ret_attrs * args_attrs *)
-    dc_attrs        : list fn_attr;
-    dc_annotations  : list annotation
-  }.
+Record declaration : Set := mk_declaration {
+  dc_name : function_id;
+  dc_type : T; (* INVARIANT: should be TYPE_Function (ret_t * args_t * vararg) *)
+  dc_param_attrs : list param_attr * list (list param_attr); (* ret_attrs * args_attrs *)
+  dc_attrs : list fn_attr;
+  dc_annotations : list annotation
+}.
 
 Definition dc_linkage (d:declaration) : option linkage :=
   find_option ann_linkage (dc_annotations d).
@@ -841,38 +885,32 @@ Definition dc_personality (d:declaration) : option texp :=
 Definition dc_metadata (d:declaration) : list (list metadata) :=
   filter_option ann_metadata (dc_annotations d).
 
-
 Definition code := list (instr_id * instr).
 
-Record block : Set :=
-  mk_block
-    {
-      blk_id    : block_id;
-      blk_phis  : list (local_id * phi);
-      blk_code  : code;
-      blk_term  : terminator;
-      blk_comments : option (list string)
-    }.
+Record block : Set := mk_block {
+  blk_id : block_id;
+  blk_phis : list (local_id * phi);
+  blk_code : code;
+  blk_term : terminator;
+  blk_comments : option (list string)
+}.
 
-Record definition {FnBody:Set} :=
-  mk_definition
-  {
-    df_prototype   : declaration;
-    df_args        : list local_id;
-    df_instrs      : FnBody;
-  }.
-
+Record definition {FnBody:Set} := mk_definition {
+  df_prototype : declaration;
+  df_args : list local_id;
+  df_instrs : FnBody;
+}.
 
 Variant toplevel_entity {FnBody:Set} : Set :=
-| TLE_Comment         (msg:string)
-| TLE_Target          (tgt:string)
-| TLE_Datalayout      (layout:string)
-| TLE_Declaration     (decl:declaration)
-| TLE_Definition      (defn:@definition FnBody)
-| TLE_Type_decl       (id:ident) (t:T)
+| TLE_Comment (msg:string)
+| TLE_Target (tgt:string)
+| TLE_Datalayout (layout:string)
+| TLE_Declaration (decl:declaration)
+| TLE_Definition (defn:@definition FnBody)
+| TLE_Type_decl (id:ident) (t:T)
 | TLE_Source_filename (s:string)
-| TLE_Global          (g:global)
-| TLE_Metadata        (id:raw_id) (md:metadata)
+| TLE_Global (g:global)
+| TLE_Metadata (id:raw_id) (md:metadata)
 | TLE_Attribute_group (i:int_ast) (attrs:list fn_attr)
 .
 
