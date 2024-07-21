@@ -1,3 +1,4 @@
+(* TODO: rename instr --> inst *)
 (* begin hide *)
 From SE.Numeric Require Import Floats.
 From Coq Require Import
@@ -278,6 +279,7 @@ Variant thread_local_storage : Set :=
 Definition local_id  := raw_id.
 Definition global_id := raw_id.
 Definition block_id := raw_id.
+(* TODO: why not just raw_id? *)
 Definition function_id := global_id.
 
 (* NOTE:
@@ -474,9 +476,8 @@ Variant tint_literal : Set :=
   | TInt_Literal (sz:N) (x:int_ast).
 
 Variant instr_id : Set :=
-  | IId (id:raw_id) (* "Anonymous" or explicitly named instructions *)
-  | IVoid (n:int_ast) (* "Void" return type, for "store",  "void call", and terminators.
-                         Each with unique number (NOTE: these are distinct from Anon raw_id) *)
+  | IId (id:raw_id)
+  | IVoid (n:int_ast)
 .
 
 Variant phi : Set :=
