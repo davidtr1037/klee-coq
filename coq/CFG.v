@@ -43,28 +43,12 @@ Section CFG.
     m_declarations : list (declaration T);
     m_definitions : list (@definition T Body);
   }.
-
-  Definition llvm_definition := @definition T cfg.
-  Definition llvm_module : Set := @module cfg.
-
-  Definition match_function (fid : function_id) (d : llvm_definition) : option (llvm_definition) :=
-    if (dc_name (df_prototype d)) =? fid then Some d else None
-  .
-
-  Definition find_function (m : llvm_module) (fid:function_id) : option (llvm_definition) :=
-    find_map (match_function fid) (m_definitions m)
-  .
-
-  Definition match_block (bid : block_id) (b : block T) : bool :=
-    if (blk_id b) =? bid then true else false
-  .
-
-  Definition find_block (bs: list (block T)) (bid : block_id) : option (block T) :=
-    find (fun b => match_block bid b) bs
-  .
-
 End CFG.
 
+Arguments mkCFG {_}.
+Arguments init {_}.
+Arguments blks {_}.
+Arguments args {_}.
 Arguments module {_} _.
 Arguments mk_module {_ _}.
 Arguments m_name {_ _}.
@@ -74,8 +58,24 @@ Arguments m_type_defs {_ _}.
 Arguments m_globals {_ _}.
 Arguments m_declarations {_ _}.
 Arguments m_definitions {_ _}.
-Arguments mkCFG {_}.
-Arguments find_block {_}.
-Arguments blks {_}.
-Arguments init {_}.
-Arguments args {_}.
+
+Definition llvm_block := @block typ.
+Definition llvm_cfg := @cfg typ.
+Definition llvm_definition := @definition typ llvm_cfg.
+Definition llvm_module : Set := @module typ llvm_cfg.
+
+Definition match_block (bid : block_id) (b : llvm_block) : bool :=
+  if (blk_id b) =? bid then true else false
+.
+
+Definition find_block (bs: list (llvm_block)) (bid : block_id) : option (llvm_block) :=
+  find (fun b => match_block bid b) bs
+.
+
+Definition match_function (fid : function_id) (d : llvm_definition) : option (llvm_definition) :=
+  if (dc_name (df_prototype d)) =? fid then Some d else None
+.
+
+Definition find_function (m : llvm_module) (fid : function_id) : option (llvm_definition) :=
+  find_map (match_function fid) (m_definitions m)
+.
