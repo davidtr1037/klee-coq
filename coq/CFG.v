@@ -1,4 +1,3 @@
-(* TODO: rename modul --> module *)
 (* begin hide *)
 Require Import Equalities.
 
@@ -6,8 +5,7 @@ From Coq Require Import ZArith List String.
 
 From SE Require Import
      Utilities
-     LLVMAst
-     AstLib.
+     LLVMAst.
 
 From ExtLib Require Import
      Programming.Eqv
@@ -21,12 +19,8 @@ Open Scope monad_scope.
 (* end hide *)
 
 Section CFG.
-  Variable (T:Set).
 
-  Inductive cmd : Set :=
-  | Inst (i:instr T)
-  | Term (t:terminator T)
-  .
+  Variable (T:Set).
 
   Record cfg := mkCFG {
     init : block_id;
@@ -43,6 +37,7 @@ Section CFG.
     m_declarations : list (declaration T);
     m_definitions : list (@definition T Body);
   }.
+
 End CFG.
 
 Arguments mkCFG {_}.
@@ -59,10 +54,34 @@ Arguments m_globals {_ _}.
 Arguments m_declarations {_ _}.
 Arguments m_definitions {_ _}.
 
+Definition llvm_global := @global typ.
+Definition llvm_cmd := @cmd typ.
 Definition llvm_block := @block typ.
 Definition llvm_cfg := @cfg typ.
 Definition llvm_definition := @definition typ llvm_cfg.
 Definition llvm_module : Set := @module typ llvm_cfg.
+
+Definition get_cmd_id (c : llvm_cmd) : cmd_id :=
+  match c with
+  | CMD_Phi n _ => n
+  | CMD_Inst n _ => n
+  | CMD_Term n _ => n
+  end
+.
+
+Definition get_first_cmd (b : llvm_block) : option cmd :=
+  match (blk_cmds b) with
+  | c :: _ => Some c
+  | _ => None
+  end
+.
+
+Definition get_first_cmd_id (b : llvm_block) : option cmd_id :=
+  match (get_first_cmd b) with
+  | Some c => Some (get_cmd_id c)
+  | _ => None
+  end
+.
 
 Definition match_block (bid : block_id) (b : llvm_block) : bool :=
   if (blk_id b) =? bid then true else false
@@ -70,6 +89,14 @@ Definition match_block (bid : block_id) (b : llvm_block) : bool :=
 
 Definition find_block (bs: list (llvm_block)) (bid : block_id) : option (llvm_block) :=
   find (fun b => match_block bid b) bs
+.
+
+Definition entry_block (d : llvm_definition) : option llvm_block :=
+  find_block (blks (df_body d)) (init (df_body d))
+.
+
+Definition fetch_block (d : llvm_definition) (bid : block_id) : option llvm_block :=
+  find_block (blks (df_body d)) bid
 .
 
 Definition match_function (fid : function_id) (d : llvm_definition) : option (llvm_definition) :=

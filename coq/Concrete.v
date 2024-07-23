@@ -1,28 +1,108 @@
+From Coq Require Import Strings.String.
+
+From Coq Require Import List.
+Import ListNotations.
+
 From SE Require Import BitVectors.
+From SE Require Import CFG.
 From SE Require Import DynamicValue.
 From SE Require Import IDMap.
 From SE Require Import LLVMAst.
 
-(* TODO: rename? *)
-Definition env := total_map (option dynamic_value).
-
-Definition global_env := env.
-
-Definition frame := env.
-
-Definition stack := list frame.
-
-Record state : Type := mkState {
-  globals : global_env;
-  current_frame : frame;
-  call_stack : stack
+Record inst_counter := mk_inst_counter {
+  fid : function_id;
+  bid : block_id;
+  cid : cmd_id;
 }.
 
-(* Definition init_state ... *)
+Definition dv_store := total_map (option dynamic_value).
+
+Definition empty_dv_store := empty_map (Some DV_Undef).
+
+Definition global_store := dv_store.
+
+(*
+Record frame := mk_frame {
+  local_store : store;
+  return_ic : inst_counter;
+  return_var : raw_id;
+}.
+*)
+
+Inductive frame : Type :=
+  Frame (s : dv_store) (ic : inst_counter) (v : raw_id)
+.
+
+(* TODO: define as an inductive type? *)
+Record state : Type := mk_state {
+  ic : inst_counter;
+  cmd : llvm_cmd;
+  block : list llvm_cmd;
+  store : dv_store;
+  stack : list frame;
+  globals : global_store;
+  module : llvm_module;
+}.
+
+Definition build_inst_counter (m : llvm_module) (d : llvm_definition) : option inst_counter :=
+  match (entry_block d) with
+  | Some b =>
+      match (get_first_cmd_id b) with
+      | Some cid => Some (mk_inst_counter (dc_name (df_prototype d)) (blk_id b) cid)
+      | _ => None
+      end
+  | _ => None
+  end
+.
+
+Definition build_local_store (m : llvm_module) (d : llvm_definition) := empty_dv_store.
+
+Definition get_global_initializer (g : llvm_global) : option dynamic_value :=
+  match (g_exp g) with
+  | Some e => eval_constant_exp (g_typ g) e
+  | _ => Some DV_Undef (* TODO: check against the specifiction *)
+  end
+.
+
+Fixpoint build_global_store_internal (s : dv_store) (l : list llvm_global) :=
+  match l with
+  | g :: t => build_global_store_internal ((g_ident g) !-> (get_global_initializer g); s) t
+  | nil => s
+  end
+.
+
+Definition build_global_store (m : llvm_module) :=
+  build_global_store_internal empty_dv_store (m_globals m)
+.
+
+(* TODO: assumes that there are no parameters *)
+Definition init_state (m : llvm_module) (d : llvm_definition) : option state :=
+  match (build_inst_counter m d) with
+  | Some ic =>
+      match (entry_block d) with
+      | Some b =>
+          match (blk_cmds b) with
+          | cmd :: tail =>
+              Some (mk_state
+                ic
+                cmd
+                tail
+                (build_local_store m d)
+                []
+                (build_global_store m)
+                m
+              )
+          | _ => None
+          end
+      | None => None
+      end
+  | None => None
+  end
+.
 
 Definition lookup_ident (s : state) (id : ident) : option dynamic_value :=
   match id with
-  | ID_Local x => (current_frame s) x
+  | ID_Local x => (store s) x
   | ID_Global x => (globals s) x
   end
 .

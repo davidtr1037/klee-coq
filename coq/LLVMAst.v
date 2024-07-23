@@ -1,4 +1,3 @@
-(* TODO: rename instr --> inst *)
 (* begin hide *)
 From SE.Numeric Require Import Floats.
 From Coq Require Import
@@ -475,13 +474,10 @@ Inductive metadata : Set :=
 Variant tint_literal : Set :=
   | TInt_Literal (sz:N) (x:int_ast).
 
+(* TODO: remove? *)
 Variant instr_id : Set :=
   | IId (id:raw_id)
   | IVoid (n:int_ast)
-.
-
-Variant phi : Set :=
-  | Phi (t:T) (args:list (block_id * exp))
 .
 
 Variant ordering : Set :=
@@ -750,32 +746,38 @@ Definition ann_fun_attribute (a:annotation) : option fn_attr :=
   | _ => None
   end.
 
-Variant instr : Set :=
-| INSTR_Comment (msg:string)
-| INSTR_Op (op:exp) (* INVARIANT: op must be of the form (OP_ ...) *)
-| INSTR_Call (fn:texp) (args:list (texp * (list param_attr))) (anns:list annotation) (* CORNER CASE: return type is void treated specially *)
-| INSTR_Alloca (t:T) (anns: list annotation)
-| INSTR_Load (t:T) (ptr:texp) (anns: list annotation)
-| INSTR_Store (val:texp) (ptr:texp) (anns: list annotation)
-| INSTR_Fence (syncscope:option string) (o:ordering)
-| INSTR_AtomicCmpXchg (c : cmpxchg)
-| INSTR_AtomicRMW (a :atomicrmw )
-| INSTR_VAArg (va_list_and_arg_list : texp) (t: T) (* arg_list isn't actually a list, this is just the name of the argument  *)
-| INSTR_LandingPad
+Variant phi : Set :=
+  | Phi (t:T) (args:list (block_id * exp))
 .
 
-Variant terminator : Set :=
-(* Terminators *)
+(* TODO: rename to inst *)
+Variant instr : Set :=
+  | INSTR_Comment (msg : string)
+  | INSTR_Op (v : local_id) (e : exp) (* INVARIANT: e must be of the form (OP_ ...) *)
+  | INSTR_VoidCall (f : texp) (args : list (texp * (list param_attr))) (anns : list annotation)
+  | INSTR_Call (v : local_id) (f : texp) (args : list (texp * (list param_attr))) (anns : list annotation)
+  | INSTR_Alloca (v : local_id) (t : T) (anns : list annotation)
+  | INSTR_Load (v : local_id) (t : T) (ptr : texp) (anns : list annotation)
+  | INSTR_Store (val : texp) (ptr : texp) (anns : list annotation)
+.
+
 (* Types in branches are TYPE_Label constant *)
-| TERM_Ret (v:texp)
-| TERM_Ret_void
-| TERM_Br (v:texp) (br1:block_id) (br2:block_id)
-| TERM_Br_1 (br:block_id)
-| TERM_Switch (v:texp) (default_dest:block_id) (brs: list (tint_literal * block_id))
-| TERM_IndirectBr (v:texp) (brs:list block_id) (* address * possible addresses (labels) *)
-| TERM_Resume (v:texp)
-| TERM_Invoke (fnptrval:tident) (args:list (texp * (list param_attr))) (to_label:block_id) (unwind_label:block_id)
-| TERM_Unreachable
+Variant terminator : Set :=
+  | TERM_Ret (e : texp)
+  | TERM_Ret_void
+  | TERM_Br (e : texp) (br1 : block_id) (br2 : block_id)
+  | TERM_Br_1 (br : block_id)
+  | TERM_Switch (e : texp) (default_dest : block_id) (brs : list (tint_literal * block_id))
+  | TERM_IndirectBr (v : texp) (brs : list block_id)
+  | TERM_Unreachable
+.
+
+Definition cmd_id := nat.
+
+Inductive cmd : Set :=
+  | CMD_Phi (n : cmd_id) (p : phi)
+  | CMD_Inst (n : cmd_id) (i : instr)
+  | CMD_Term (n : cmd_id) (t : terminator)
 .
 
 Record global : Set := mk_global {
@@ -888,14 +890,11 @@ Definition dc_personality (d:declaration) : option texp :=
 Definition dc_metadata (d:declaration) : list (list metadata) :=
   filter_option ann_metadata (dc_annotations d).
 
-Definition code := list (instr_id * instr).
-
 (* TODO: move to CFG.v? *)
+(* TODO: don't separate betweein phi instructions and regular instructions *)
 Record block : Set := mk_block {
   blk_id : block_id;
-  blk_phis : list (local_id * phi);
-  blk_code : code;
-  blk_term : terminator;
+  blk_cmds : list cmd;
   blk_comments : option (list string)
 }.
 
@@ -930,7 +929,6 @@ Arguments texp: clear implicits.
 Arguments phi: clear implicits.
 Arguments instr: clear implicits.
 Arguments terminator: clear implicits.
-Arguments code: clear implicits.
 Arguments annotation: clear implicits.
 Arguments global: clear implicits.
 Arguments declaration: clear implicits.
