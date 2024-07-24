@@ -1,6 +1,7 @@
-From Coq Require Import Strings.String.
-
 From Coq Require Import List.
+From Coq Require Import Strings.String.
+From Coq Require Import ZArith.
+
 Import ListNotations.
 
 From SE Require Import BitVectors.
@@ -15,6 +16,7 @@ Record inst_counter := mk_inst_counter {
   cid : cmd_id;
 }.
 
+(* TODO: why option? *)
 Definition dv_store := total_map (option dynamic_value).
 
 Definition empty_dv_store := empty_map (Some DV_Undef).
@@ -100,20 +102,20 @@ Definition init_state (m : llvm_module) (d : llvm_definition) : option state :=
   end
 .
 
-Definition lookup_ident (s : state) (id : ident) : option dynamic_value :=
+Definition lookup_ident (s : dv_store) (g : global_store) (id : ident) : option dynamic_value :=
   match id with
-  | ID_Local x => (store s) x
-  | ID_Global x => (globals s) x
+  | ID_Local x => s x
+  | ID_Global x => g x
   end
 .
 
 (* TODO: why vellvm passes dtyp? *)
-Fixpoint eval_exp (s : state) (t : typ) (e : exp typ) : option dynamic_value :=
+Fixpoint eval_exp (s : dv_store) (g : global_store) (t : option typ) (e : exp typ) : option dynamic_value :=
   match e with
-  | EXP_Ident id => lookup_ident s id
+  | EXP_Ident id => lookup_ident s g id
   | EXP_Integer n =>
       match t with
-      | TYPE_I bits => make_dv bits n
+      | Some (TYPE_I bits) => make_dv bits n
       | _ => None
       end
   | EXP_Float f => None
@@ -130,19 +132,19 @@ Fixpoint eval_exp (s : state) (t : typ) (e : exp typ) : option dynamic_value :=
   | EXP_Array elts => None
   | EXP_Vector elts => None
   | OP_IBinop iop t v1 v2 =>
-      match (eval_exp s t v1, eval_exp s t v2) with
+      match (eval_exp s g (Some t) v1, eval_exp s g (Some t) v2) with
       | (Some dv1, Some dv2) => eval_ibinop iop dv1 dv2
       | (_, _) => None
       end
   | OP_ICmp icmp t v1 v2 =>
-      match (eval_exp s t v1, eval_exp s t v2) with
+      match (eval_exp s g (Some t) v1, eval_exp s g (Some t) v2) with
       | (Some dv1, Some dv2) => eval_icmp icmp dv1 dv2
       | (_, _) => None
       end
   | OP_FBinop fop _ _ _ _ => None
   | OP_FCmp _ _ _ _ => None
   | OP_Conversion conv t1 e t2 =>
-      match eval_exp s t1 e with
+      match eval_exp s g (Some t1) e with
       | Some dv => convert conv dv t1 t2
       | _ => None
       end
@@ -157,5 +159,14 @@ Fixpoint eval_exp (s : state) (t : typ) (e : exp typ) : option dynamic_value :=
   end
 .
 
+Definition next_inst_counter (pc : inst_counter) (c : llvm_cmd) : inst_counter :=
+  mk_inst_counter (fid pc) (bid pc) (get_cmd_id c)
+.
+
 Inductive step : state -> state -> Prop :=
+  | Step_OP : forall pc cid v e c b f s g m dv,
+      (eval_exp f g None e) = Some dv ->
+      step
+        (mk_state pc (CMD_Inst cid (INSTR_Op v e)) (c :: b) f s g m)
+        (mk_state (next_inst_counter pc c) c b (v !-> Some dv; f) s g m)
 .

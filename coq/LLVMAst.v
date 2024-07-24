@@ -474,12 +474,6 @@ Inductive metadata : Set :=
 Variant tint_literal : Set :=
   | TInt_Literal (sz:N) (x:int_ast).
 
-(* TODO: remove? *)
-Variant instr_id : Set :=
-  | IId (id:raw_id)
-  | IVoid (n:int_ast)
-.
-
 Variant ordering : Set :=
   | Unordered
   | Monotonic
