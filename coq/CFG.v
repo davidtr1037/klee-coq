@@ -91,6 +91,11 @@ Definition find_block (bs: list (llvm_block)) (bid : block_id) : option (llvm_bl
   find (fun b => match_block bid b) bs
 .
 
+(* TODO: rename *)
+Definition get_fid(d : llvm_definition) : function_id :=
+  (dc_name (df_prototype d))
+.
+
 Definition entry_block (d : llvm_definition) : option llvm_block :=
   find_block (blks (df_body d)) (init (df_body d))
 .

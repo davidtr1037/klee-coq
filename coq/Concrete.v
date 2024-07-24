@@ -1,3 +1,4 @@
+(* TODO: do something with exp typ *)
 From Coq Require Import List.
 From Coq Require Import Strings.String.
 From Coq Require Import ZArith.
@@ -9,6 +10,7 @@ From SE Require Import CFG.
 From SE Require Import DynamicValue.
 From SE Require Import IDMap.
 From SE Require Import LLVMAst.
+From SE.Utils Require Import ListUtil.
 
 Record inst_counter := mk_inst_counter {
   fid : function_id;
@@ -32,7 +34,8 @@ Record frame := mk_frame {
 *)
 
 Inductive frame : Type :=
-  Frame (s : dv_store) (ic : inst_counter) (v : raw_id)
+  | Frame (s : dv_store) (ic : inst_counter) (v : raw_id)
+  | Frame_NoReturn (s : dv_store) (ic : inst_counter)
 .
 
 (* TODO: define as an inductive type? *)
@@ -40,7 +43,7 @@ Record state : Type := mk_state {
   ic : inst_counter;
   cmd : llvm_cmd;
   block : list llvm_cmd;
-  store : dv_store;
+  store : dv_store; (* TODO: rename *)
   stack : list frame;
   globals : global_store;
   module : llvm_module;
@@ -163,10 +166,194 @@ Definition next_inst_counter (pc : inst_counter) (c : llvm_cmd) : inst_counter :
   mk_inst_counter (fid pc) (bid pc) (get_cmd_id c)
 .
 
+Definition next_inst_counter_on_branch (pc : inst_counter) (bid : block_id) (m : llvm_module) : option inst_counter :=
+  match (find_function m (fid pc)) with
+  | Some d =>
+      match (fetch_block d bid) with
+      | Some b =>
+          match (get_first_cmd_id b) with
+          | Some cid => Some (mk_inst_counter (fid pc) (blk_id b) cid)
+          | _ => None
+          end
+      | _ => None
+      end
+  | _ => None
+  end
+.
+
+Definition find_function_by_exp (m : llvm_module) (e : exp typ) : option llvm_definition :=
+  match e with
+  | EXP_Ident (ID_Global id) => find_function m id
+  | _ => None
+  end
+.
+
+Fixpoint get_arg_types (args : list (function_arg)) : list typ :=
+  match args with
+  | ((t, e), _) :: tail => t :: get_arg_types tail
+  | [] => []
+  end
+.
+
+Fixpoint eval_args (s : dv_store) (g : global_store) (args : list function_arg) : option (list dynamic_value) :=
+  match args with
+  | ((t, e), _) :: tail =>
+      match (eval_exp s g (Some t) e) with
+      | Some dv =>
+          match (eval_args s g tail) with
+          | Some dvs => Some (dv :: dvs)
+          | _ => None
+          end
+      | _ => None
+      end
+  | _ => None
+  end
+.
+
+Fixpoint fill_store (l : list (raw_id * dynamic_value)) : dv_store :=
+  match l with
+  | (id, dv) :: tail => (id !-> Some dv; (fill_store tail))
+  | [] => empty_dv_store
+  end
+.
+
+Definition init_local_store (d : llvm_definition) (dvs : list dynamic_value) : option dv_store :=
+  match (merge_lists (df_args d) dvs) with
+  | Some l => Some (fill_store l)
+  | None => None
+  end
+.
+
+(* TODO: s (store) --> ls (local store) *)
 Inductive step : state -> state -> Prop :=
   | Step_OP : forall pc cid v e c b f s g m dv,
       (eval_exp f g None e) = Some dv ->
       step
         (mk_state pc (CMD_Inst cid (INSTR_Op v e)) (c :: b) f s g m)
         (mk_state (next_inst_counter pc c) c b (v !-> Some dv; f) s g m)
+  | Step_UnconditionalBr : forall pc cid bid f s g m d b c cs,
+      (find_function m (fid pc)) = Some d ->
+      (fetch_block d bid) = Some b ->
+      (blk_cmds b) = c :: cs ->
+      step
+        (mk_state pc (CMD_Term cid (TERM_UnconditionalBr bid)) [] f s g m)
+        (mk_state (mk_inst_counter (fid pc) bid (get_cmd_id c)) c cs f s g m)
+  | Step_Br_True : forall pc cid t e bid1 bid2 f s g m d b c cs,
+      (eval_exp f g (Some t) e) = Some (DV_I1 one) ->
+      (find_function m (fid pc)) = Some d ->
+      (fetch_block d bid1) = Some b ->
+      (blk_cmds b) = c :: cs ->
+      step
+        (mk_state pc (CMD_Term cid (TERM_Br (t, e) bid1 bid2)) [] f s g m)
+        (mk_state (mk_inst_counter (fid pc) bid1 (get_cmd_id c)) c cs f s g m)
+  | Step_Br_False : forall pc cid t e bid1 bid2 f s g m d b c cs,
+      (eval_exp f g (Some t) e) = Some (DV_I1 zero) ->
+      (find_function m (fid pc)) = Some d ->
+      (fetch_block d bid2) = Some b ->
+      (blk_cmds b) = c :: cs ->
+      step
+        (mk_state pc (CMD_Term cid (TERM_Br (t, e) bid1 bid2)) [] f s g m)
+        (mk_state (mk_inst_counter (fid pc) bid2 (get_cmd_id c)) c cs f s g m)
+  (* TODO: t must be TYPE_Void here? *)
+  | Step_VoidCall : forall pc cid t f args anns c cs s stk gs m d b c' cs' dvs s',
+      (find_function_by_exp m f) = Some d ->
+      (dc_type (df_prototype d)) = TYPE_Function t (get_arg_types args) false ->
+      (entry_block d) = Some b ->
+      (blk_cmds b) = c' :: cs' ->
+      (eval_args s gs args) = Some dvs ->
+      (init_local_store d  dvs) = Some s' ->
+      step
+        (mk_state
+          pc
+          (CMD_Inst cid (INSTR_VoidCall (t, f) args anns))
+          (c :: cs)
+          s
+          stk
+          gs
+          m
+        )
+        (mk_state
+          (mk_inst_counter (get_fid d) (blk_id b) (get_cmd_id c'))
+          c'
+          cs'
+          s'
+          ((Frame_NoReturn s (next_inst_counter pc c)) :: stk)
+          gs
+          m
+        )
+  | Step_Call : forall pc cid v t f args anns c cs s stk gs m d b c' cs' dvs s',
+      (find_function_by_exp m f) = Some d ->
+      (dc_type (df_prototype d)) = TYPE_Function t (get_arg_types args) false ->
+      (entry_block d) = Some b ->
+      (blk_cmds b) = c' :: cs' ->
+      (eval_args s gs args) = Some dvs ->
+      (init_local_store d dvs) = Some s' ->
+      step
+        (mk_state
+          pc
+          (CMD_Inst cid (INSTR_Call v (t, f) args anns))
+          (c :: cs)
+          s
+          stk
+          gs
+          m
+        )
+        (mk_state
+          (mk_inst_counter (get_fid d) (blk_id b) (get_cmd_id c'))
+          c'
+          cs'
+          s'
+          ((Frame s (next_inst_counter pc c) v) :: stk)
+          gs
+          m
+        )
+  (* TODO: check the return type of the current function *)
+  | Step_RetVoid : forall pc cid s s' pc' stk gs m d b c' cs',
+      (find_function m (fid pc)) = Some d ->
+      (fetch_block d (bid pc)) = Some b ->
+      (blk_cmds b) = c' :: cs' ->
+      step
+        (mk_state
+          pc
+          (CMD_Term cid TERM_RetVoid)
+          []
+          s
+          ((Frame_NoReturn s' pc') :: stk)
+          gs
+          m
+        )
+        (mk_state
+          pc'
+          c'
+          cs'
+          s
+          stk
+          gs
+          m
+        )
+  (* TODO: check the return type of the current function *)
+  | Step_Ret : forall pc cid t e s s' pc' v stk gs m dv d b c' cs',
+      (eval_exp s gs (Some t) e) = Some dv ->
+      (find_function m (fid pc)) = Some d ->
+      (fetch_block d (bid pc)) = Some b ->
+      (blk_cmds b) = c' :: cs' ->
+      step
+        (mk_state
+          pc
+          (CMD_Term cid (TERM_Ret (t, e)))
+          []
+          s
+          ((Frame s' pc' v) :: stk)
+          gs
+          m
+        )
+        (mk_state
+          pc'
+          c'
+          cs'
+          (v !-> Some dv; s)
+          stk
+          gs
+          m
+        )
 .

@@ -744,12 +744,14 @@ Variant phi : Set :=
   | Phi (t:T) (args:list (block_id * exp))
 .
 
+Definition function_arg : Set := (texp * (list param_attr)).
+
 (* TODO: rename to inst *)
 Variant instr : Set :=
   | INSTR_Comment (msg : string)
   | INSTR_Op (v : local_id) (e : exp) (* INVARIANT: e must be of the form (OP_ ...) *)
-  | INSTR_VoidCall (f : texp) (args : list (texp * (list param_attr))) (anns : list annotation)
-  | INSTR_Call (v : local_id) (f : texp) (args : list (texp * (list param_attr))) (anns : list annotation)
+  | INSTR_VoidCall (f : texp) (args : list function_arg) (anns : list annotation)
+  | INSTR_Call (v : local_id) (f : texp) (args : list function_arg) (anns : list annotation)
   | INSTR_Alloca (v : local_id) (t : T) (anns : list annotation)
   | INSTR_Load (v : local_id) (t : T) (ptr : texp) (anns : list annotation)
   | INSTR_Store (val : texp) (ptr : texp) (anns : list annotation)
@@ -758,9 +760,9 @@ Variant instr : Set :=
 (* Types in branches are TYPE_Label constant *)
 Variant terminator : Set :=
   | TERM_Ret (e : texp)
-  | TERM_Ret_void
+  | TERM_RetVoid
   | TERM_Br (e : texp) (br1 : block_id) (br2 : block_id)
-  | TERM_Br_1 (br : block_id)
+  | TERM_UnconditionalBr (br : block_id)
   | TERM_Switch (e : texp) (default_dest : block_id) (brs : list (tint_literal * block_id))
   | TERM_IndirectBr (v : texp) (brs : list block_id)
   | TERM_Unreachable
