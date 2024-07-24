@@ -335,9 +335,9 @@ Inductive step : state -> state -> Prop :=
           m
         )
   (* TODO: t must be TYPE_Void here? *)
-  | Step_VoidCall : forall pc cid t f args anns c cs ls stk gs m d b c' cs' dvs s',
+  | Step_VoidCall : forall pc cid f args anns c cs ls stk gs m d b c' cs' dvs s',
       (find_function_by_exp m f) = Some d ->
-      (dc_type (df_prototype d)) = TYPE_Function t (get_arg_types args) false ->
+      (dc_type (df_prototype d)) = TYPE_Function TYPE_Void (get_arg_types args) false ->
       (entry_block d) = Some b ->
       (blk_cmds b) = c' :: cs' ->
       (eval_args ls gs args) = Some dvs ->
@@ -345,7 +345,7 @@ Inductive step : state -> state -> Prop :=
       step
         (mk_state
           pc
-          (CMD_Inst cid (INSTR_VoidCall (t, f) args anns))
+          (CMD_Inst cid (INSTR_VoidCall (TYPE_Void, f) args anns))
           (c :: cs)
           ls
           stk
