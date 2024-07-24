@@ -69,14 +69,14 @@ Definition get_global_initializer (g : llvm_global) : option dynamic_value :=
   end
 .
 
-Fixpoint build_global_store_internal (s : dv_store) (l : list llvm_global) :=
+Fixpoint build_global_store_internal (gs : global_store) (l : list llvm_global) :=
   match l with
-  | g :: t => build_global_store_internal ((g_ident g) !-> (get_global_initializer g); s) t
-  | nil => s
+  | g :: t => build_global_store_internal ((g_ident g) !-> (get_global_initializer g); gs) t
+  | nil => gs
   end
 .
 
-Definition build_global_store (m : llvm_module) :=
+Definition build_global_store (m : llvm_module) : global_store :=
   build_global_store_internal empty_dv_store (m_globals m)
 .
 
@@ -226,48 +226,111 @@ Definition init_local_store (d : llvm_definition) (dvs : list dynamic_value) : o
 
 (* TODO: s (store) --> ls (local store) *)
 Inductive step : state -> state -> Prop :=
-  | Step_OP : forall pc cid v e c b f s g m dv,
-      (eval_exp f g None e) = Some dv ->
+  | Step_OP : forall pc cid v e c b ls stk gs m dv,
+      (eval_exp ls gs None e) = Some dv ->
       step
-        (mk_state pc (CMD_Inst cid (INSTR_Op v e)) (c :: b) f s g m)
-        (mk_state (next_inst_counter pc c) c b (v !-> Some dv; f) s g m)
-  | Step_UnconditionalBr : forall pc cid bid f s g m d b c cs,
+        (mk_state
+          pc
+          (CMD_Inst cid (INSTR_Op v e))
+          (c :: b)
+          ls
+          stk
+          gs
+          m
+        )
+        (mk_state
+          (next_inst_counter pc c)
+          c
+          b
+          (v !-> Some dv; ls)
+          stk
+          gs
+          m
+        )
+  | Step_UnconditionalBr : forall pc cid bid ls stk gs m d b c cs,
       (find_function m (fid pc)) = Some d ->
       (fetch_block d bid) = Some b ->
       (blk_cmds b) = c :: cs ->
       step
-        (mk_state pc (CMD_Term cid (TERM_UnconditionalBr bid)) [] f s g m)
-        (mk_state (mk_inst_counter (fid pc) bid (get_cmd_id c)) c cs f s g m)
-  | Step_Br_True : forall pc cid t e bid1 bid2 f s g m d b c cs,
-      (eval_exp f g (Some t) e) = Some (DV_I1 one) ->
+        (mk_state pc
+          (CMD_Term cid (TERM_UnconditionalBr bid))
+          []
+          ls
+          stk
+          gs
+          m
+        )
+        (mk_state
+          (mk_inst_counter (fid pc) bid (get_cmd_id c))
+          c
+          cs
+          ls
+          stk
+          gs
+          m
+        )
+  | Step_Br_True : forall pc cid t e bid1 bid2 ls stk gs m d b c cs,
+      (eval_exp ls gs (Some t) e) = Some (DV_I1 one) ->
       (find_function m (fid pc)) = Some d ->
       (fetch_block d bid1) = Some b ->
       (blk_cmds b) = c :: cs ->
       step
-        (mk_state pc (CMD_Term cid (TERM_Br (t, e) bid1 bid2)) [] f s g m)
-        (mk_state (mk_inst_counter (fid pc) bid1 (get_cmd_id c)) c cs f s g m)
-  | Step_Br_False : forall pc cid t e bid1 bid2 f s g m d b c cs,
-      (eval_exp f g (Some t) e) = Some (DV_I1 zero) ->
+        (mk_state
+          pc
+          (CMD_Term cid (TERM_Br (t, e) bid1 bid2))
+          []
+          ls
+          stk
+          gs
+          m
+        )
+        (mk_state
+          (mk_inst_counter (fid pc) bid1 (get_cmd_id c))
+          c
+          cs
+          ls
+          stk
+          gs
+          m
+        )
+  | Step_Br_False : forall pc cid t e bid1 bid2 ls stk gs m d b c cs,
+      (eval_exp ls gs (Some t) e) = Some (DV_I1 zero) ->
       (find_function m (fid pc)) = Some d ->
       (fetch_block d bid2) = Some b ->
       (blk_cmds b) = c :: cs ->
       step
-        (mk_state pc (CMD_Term cid (TERM_Br (t, e) bid1 bid2)) [] f s g m)
-        (mk_state (mk_inst_counter (fid pc) bid2 (get_cmd_id c)) c cs f s g m)
+        (mk_state
+          pc
+          (CMD_Term cid (TERM_Br (t, e) bid1 bid2))
+          []
+          ls
+          stk
+          gs
+          m
+        )
+        (mk_state
+          (mk_inst_counter (fid pc) bid2 (get_cmd_id c))
+          c
+          cs
+          ls
+          stk
+          gs
+          m
+        )
   (* TODO: t must be TYPE_Void here? *)
-  | Step_VoidCall : forall pc cid t f args anns c cs s stk gs m d b c' cs' dvs s',
+  | Step_VoidCall : forall pc cid t f args anns c cs ls stk gs m d b c' cs' dvs s',
       (find_function_by_exp m f) = Some d ->
       (dc_type (df_prototype d)) = TYPE_Function t (get_arg_types args) false ->
       (entry_block d) = Some b ->
       (blk_cmds b) = c' :: cs' ->
-      (eval_args s gs args) = Some dvs ->
+      (eval_args ls gs args) = Some dvs ->
       (init_local_store d  dvs) = Some s' ->
       step
         (mk_state
           pc
           (CMD_Inst cid (INSTR_VoidCall (t, f) args anns))
           (c :: cs)
-          s
+          ls
           stk
           gs
           m
@@ -277,23 +340,23 @@ Inductive step : state -> state -> Prop :=
           c'
           cs'
           s'
-          ((Frame_NoReturn s (next_inst_counter pc c)) :: stk)
+          ((Frame_NoReturn ls (next_inst_counter pc c)) :: stk)
           gs
           m
         )
-  | Step_Call : forall pc cid v t f args anns c cs s stk gs m d b c' cs' dvs s',
+  | Step_Call : forall pc cid v t f args anns c cs ls stk gs m d b c' cs' dvs s',
       (find_function_by_exp m f) = Some d ->
       (dc_type (df_prototype d)) = TYPE_Function t (get_arg_types args) false ->
       (entry_block d) = Some b ->
       (blk_cmds b) = c' :: cs' ->
-      (eval_args s gs args) = Some dvs ->
+      (eval_args ls gs args) = Some dvs ->
       (init_local_store d dvs) = Some s' ->
       step
         (mk_state
           pc
           (CMD_Inst cid (INSTR_Call v (t, f) args anns))
           (c :: cs)
-          s
+          ls
           stk
           gs
           m
@@ -303,12 +366,12 @@ Inductive step : state -> state -> Prop :=
           c'
           cs'
           s'
-          ((Frame s (next_inst_counter pc c) v) :: stk)
+          ((Frame ls (next_inst_counter pc c) v) :: stk)
           gs
           m
         )
   (* TODO: check the return type of the current function *)
-  | Step_RetVoid : forall pc cid s s' pc' stk gs m d b c' cs',
+  | Step_RetVoid : forall pc cid ls ls' pc' stk gs m d b c' cs',
       (find_function m (fid pc)) = Some d ->
       (fetch_block d (bid pc)) = Some b ->
       (blk_cmds b) = c' :: cs' ->
@@ -317,8 +380,8 @@ Inductive step : state -> state -> Prop :=
           pc
           (CMD_Term cid TERM_RetVoid)
           []
-          s
-          ((Frame_NoReturn s' pc') :: stk)
+          ls
+          ((Frame_NoReturn ls' pc') :: stk)
           gs
           m
         )
@@ -326,14 +389,14 @@ Inductive step : state -> state -> Prop :=
           pc'
           c'
           cs'
-          s
+          ls'
           stk
           gs
           m
         )
   (* TODO: check the return type of the current function *)
-  | Step_Ret : forall pc cid t e s s' pc' v stk gs m dv d b c' cs',
-      (eval_exp s gs (Some t) e) = Some dv ->
+  | Step_Ret : forall pc cid t e ls ls' pc' v stk gs m dv d b c' cs',
+      (eval_exp ls gs (Some t) e) = Some dv ->
       (find_function m (fid pc)) = Some d ->
       (fetch_block d (bid pc)) = Some b ->
       (blk_cmds b) = c' :: cs' ->
@@ -342,8 +405,8 @@ Inductive step : state -> state -> Prop :=
           pc
           (CMD_Term cid (TERM_Ret (t, e)))
           []
-          s
-          ((Frame s' pc' v) :: stk)
+          ls
+          ((Frame ls' pc' v) :: stk)
           gs
           m
         )
@@ -351,7 +414,7 @@ Inductive step : state -> state -> Prop :=
           pc'
           c'
           cs'
-          (v !-> Some dv; s)
+          (v !-> Some dv; ls')
           stk
           gs
           m
