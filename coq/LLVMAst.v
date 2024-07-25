@@ -741,7 +741,7 @@ Definition ann_fun_attribute (a:annotation) : option fn_attr :=
   end.
 
 Variant phi : Set :=
-  | Phi (t:T) (args:list (block_id * exp))
+  | Phi (v : local_id) (t : T) (args : list (block_id * exp))
 .
 
 Definition function_arg : Set := (texp * (list param_attr)).

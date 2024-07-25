@@ -22,6 +22,7 @@ Section CFG.
 
   Variable (T:Set).
 
+  (* TODO: rename to mk_cfg *)
   Record cfg := mkCFG {
     init : block_id;
     blks : list (block T);
