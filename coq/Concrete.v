@@ -11,6 +11,7 @@ From SE Require Import DynamicValue.
 From SE Require Import IDMap.
 From SE Require Import LLVMAst.
 From SE.Utils Require Import ListUtil.
+From SE Require Import Relation.
 
 Record inst_counter := mk_inst_counter {
   fid : function_id;
@@ -489,3 +490,5 @@ Inductive step : state -> state -> Prop :=
           m
         )
 .
+
+Definition multi_step := multi step.
