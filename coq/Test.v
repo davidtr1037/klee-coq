@@ -46,10 +46,11 @@ Definition f_block_1 : llvm_block := mk_block
 
 Definition f_block_2_cmd_0 := (CMD_Inst 0 (INSTR_Op (Name "add") (OP_IBinop (LLVMAst.Add false true) (TYPE_I 32) (EXP_Ident (ID_Local (Name "x"))) (EXP_Ident (ID_Local (Name "y")))))).
 
+Definition f_block_2_cmd_1 : llvm_cmd := (CMD_Term 1 (TERM_UnconditionalBr (Name "return"))).
 
 Definition f_block_2 : llvm_block := mk_block
   f_block_2_id
-  [f_block_2_cmd_0]
+  [f_block_2_cmd_0; f_block_2_cmd_1]
   None
 .
 
@@ -159,23 +160,27 @@ Definition m : llvm_module := mk_module
   defs
 .
 
+Definition s_0_ls := empty_dv_store.
+
 Definition s_0 := mk_state
   (mk_inst_counter main_id main_block_1_id 0)
   main_block_1_cmd_0
   [main_block_1_cmd_1]
   None
-  empty_dv_store
+  s_0_ls
   []
   empty_dv_store
   m
 .
+
+Definition s_1_ls := ((Name "x") !-> (DV_I32 (repr 1)); (Name "y") !-> (DV_I32 (repr 2)); empty_dv_store).
 
 Definition s_1 := mk_state
   (mk_inst_counter f_id f_entry 0)
   f_block_1_cmd_0
   [f_block_1_cmd_1]
   None
-  ((Name "x") !-> (DV_I32 (repr 1)); (Name "y") !-> (DV_I32 (repr 2)); empty_dv_store)
+  s_1_ls
   [Frame empty_dv_store (mk_inst_counter main_id main_block_1_id 1) None (Name "call")]
   empty_dv_store
   m
@@ -203,7 +208,7 @@ Proof.
     f_block_1_cmd_0
     [f_block_1_cmd_1]
     [(DV_I32 (repr 1)); (DV_I32 (repr 2))]
-    ((Name "x") !-> (DV_I32 (repr 1)); (Name "y") !-> (DV_I32 (repr 2)); empty_dv_store)
+    s_1_ls
   ).
   - reflexivity.
   - reflexivity.
@@ -213,12 +218,14 @@ Proof.
   - reflexivity.
 Qed.
 
+Definition s_2_ls := ((Name "cmp") !-> (DV_I1 one); s_1_ls).
+
 Definition s_2 := mk_state
   (mk_inst_counter f_id f_entry 1)
   f_block_1_cmd_1
   []
   None
-  ((Name "cmp") !-> (DV_I1 one); (Name "x") !-> (DV_I32 (repr 1)); (Name "y") !-> (DV_I32 (repr 2)); empty_dv_store)
+  s_2_ls
   [Frame empty_dv_store (mk_inst_counter main_id main_block_1_id 1) None (Name "call")]
   empty_dv_store
   m
@@ -230,12 +237,14 @@ Proof.
   reflexivity.
 Qed.
 
+Definition s_3_ls := s_2_ls.
+
 Definition s_3 := mk_state
   (mk_inst_counter f_id f_block_2_id 0)
   f_block_2_cmd_0
-  []
+  [f_block_2_cmd_1]
   (Some f_block_1_id)
-  ((Name "cmp") !-> (DV_I1 one); (Name "x") !-> (DV_I32 (repr 1)); (Name "y") !-> (DV_I32 (repr 2)); empty_dv_store)
+  s_3_ls
   [Frame empty_dv_store (mk_inst_counter main_id main_block_1_id 1) None (Name "call")]
   empty_dv_store
   m
@@ -251,16 +260,69 @@ Proof.
     f_block_2_id
     f_block_3_id
     None
-    ((Name "cmp") !-> (DV_I1 one); (Name "x") !-> (DV_I32 (repr 1)); (Name "y") !-> (DV_I32 (repr 2)); empty_dv_store)
+    s_2_ls
     [Frame empty_dv_store (mk_inst_counter main_id main_block_1_id 1) None (Name "call")]
     empty_dv_store
     m
     f_def
     f_block_2
     f_block_2_cmd_0
-    []
+    [f_block_2_cmd_1]
   ).
   - reflexivity.
+  - reflexivity.
+  - reflexivity.
+  - reflexivity.
+Qed.
+
+Definition s_4_ls := ((Name "add") !-> (DV_I32 (repr 3)); s_3_ls).
+
+Definition s_4 := mk_state
+  (mk_inst_counter f_id f_block_2_id 1)
+  f_block_2_cmd_1
+  []
+  (Some f_block_1_id)
+  s_4_ls
+  [Frame empty_dv_store (mk_inst_counter main_id main_block_1_id 1) None (Name "call")]
+  empty_dv_store
+  m
+.
+
+Lemma L_4 : step s_3 s_4.
+Proof.
+  apply Step_OP.
+  - reflexivity.
+Qed.
+
+Definition s_5_ls := s_4_ls.
+
+Definition s_5 := mk_state
+  (mk_inst_counter f_id f_block_4_id 0)
+  f_block_4_cmd_0
+  [f_block_4_cmd_1]
+  (Some f_block_2_id)
+  s_5_ls
+  [Frame empty_dv_store (mk_inst_counter main_id main_block_1_id 1) None (Name "call")]
+  empty_dv_store
+  m
+.
+
+Lemma L_5 : step s_4 s_5.
+Proof.
+  apply (Step_UnconditionalBr
+    (mk_inst_counter f_id f_block_2_id 1)
+    1
+    f_block_4_id
+    (Some f_block_1_id)
+    s_4_ls
+    [Frame empty_dv_store (mk_inst_counter main_id main_block_1_id 1) None (Name "call")]
+    empty_dv_store
+    m
+    f_def
+    f_block_4
+    f_block_4_cmd_0
+    [f_block_4_cmd_1]
+  ).
   - reflexivity.
   - reflexivity.
   - reflexivity.
