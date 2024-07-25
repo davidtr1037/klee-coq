@@ -227,7 +227,7 @@ Fixpoint eval_args (s : dv_store) (g : global_store) (args : list function_arg) 
           end
       | _ => None
       end
-  | _ => None
+  | _ => Some []
   end
 .
 
@@ -380,13 +380,13 @@ Inductive step : state -> state -> Prop :=
           m
         )
   (* TODO: t must be TYPE_Void here? *)
-  | Step_VoidCall : forall pc cid f args anns c cs pbid ls stk gs m d b c' cs' dvs s',
+  | Step_VoidCall : forall pc cid f args anns c cs pbid ls stk gs m d b c' cs' dvs ls',
       (find_function_by_exp m f) = Some d ->
       (dc_type (df_prototype d)) = TYPE_Function TYPE_Void (get_arg_types args) false ->
       (entry_block d) = Some b ->
       (blk_cmds b) = c' :: cs' ->
       (eval_args ls gs args) = Some dvs ->
-      (init_local_store d  dvs) = Some s' ->
+      (init_local_store d  dvs) = Some ls' ->
       step
         (mk_state
           pc
@@ -403,18 +403,18 @@ Inductive step : state -> state -> Prop :=
           c'
           cs'
           None
-          s'
+          ls'
           ((Frame_NoReturn ls (next_inst_counter pc c) None) :: stk)
           gs
           m
         )
-  | Step_Call : forall pc cid v t f args anns c cs pbid ls stk gs m d b c' cs' dvs s',
+  | Step_Call : forall pc cid v t f args anns c cs pbid ls stk gs m d b c' cs' dvs ls',
       (find_function_by_exp m f) = Some d ->
       (dc_type (df_prototype d)) = TYPE_Function t (get_arg_types args) false ->
       (entry_block d) = Some b ->
       (blk_cmds b) = c' :: cs' ->
       (eval_args ls gs args) = Some dvs ->
-      (init_local_store d dvs) = Some s' ->
+      (init_local_store d dvs) = Some ls' ->
       step
         (mk_state
           pc
@@ -431,7 +431,7 @@ Inductive step : state -> state -> Prop :=
           c'
           cs'
           None
-          s'
+          ls'
           ((Frame ls (next_inst_counter pc c) None v) :: stk)
           gs
           m
