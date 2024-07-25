@@ -328,6 +328,25 @@ Proof.
   - reflexivity.
 Qed.
 
+Definition s_6_ls := ((Name "retval.0") !-> (DV_I32 (repr 3)); s_5_ls).
+
+Definition s_6 := mk_state
+  (mk_inst_counter f_id f_block_4_id 1)
+  f_block_4_cmd_1
+  []
+  (Some f_block_2_id)
+  s_6_ls
+  [Frame empty_dv_store (mk_inst_counter main_id main_block_1_id 1) None (Name "call")]
+  empty_dv_store
+  m
+.
+
+Lemma L_6 : step s_5 s_6.
+Proof.
+  apply Step_Phi.
+  - reflexivity.
+Qed.
+
 Definition final_state := mk_state
   (mk_inst_counter main_id main_entry 1)
   main_block_1_cmd_0
