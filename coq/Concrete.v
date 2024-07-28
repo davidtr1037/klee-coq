@@ -256,6 +256,21 @@ Fixpoint eval_phi_args ls gs t args pbid : option dynamic_value :=
   end
 .
 
+Fixpoint get_trailing_cmds_by_cid (l : list llvm_cmd) (cid : cmd_id) :=
+  match l with
+  | c :: tail =>
+      if ((get_cmd_id c) =? cid)%nat then (Some l) else get_trailing_cmds_by_cid tail cid
+  | [] => None
+  end
+.
+
+Definition get_trailing_cmds (d : llvm_definition) (pc : inst_counter) : option (list llvm_cmd) :=
+  match (fetch_block d (bid pc)) with
+  | Some b => get_trailing_cmds_by_cid (blk_cmds b) (cid pc)
+  | _ => None
+  end
+.
+
 Inductive step : state -> state -> Prop :=
   | Step_OP : forall pc cid v e c cs pbid ls stk gs m dv,
       (eval_exp ls gs None e) = Some dv ->
@@ -437,10 +452,9 @@ Inductive step : state -> state -> Prop :=
           m
         )
   (* TODO: check the return type of the current function *)
-  | Step_RetVoid : forall pc cid pbid ls ls' pc' pbid' stk gs m d b c' cs',
-      (find_function m (fid pc)) = Some d ->
-      (fetch_block d (bid pc)) = Some b ->
-      (blk_cmds b) = c' :: cs' ->
+  | Step_RetVoid : forall pc cid pbid ls ls' pc' pbid' stk gs m d c' cs',
+      (find_function m (fid pc')) = Some d ->
+      (get_trailing_cmds d pc') = Some (c' :: cs') ->
       step
         (mk_state
           pc
@@ -463,11 +477,10 @@ Inductive step : state -> state -> Prop :=
           m
         )
   (* TODO: check the return type of the current function *)
-  | Step_Ret : forall pc cid t e pbid ls ls' pc' pbid' v stk gs m dv d b c' cs',
+  | Step_Ret : forall pc cid t e pbid ls ls' pc' pbid' v stk gs m dv d c' cs',
       (eval_exp ls gs (Some t) e) = Some dv ->
-      (find_function m (fid pc)) = Some d ->
-      (fetch_block d (bid pc)) = Some b ->
-      (blk_cmds b) = c' :: cs' ->
+      (find_function m (fid pc')) = Some d ->
+      (get_trailing_cmds d pc') = Some (c' :: cs') ->
       step
         (mk_state
           pc
