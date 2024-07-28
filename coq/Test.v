@@ -347,6 +347,45 @@ Proof.
   - reflexivity.
 Qed.
 
+Definition s_7_ls := (Name "call" !-> (DV_I32 (repr 3)); s_0_ls).
+
+Definition s_7 := mk_state
+  (mk_inst_counter main_id main_block_1_id 1)
+  main_block_1_cmd_1
+  []
+  None
+  s_7_ls
+  []
+  empty_dv_store
+  m
+.
+
+Lemma L_7 : step s_6 s_7.
+Proof.
+  apply (Step_Ret
+    (mk_inst_counter f_id f_block_4_id 1)
+    1
+    (TYPE_I 32)
+    (EXP_Ident (ID_Local (Name "retval.0")))
+    (Some f_block_2_id)
+    s_6_ls
+    empty_dv_store
+    (mk_inst_counter main_id main_block_1_id 1)
+    None
+    (Name "call")
+    []
+    empty_dv_store
+    m
+    (DV_I32 (repr 3))
+    main_def
+    main_block_1_cmd_1
+    []
+  ).
+  - reflexivity.
+  - reflexivity.
+  - reflexivity.
+Qed.
+
 Definition final_state := mk_state
   (mk_inst_counter main_id main_entry 1)
   main_block_1_cmd_0
