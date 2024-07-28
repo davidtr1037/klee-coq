@@ -326,7 +326,8 @@ Inductive step : state -> state -> Prop :=
       (fetch_block d tbid) = Some b ->
       (blk_cmds b) = c :: cs ->
       step
-        (mk_state ic
+        (mk_state
+          ic
           (CMD_Term cid (TERM_UnconditionalBr tbid))
           []
           pbid
@@ -421,7 +422,7 @@ Inductive step : state -> state -> Prop :=
           cs'
           None
           ls'
-          ((Frame_NoReturn ls (next_inst_counter ic c) None) :: stk)
+          ((Frame_NoReturn ls (next_inst_counter ic c) pbid) :: stk)
           gs
           m
         )
@@ -508,8 +509,8 @@ Inductive step : state -> state -> Prop :=
 
 Definition multi_step := multi step.
 
-Definition is_safe_program : forall m,
-  exists d s0,
-    (find_function m (Name "main")) = Some d /\
-    (init_state m d) = Some s0 /\
+(* TODO: add assumptions about the module? *)
+Definition is_safe_program : forall m d,
+  exists s0,
+  (init_state m d) = Some s0 /\ (* TODO: define as a well-formed property? *)
     forall s, multi_step s0 s -> ~ error_state s.
