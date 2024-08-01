@@ -58,7 +58,9 @@ Class VInt I : Type := {
   max_signed : Z;
 
   (* Conversion *)
+  (* TODO: remove *)
   to_dvalue : I -> dynamic_value;
+  to_dint : I -> dynamic_int;
   unsigned : I -> Z;
   signed : I -> Z;
 
@@ -110,6 +112,7 @@ Global Instance VInt1 : VInt Int1.int := {
 
   (* Conversion *)
   to_dvalue := DV_I1;
+  to_dint := DI_I1;
   unsigned := Int1.unsigned;
   signed := Int1.signed;
 
@@ -161,6 +164,7 @@ Global Instance VInt8 : VInt Int8.int := {
 
   (* Conversion *)
   to_dvalue := DV_I8;
+  to_dint := DI_I8;
   unsigned := Int8.unsigned;
   signed := Int8.signed;
 
@@ -212,6 +216,7 @@ Global Instance VInt16 : VInt Int16.int := {
 
   (* Conversion *)
   to_dvalue := DV_I16;
+  to_dint := DI_I16;
   unsigned := Int16.unsigned;
   signed := Int16.signed;
 
@@ -263,6 +268,7 @@ Global Instance VInt32 : VInt Int32.int := {
 
   (* Conversion *)
   to_dvalue := DV_I32;
+  to_dint := DI_I32;
   unsigned := Int32.unsigned;
   signed := Int32.signed;
 
@@ -314,6 +320,7 @@ Global Instance VInt64 : VInt Int64.int := {
 
   (* Conversion *)
   to_dvalue := DV_I64;
+  to_dint := DI_I64;
   unsigned := Int64.unsigned;
   signed := Int64.signed;
 
