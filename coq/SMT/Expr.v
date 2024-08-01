@@ -5,6 +5,35 @@ From SE Require Import BitVectors.
 From SE Require Import DynamicValue.
 From SE.Numeric Require Import Integers.
 
+Variant smt_binop : Type :=
+  | SMT_Add
+  | SMT_Sub
+  | SMT_Mul
+  | SMT_UDiv
+  | SMT_SDiv
+  | SMT_URem
+  | SMT_SRem
+  | SMT_And
+  | SMT_Or
+  | SMT_Xor
+  | SMT_Shl
+  | SMT_LShr
+  | SMT_AShr
+.
+
+Variant smt_cmpop : Type :=
+  | SMT_Eq
+  | SMT_Ne
+  | SMT_Ult
+  | SMT_Ule
+  | SMT_Ugt
+  | SMT_Uge
+  | SMT_Slt
+  | SMT_Sle
+  | SMT_Sgt
+  | SMT_Sge
+.
+
 Inductive smt_expr : Type :=
   | SMT_Const_I1 (n : int1)
   | SMT_Const_I8 (n : int8)
@@ -16,29 +45,8 @@ Inductive smt_expr : Type :=
   | SMT_Var_I16 (x : string)
   | SMT_Var_I32 (x : string)
   | SMT_Var_I64 (x : string)
-  | SMT_Add (e1 e2 : smt_expr)
-  | SMT_Sub (e1 e2 : smt_expr)
-  | SMT_Mul (e1 e2 : smt_expr)
-  | SMT_UDiv (e1 e2 : smt_expr)
-  | SMT_SDiv (e1 e2 : smt_expr)
-  | SMT_URem (e1 e2 : smt_expr)
-  | SMT_SRem (e1 e2 : smt_expr)
-  | SMT_And (e1 e2 : smt_expr)
-  | SMT_Or (e1 e2 : smt_expr)
-  | SMT_Xor (e1 e2 : smt_expr)
-  | SMT_Shl (e1 e2 : smt_expr)
-  | SMT_LShr (e1 e2 : smt_expr)
-  | SMT_AShr (e1 e2 : smt_expr)
-  | SMT_Eq (e1 e2 : smt_expr)
-  | SMT_Ne (e1 e2 : smt_expr)
-  | SMT_Ult (e1 e2 : smt_expr)
-  | SMT_Ule (e1 e2 : smt_expr)
-  | SMT_Ugt (e1 e2 : smt_expr)
-  | SMT_Uge (e1 e2 : smt_expr)
-  | SMT_Slt (e1 e2 : smt_expr)
-  | SMT_Sle (e1 e2 : smt_expr)
-  | SMT_Sgt (e1 e2 : smt_expr)
-  | SMT_Sge (e1 e2 : smt_expr)
+  | SMT_BinOp (op : smt_binop) (e1 e2 : smt_expr)
+  | SMT_CmpOp (op : smt_cmpop) (e1 e2 : smt_expr)
   | SMT_ZExt (e : smt_expr) (w : nat)
   | SMT_SExt (e : smt_expr) (w : nat)
   | SMT_ITE (e1 e2 e3 : smt_expr)
