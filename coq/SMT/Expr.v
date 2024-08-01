@@ -41,7 +41,7 @@ Inductive smt_expr : Type :=
   | SMT_Sge (e1 e2 : smt_expr)
   | SMT_ZExt (e : smt_expr) (w : nat)
   | SMT_SExt (e : smt_expr) (w : nat)
-  | SMT_ITE (c e1 e2 : smt_expr)
+  | SMT_ITE (e1 e2 e3 : smt_expr)
   | SMT_Not (e : smt_expr)
   | SMT_Concat (e1 e2 : smt_expr)
   | SMT_Extract (e : smt_expr) (i w : nat)

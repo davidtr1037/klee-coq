@@ -154,7 +154,15 @@ Fixpoint smt_eval (m : smt_model) (e : smt_expr) : option dynamic_value :=
       end
   | SMT_ZExt e w => None
   | SMT_SExt e w => None
-  | SMT_ITE c e1 e2 => None
+  | SMT_ITE e1 e2 e3 =>
+      match (smt_eval m e1) with
+      | Some (DV_I1 b) =>
+          if eq b one then
+            smt_eval m e2
+          else
+            smt_eval m e3
+      | _ => None
+      end
   | SMT_Not e => None
   | SMT_Concat e1 e2 => None
   | SMT_Extract e i w => None
