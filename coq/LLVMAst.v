@@ -72,6 +72,7 @@ Variant ident : Set :=
 | ID_Local  (id:raw_id)   (* %id *)
 .
 
+(* TODO: the type of sz should be positive? *)
 Unset Elimination Schemes.
 Inductive typ : Set :=
 | TYPE_I (sz:N)
