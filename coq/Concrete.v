@@ -322,6 +322,7 @@ Inductive step : state -> state -> Prop :=
           gs
           m
         )
+  (* TODO: t must by i1? *)
   | Step_Br_True : forall ic cid t e bid1 bid2 pbid ls stk gs m d b c cs,
       (eval_exp ls gs (Some t) e) = Some dv_true ->
       (find_function m (fid ic)) = Some d ->
@@ -348,6 +349,7 @@ Inductive step : state -> state -> Prop :=
           gs
           m
         )
+  (* TODO: t must by i1? *)
   | Step_Br_False : forall ic cid t e bid1 bid2 pbid ls stk gs m d b c cs,
       (eval_exp ls gs (Some t) e) = Some dv_true ->
       (find_function m (fid ic)) = Some d ->

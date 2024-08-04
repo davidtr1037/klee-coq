@@ -349,6 +349,7 @@ Inductive sym_step : sym_state -> sym_state -> Prop :=
           pc
           m
         )
+  (* TODO: t must by i1? *)
   | Sym_Step_Br_True : forall ic cid t e bid1 bid2 pbid ls stk gs syms pc m se d b c cs,
       (sym_eval_exp ls gs (Some t) e) = Some se ->
       (find_function m (fid ic)) = Some d ->
@@ -379,6 +380,7 @@ Inductive sym_step : sym_state -> sym_state -> Prop :=
           (SMT_BinOp SMT_And pc se)
           m
         )
+  (* TODO: t must by i1? *)
   | Sym_Step_Br_False : forall ic cid t e bid1 bid2 pbid ls stk gs syms pc m se d b c cs,
       (sym_eval_exp ls gs (Some t) e) = Some se ->
       (find_function m (fid ic)) = Some d ->
