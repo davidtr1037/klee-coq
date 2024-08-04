@@ -18,9 +18,9 @@ From SE.Utils Require Import ListUtil.
 
 (* TODO: smt_store -> sym_store? *)
 
-Definition smt_store := total_map smt_expr.
+Definition smt_store := total_map (option smt_expr).
 
-Definition empty_smt_store := empty_map (SMT_Const_I1 zero).
+Definition empty_smt_store := empty_map (Some (SMT_Const_I1 zero)).
 
 Inductive sym_frame : Type :=
   | Sym_Frame (s : smt_store) (ic : inst_counter) (pbid : option block_id) (v : raw_id)
@@ -77,7 +77,7 @@ Inductive unsat_sym_state : sym_state -> Prop :=
       unsat_sym_state (mk_sym_state ic c cs pbid ls stk gs syms pc mdl)
 .
 
-Definition sym_lookup_ident (s : smt_store) (g : smt_store) (id : ident) : smt_expr :=
+Definition sym_lookup_ident (s : smt_store) (g : smt_store) (id : ident) : option smt_expr :=
   match id with
   | ID_Local x => s x
   | ID_Global x => g x
@@ -168,7 +168,7 @@ Definition sym_convert (conv : conversion_type) (e : smt_expr) t1 t2 : option sm
 
 Fixpoint sym_eval_exp (s : smt_store) (g : smt_store) (t : option typ) (e : exp typ) : option smt_expr :=
   match e with
-  | EXP_Ident id => Some (sym_lookup_ident s g id)
+  | EXP_Ident id => sym_lookup_ident s g id
   | EXP_Integer n =>
       match t with
       | Some (TYPE_I bits) => make_smt_const bits n
@@ -242,7 +242,7 @@ Fixpoint sym_eval_args (ls : smt_store) (gs : smt_store) (args : list function_a
 
 Fixpoint fill_smt_store (l : list (raw_id * smt_expr)) : smt_store :=
   match l with
-  | (id, e) :: tail => (id !-> e; (fill_smt_store tail))
+  | (id, e) :: tail => (id !-> Some e; (fill_smt_store tail))
   | [] => empty_smt_store
   end
 .
@@ -286,7 +286,7 @@ Inductive sym_step : sym_state -> sym_state -> Prop :=
           c
           cs
           pbid
-          (v !-> se; ls)
+          (v !-> Some se; ls)
           stk
           gs
           syms
@@ -313,7 +313,7 @@ Inductive sym_step : sym_state -> sym_state -> Prop :=
           c
           cs
           (Some pbid)
-          (v !-> se; ls)
+          (v !-> Some se; ls)
           stk
           gs
           syms
@@ -527,7 +527,7 @@ Inductive sym_step : sym_state -> sym_state -> Prop :=
           c'
           cs'
           pbid'
-          (v !-> se; ls')
+          (v !-> Some se; ls')
           stk
           gs
           syms
@@ -589,7 +589,7 @@ Inductive sym_step : sym_state -> sym_state -> Prop :=
           c
           cs
           pbid
-          (v !-> (SMT_Var_I32 name); ls)
+          (v !-> Some (SMT_Var_I32 name); ls)
           stk
           gs
           (name :: syms)
@@ -613,7 +613,7 @@ Definition get_global_initializer (g : llvm_global) : option smt_expr :=
 
 Definition add_global (gs : smt_store) (g : llvm_global) : option smt_store :=
   match (get_global_initializer g) with
-  | Some dv => Some ((g_ident g) !-> dv; gs)
+  | Some dv => Some ((g_ident g) !-> Some dv; gs)
   | _ => None
   end
 .

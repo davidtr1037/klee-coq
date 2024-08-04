@@ -20,17 +20,9 @@ Record inst_counter := mk_inst_counter {
   cid : cmd_id;
 }.
 
-Definition dv_store := total_map dynamic_value.
+Definition dv_store := total_map (option dynamic_value).
 
-Definition empty_dv_store := empty_map DV_Undef.
-
-(*
-Record frame := mk_frame {
-  local_store : store;
-  return_ic : inst_counter;
-  return_var : raw_id;
-}.
-*)
+Definition empty_dv_store : dv_store := empty_map None.
 
 Inductive frame : Type :=
   | Frame (s : dv_store) (ic : inst_counter) (pbid : option block_id) (v : raw_id)
@@ -93,7 +85,7 @@ Inductive error_state : state -> Prop :=
        )
 .
 
-Definition lookup_ident (s : dv_store) (g : dv_store) (id : ident) : dynamic_value :=
+Definition lookup_ident (s : dv_store) (g : dv_store) (id : ident) : option dynamic_value :=
   match id with
   | ID_Local x => s x
   | ID_Global x => g x
@@ -103,7 +95,7 @@ Definition lookup_ident (s : dv_store) (g : dv_store) (id : ident) : dynamic_val
 (* TODO: why vellvm passes dtyp? *)
 Fixpoint eval_exp (s : dv_store) (g : dv_store) (t : option typ) (e : exp typ) : option dynamic_value :=
   match e with
-  | EXP_Ident id => Some (lookup_ident s g id)
+  | EXP_Ident id => lookup_ident s g id
   | EXP_Integer n =>
       match t with
       | Some (TYPE_I bits) => make_dv bits n
@@ -203,7 +195,7 @@ Fixpoint eval_args (ls : dv_store) (gs : dv_store) (args : list function_arg) : 
 
 Fixpoint fill_store (l : list (raw_id * dynamic_value)) : dv_store :=
   match l with
-  | (id, dv) :: tail => (id !-> dv; (fill_store tail))
+  | (id, dv) :: tail => (id !-> Some dv; (fill_store tail))
   | [] => empty_dv_store
   end
 .
@@ -269,7 +261,7 @@ Inductive step : state -> state -> Prop :=
           c
           cs
           pbid
-          (v !-> dv; ls)
+          (v !-> Some dv; ls)
           stk
           gs
           m
@@ -292,7 +284,7 @@ Inductive step : state -> state -> Prop :=
           c
           cs
           (Some pbid)
-          (v !-> dv; ls)
+          (v !-> Some dv; ls)
           stk
           gs
           m
@@ -478,7 +470,7 @@ Inductive step : state -> state -> Prop :=
           c'
           cs'
           pbid'
-          (v !-> dv; ls')
+          (v !-> Some dv; ls')
           stk
           gs
           m
@@ -503,7 +495,7 @@ Inductive step : state -> state -> Prop :=
           c
           cs
           pbid
-          (v !-> (DV_Int (DI_I32 (repr n))); ls)
+          (v !-> Some (DV_Int (DI_I32 (repr n))); ls)
           stk
           gs
           m
@@ -567,7 +559,7 @@ Definition get_global_initializer (g : llvm_global) : option dynamic_value :=
 
 Definition add_global (gs : dv_store) (g : llvm_global) : option dv_store :=
   match (get_global_initializer g) with
-  | Some dv => Some ((g_ident g) !-> dv; gs)
+  | Some dv => Some ((g_ident g) !-> Some dv; gs)
   | _ => None
   end
 .
