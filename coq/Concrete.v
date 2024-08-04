@@ -200,7 +200,7 @@ Fixpoint fill_store (l : list (raw_id * dynamic_value)) : dv_store :=
   end
 .
 
-Definition init_local_store (d : llvm_definition) (dvs : list dynamic_value) : option dv_store :=
+Definition init_local_store_with_args (d : llvm_definition) (dvs : list dynamic_value) : option dv_store :=
   match (merge_lists (df_args d) dvs) with
   | Some l => Some (fill_store l)
   | None => None
@@ -374,7 +374,7 @@ Inductive step : state -> state -> Prop :=
       (entry_block d) = Some b ->
       (blk_cmds b) = c' :: cs' ->
       (eval_args ls gs args) = Some dvs ->
-      (init_local_store d  dvs) = Some ls' ->
+      (init_local_store_with_args d dvs) = Some ls' ->
       step
         (mk_state
           ic
@@ -402,7 +402,7 @@ Inductive step : state -> state -> Prop :=
       (entry_block d) = Some b ->
       (blk_cmds b) = c' :: cs' ->
       (eval_args ls gs args) = Some dvs ->
-      (init_local_store d dvs) = Some ls' ->
+      (init_local_store_with_args d dvs) = Some ls' ->
       step
         (mk_state
           ic
@@ -544,7 +544,7 @@ Definition build_inst_counter (m : llvm_module) (d : llvm_definition) : option i
   end
 .
 
-Definition build_local_store (m : llvm_module) (d : llvm_definition) := empty_dv_store.
+Definition init_local_store (m : llvm_module) (d : llvm_definition) := empty_dv_store.
 
 Definition get_global_initializer (g : llvm_global) : option dynamic_value :=
   match (g_exp g) with
@@ -564,24 +564,24 @@ Definition add_global (gs : dv_store) (g : llvm_global) : option dv_store :=
   end
 .
 
-Fixpoint build_global_store_internal (gs : dv_store) (l : list llvm_global) : option dv_store :=
+Fixpoint init_global_store_internal (gs : dv_store) (l : list llvm_global) : option dv_store :=
   match l with
   | g :: tail =>
       match (add_global gs g) with
-      | Some gs' => build_global_store_internal gs' tail
+      | Some gs' => init_global_store_internal gs' tail
       | _ => None
       end
   | [] => Some gs
   end
 .
 
-Definition build_global_store (m : llvm_module) : option dv_store :=
-  build_global_store_internal empty_dv_store (m_globals m)
+Definition init_global_store (m : llvm_module) : option dv_store :=
+  init_global_store_internal empty_dv_store (m_globals m)
 .
 
 (* TODO: assumes that there are no parameters *)
 Definition init_state (m : llvm_module) (d : llvm_definition) : option state :=
-  match (build_global_store m) with
+  match (init_global_store m) with
   | Some gs =>
     match (build_inst_counter m d) with
     | Some ic =>
@@ -594,7 +594,7 @@ Definition init_state (m : llvm_module) (d : llvm_definition) : option state :=
                   cmd
                   tail
                   None
-                  (build_local_store m d)
+                  (init_local_store m d)
                   []
                   gs
                   m

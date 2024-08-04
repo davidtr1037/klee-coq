@@ -247,8 +247,7 @@ Fixpoint fill_smt_store (l : list (raw_id * smt_expr)) : smt_store :=
   end
 .
 
-(* TODO: rename *)
-Definition init_local_smt_store (d : llvm_definition) (es : list smt_expr) : option smt_store :=
+Definition init_local_smt_store_with_args (d : llvm_definition) (es : list smt_expr) : option smt_store :=
   match (merge_lists (df_args d) es) with
   | Some l => Some (fill_smt_store l)
   | None => None
@@ -418,7 +417,7 @@ Inductive sym_step : sym_state -> sym_state -> Prop :=
       (entry_block d) = Some b ->
       (blk_cmds b) = c' :: cs' ->
       (sym_eval_args ls gs args) = Some es ->
-      (init_local_smt_store d es) = Some ls' ->
+      (init_local_smt_store_with_args d es) = Some ls' ->
       sym_step
         (mk_sym_state
           ic
@@ -450,7 +449,7 @@ Inductive sym_step : sym_state -> sym_state -> Prop :=
       (entry_block d) = Some b ->
       (blk_cmds b) = c' :: cs' ->
       (sym_eval_args ls gs args) = Some es ->
-      (init_local_smt_store d es) = Some ls' ->
+      (init_local_smt_store_with_args d es) = Some ls' ->
       sym_step
         (mk_sym_state
           ic
@@ -601,7 +600,7 @@ Inductive sym_step : sym_state -> sym_state -> Prop :=
 
 Definition multi_sym_step := multi sym_step.
 
-Definition build_local_smt_store (m : llvm_module) (d : llvm_definition) : smt_store :=
+Definition init_local_smt_store (m : llvm_module) (d : llvm_definition) : smt_store :=
   empty_smt_store
 .
 
@@ -619,23 +618,23 @@ Definition add_global (gs : smt_store) (g : llvm_global) : option smt_store :=
   end
 .
 
-Fixpoint build_global_smt_store_internal (gs : smt_store) (l : list llvm_global) : option smt_store :=
+Fixpoint init_global_smt_store_internal (gs : smt_store) (l : list llvm_global) : option smt_store :=
   match l with
   | g :: tail =>
       match (add_global gs g) with
-      | Some gs' => build_global_smt_store_internal gs' tail
+      | Some gs' => init_global_smt_store_internal gs' tail
       | _ => None
       end
   | [] => Some gs
   end
 .
 
-Definition build_global_smt_store (m : llvm_module) : option smt_store :=
-  build_global_smt_store_internal empty_smt_store (m_globals m)
+Definition init_global_smt_store (m : llvm_module) : option smt_store :=
+  init_global_smt_store_internal empty_smt_store (m_globals m)
 .
 
 Definition init_sym_state (m : llvm_module) (d : llvm_definition) : option sym_state :=
-  match (build_global_smt_store m) with
+  match (init_global_smt_store m) with
   | Some gs =>
     match (build_inst_counter m d) with
     | Some ic =>
@@ -648,7 +647,7 @@ Definition init_sym_state (m : llvm_module) (d : llvm_definition) : option sym_s
                   cmd
                   tail
                   None
-                  (build_local_smt_store m d)
+                  (init_local_smt_store m d)
                   []
                   gs
                   []
