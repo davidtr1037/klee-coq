@@ -22,8 +22,6 @@ Definition smt_store := total_map smt_expr.
 
 Definition empty_smt_store := empty_map (SMT_Const_I1 zero).
 
-Definition global_smt_store := smt_store.
-
 Inductive sym_frame : Type :=
   | Sym_Frame (s : smt_store) (ic : inst_counter) (pbid : option block_id) (v : raw_id)
   | Sym_Frame_NoReturn (s : smt_store) (ic : inst_counter) (pbid : option block_id)
@@ -37,7 +35,7 @@ Record sym_state : Type := mk_sym_state {
   sym_prev_bid : option block_id;
   sym_store : smt_store;
   sym_stack : list sym_frame;
-  sym_globals : global_smt_store;
+  sym_globals : smt_store;
   sym_symbolics : list string;
   sym_pc : smt_expr;
   sym_module : llvm_module;
@@ -79,7 +77,7 @@ Inductive unsat_sym_state : sym_state -> Prop :=
       unsat_sym_state (mk_sym_state ic c cs pbid ls stk gs syms pc mdl)
 .
 
-Definition sym_lookup_ident (s : smt_store) (g : global_smt_store) (id : ident) : smt_expr :=
+Definition sym_lookup_ident (s : smt_store) (g : smt_store) (id : ident) : smt_expr :=
   match id with
   | ID_Local x => s x
   | ID_Global x => g x
@@ -168,35 +166,7 @@ Definition sym_convert (conv : conversion_type) (e : smt_expr) t1 t2 : option sm
   end
 .
 
-Fixpoint sym_eval_constant_exp (t : typ) (e : exp typ) : option smt_expr :=
-  match e with
-  | EXP_Integer n =>
-      match t with
-      | TYPE_I bits => make_smt_const bits n
-      | _ => None
-      end
-  | EXP_Bool b => Some (make_smt_bool b)
-  | EXP_Undef => None
-  | OP_IBinop op t v1 v2 =>
-      match (sym_eval_constant_exp t v1, sym_eval_constant_exp t v2) with
-      | (Some e1, Some e2) => Some (sym_eval_ibinop op e1 e2)
-      | (_, _) => None
-      end
-  | OP_ICmp op t v1 v2 =>
-      match (sym_eval_constant_exp t v1, sym_eval_constant_exp t v2) with
-      | (Some e1, Some e2) => Some (sym_eval_icmp op e1 e2)
-      | (_, _) => None
-      end
-  | OP_Conversion conv t1 e t2 =>
-      match sym_eval_constant_exp t1 e with
-      | Some e => sym_convert conv e t1 t2
-      | _ => None
-      end
-  | _ => None
-  end
-.
-
-Fixpoint sym_eval_exp (s : smt_store) (g : global_smt_store) (t : option typ) (e : exp typ) : option smt_expr :=
+Fixpoint sym_eval_exp (s : smt_store) (g : smt_store) (t : option typ) (e : exp typ) : option smt_expr :=
   match e with
   | EXP_Ident id => Some (sym_lookup_ident s g id)
   | EXP_Integer n =>
@@ -245,13 +215,17 @@ Fixpoint sym_eval_exp (s : smt_store) (g : global_smt_store) (t : option typ) (e
   end
 .
 
-Definition sym_eval_arg (ls : smt_store) (gs : global_smt_store) (arg : function_arg) : option smt_expr :=
+Fixpoint sym_eval_constant_exp (t : typ) (e : exp typ) : option smt_expr :=
+  sym_eval_exp empty_smt_store empty_smt_store (Some t) e
+.
+
+Definition sym_eval_arg (ls : smt_store) (gs : smt_store) (arg : function_arg) : option smt_expr :=
   match arg with
   | ((t, e), _) => sym_eval_exp ls gs (Some t) e
   end
 .
 
-Fixpoint sym_eval_args (ls : smt_store) (gs : global_smt_store) (args : list function_arg) : option (list smt_expr) :=
+Fixpoint sym_eval_args (ls : smt_store) (gs : smt_store) (args : list function_arg) : option (list smt_expr) :=
   match args with
   | arg :: tail =>
       match (sym_eval_arg ls gs arg) with
@@ -635,14 +609,14 @@ Definition get_global_initializer (g : llvm_global) : option smt_expr :=
   end
 .
 
-Definition add_global (gs : global_smt_store) (g : llvm_global) : option global_smt_store :=
+Definition add_global (gs : smt_store) (g : llvm_global) : option smt_store :=
   match (get_global_initializer g) with
   | Some dv => Some ((g_ident g) !-> dv; gs)
   | _ => None
   end
 .
 
-Fixpoint build_global_smt_store_internal (gs : global_smt_store) (l : list llvm_global) : option global_smt_store :=
+Fixpoint build_global_smt_store_internal (gs : smt_store) (l : list llvm_global) : option smt_store :=
   match l with
   | g :: tail =>
       match (add_global gs g) with
@@ -653,7 +627,7 @@ Fixpoint build_global_smt_store_internal (gs : global_smt_store) (l : list llvm_
   end
 .
 
-Definition build_global_smt_store (m : llvm_module) : option global_smt_store :=
+Definition build_global_smt_store (m : llvm_module) : option smt_store :=
   build_global_smt_store_internal empty_smt_store (m_globals m)
 .
 

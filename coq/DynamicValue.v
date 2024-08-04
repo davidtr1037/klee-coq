@@ -5,6 +5,7 @@ From SE Require Import BitVectors.
 From SE.Numeric Require Import Integers.
 From SE Require Import LLVMAst.
 
+(* this type represents an LLVM value *)
 Inductive dynamic_value : Type :=
   | DV_Int (di : dynamic_int)
   | DV_Undef
@@ -246,33 +247,5 @@ Definition convert conv x t1 t2 : option dynamic_value :=
   | Inttoptr
   | Ptrtoint
   | Addrspacecast => None
-  end
-.
-
-Fixpoint eval_constant_exp (t : typ) (e : exp typ) : option dynamic_value :=
-  match e with
-  | EXP_Integer n =>
-      match t with
-      | TYPE_I bits => make_dv bits n
-      | _ => None
-      end
-  | EXP_Bool b => Some (make_bool b)
-  | EXP_Undef => Some DV_Undef
-  | OP_IBinop iop t v1 v2 =>
-      match (eval_constant_exp t v1, eval_constant_exp t v2) with
-      | (Some dv1, Some dv2) => eval_ibinop iop dv1 dv2
-      | (_, _) => None
-      end
-  | OP_ICmp icmp t v1 v2 =>
-      match (eval_constant_exp t v1, eval_constant_exp t v2) with
-      | (Some dv1, Some dv2) => eval_icmp icmp dv1 dv2
-      | (_, _) => None
-      end
-  | OP_Conversion conv t1 e t2 =>
-      match eval_constant_exp t1 e with
-      | Some dv => convert conv dv t1 t2
-      | _ => None
-      end
-  | _ => None
   end
 .

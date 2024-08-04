@@ -24,8 +24,6 @@ Definition dv_store := total_map dynamic_value.
 
 Definition empty_dv_store := empty_map DV_Undef.
 
-Definition global_store := dv_store.
-
 (*
 Record frame := mk_frame {
   local_store : store;
@@ -47,7 +45,7 @@ Record state : Type := mk_state {
   prev_bid : option block_id; (* TODO: add to inst_counter? *)
   store : dv_store; (* TODO: rename *)
   stack : list frame;
-  globals : global_store;
+  globals : dv_store;
   module : llvm_module;
 }.
 
@@ -95,7 +93,7 @@ Inductive error_state : state -> Prop :=
        )
 .
 
-Definition lookup_ident (s : dv_store) (g : global_store) (id : ident) : dynamic_value :=
+Definition lookup_ident (s : dv_store) (g : dv_store) (id : ident) : dynamic_value :=
   match id with
   | ID_Local x => s x
   | ID_Global x => g x
@@ -103,7 +101,7 @@ Definition lookup_ident (s : dv_store) (g : global_store) (id : ident) : dynamic
 .
 
 (* TODO: why vellvm passes dtyp? *)
-Fixpoint eval_exp (s : dv_store) (g : global_store) (t : option typ) (e : exp typ) : option dynamic_value :=
+Fixpoint eval_exp (s : dv_store) (g : dv_store) (t : option typ) (e : exp typ) : option dynamic_value :=
   match e with
   | EXP_Ident id => Some (lookup_ident s g id)
   | EXP_Integer n =>
@@ -152,6 +150,10 @@ Fixpoint eval_exp (s : dv_store) (g : global_store) (t : option typ) (e : exp ty
   end
 .
 
+Fixpoint eval_constant_exp (t : typ) (e : exp typ) : option dynamic_value :=
+  eval_exp empty_dv_store empty_dv_store (Some t) e
+.
+
 Definition next_inst_counter (ic : inst_counter) (c : llvm_cmd) : inst_counter :=
   mk_inst_counter (fid ic) (bid ic) (get_cmd_id c)
 .
@@ -178,13 +180,13 @@ Definition find_function_by_exp (m : llvm_module) (e : exp typ) : option llvm_de
   end
 .
 
-Definition eval_arg (ls : dv_store) (gs : global_store) (arg : function_arg) : option dynamic_value :=
+Definition eval_arg (ls : dv_store) (gs : dv_store) (arg : function_arg) : option dynamic_value :=
   match arg with
   | ((t, e), _) => eval_exp ls gs (Some t) e
   end
 .
 
-Fixpoint eval_args (ls : dv_store) (gs : global_store) (args : list function_arg) : option (list dynamic_value) :=
+Fixpoint eval_args (ls : dv_store) (gs : dv_store) (args : list function_arg) : option (list dynamic_value) :=
   match args with
   | arg :: tail =>
       match (eval_arg ls gs arg) with
@@ -561,14 +563,14 @@ Definition get_global_initializer (g : llvm_global) : option dynamic_value :=
   end
 .
 
-Definition add_global (gs : global_store) (g : llvm_global) : option global_store :=
+Definition add_global (gs : dv_store) (g : llvm_global) : option dv_store :=
   match (get_global_initializer g) with
   | Some dv => Some ((g_ident g) !-> dv; gs)
   | _ => None
   end
 .
 
-Fixpoint build_global_store_internal (gs : global_store) (l : list llvm_global) : option global_store :=
+Fixpoint build_global_store_internal (gs : dv_store) (l : list llvm_global) : option dv_store :=
   match l with
   | g :: tail =>
       match (add_global gs g) with
@@ -579,7 +581,7 @@ Fixpoint build_global_store_internal (gs : global_store) (l : list llvm_global) 
   end
 .
 
-Definition build_global_store (m : llvm_module) : option global_store :=
+Definition build_global_store (m : llvm_module) : option dv_store :=
   build_global_store_internal empty_dv_store (m_globals m)
 .
 
