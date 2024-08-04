@@ -247,7 +247,7 @@ Fixpoint fill_smt_store (l : list (raw_id * smt_expr)) : smt_store :=
   end
 .
 
-Definition init_local_smt_store_with_args (d : llvm_definition) (es : list smt_expr) : option smt_store :=
+Definition create_local_smt_store (d : llvm_definition) (es : list smt_expr) : option smt_store :=
   match (merge_lists (df_args d) es) with
   | Some l => Some (fill_smt_store l)
   | None => None
@@ -417,7 +417,7 @@ Inductive sym_step : sym_state -> sym_state -> Prop :=
       (entry_block d) = Some b ->
       (blk_cmds b) = c' :: cs' ->
       (sym_eval_args ls gs args) = Some es ->
-      (init_local_smt_store_with_args d es) = Some ls' ->
+      (create_local_smt_store d es) = Some ls' ->
       sym_step
         (mk_sym_state
           ic
@@ -449,7 +449,7 @@ Inductive sym_step : sym_state -> sym_state -> Prop :=
       (entry_block d) = Some b ->
       (blk_cmds b) = c' :: cs' ->
       (sym_eval_args ls gs args) = Some es ->
-      (init_local_smt_store_with_args d es) = Some ls' ->
+      (create_local_smt_store d es) = Some ls' ->
       sym_step
         (mk_sym_state
           ic

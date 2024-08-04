@@ -200,7 +200,7 @@ Fixpoint fill_store (l : list (raw_id * dynamic_value)) : dv_store :=
   end
 .
 
-Definition init_local_store_with_args (d : llvm_definition) (dvs : list dynamic_value) : option dv_store :=
+Definition create_local_store (d : llvm_definition) (dvs : list dynamic_value) : option dv_store :=
   match (merge_lists (df_args d) dvs) with
   | Some l => Some (fill_store l)
   | None => None
@@ -374,7 +374,7 @@ Inductive step : state -> state -> Prop :=
       (entry_block d) = Some b ->
       (blk_cmds b) = c' :: cs' ->
       (eval_args ls gs args) = Some dvs ->
-      (init_local_store_with_args d dvs) = Some ls' ->
+      (create_local_store d dvs) = Some ls' ->
       step
         (mk_state
           ic
@@ -402,7 +402,7 @@ Inductive step : state -> state -> Prop :=
       (entry_block d) = Some b ->
       (blk_cmds b) = c' :: cs' ->
       (eval_args ls gs args) = Some dvs ->
-      (init_local_store_with_args d dvs) = Some ls' ->
+      (create_local_store d dvs) = Some ls' ->
       step
         (mk_state
           ic
