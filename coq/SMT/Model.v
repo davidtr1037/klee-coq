@@ -79,6 +79,7 @@ Fixpoint smt_eval_cmpop (op : smt_cmpop) (v1 v2 : dynamic_int) : option dynamic_
   end
 .
 
+(* TODO: implement *)
 Fixpoint smt_eval (m : smt_model) (e : smt_expr) : option dynamic_int :=
   match e with
   | SMT_Const_I1 n => Some (DI_I1 n)
@@ -120,10 +121,12 @@ Fixpoint smt_eval (m : smt_model) (e : smt_expr) : option dynamic_int :=
 .
 
 Definition sat_via (e : smt_expr) (m : smt_model) :=
-  smt_eval m e = Some di_true.
+  smt_eval m e = Some di_true
+.
 
 Definition sat (e : smt_expr) :=
-  exists (m : smt_model), sat_via e m.
+  exists (m : smt_model), sat_via e m
+.
 
 Definition unsat (e : smt_expr) := ~ sat e.
 
