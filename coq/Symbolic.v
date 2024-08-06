@@ -665,19 +665,17 @@ Definition init_sym_state (m : llvm_module) (d : llvm_definition) : option sym_s
   end
 .
 
+Inductive equiv_via_model : option dynamic_value -> option smt_expr -> smt_model -> Prop :=
+  | EVM_None : forall m, equiv_via_model None None m
+  | EVM_Some : forall m di se,
+      (smt_eval m se) = Some di -> equiv_via_model (Some (DV_Int di)) (Some se) m
+.
+
 Inductive over_approx_via : sym_state -> state -> smt_model -> Prop :=
   | OAV_State :
       forall ic c cs pbid s_ls s_stk s_gs syms pc mdl c_ls c_stk c_gs m,
-      (forall (x : raw_id), exists di e,
-        (c_ls x) = Some (DV_Int di) /\
-        (s_ls x) = Some e /\
-        (smt_eval m e) = Some di
-      ) /\
-      (forall (x : raw_id), exists di e,
-        (c_gs x) = Some (DV_Int di) /\
-        (s_gs x) = Some e /\
-        (smt_eval m e) = Some di
-      ) /\
+      (forall (x : raw_id), equiv_via_model (c_ls x) (s_ls x) m) /\
+      (forall (x : raw_id), equiv_via_model (c_gs x) (s_gs x) m) /\
       ((smt_eval m pc) = Some di_true) ->
       over_approx_via
         (mk_sym_state
@@ -709,6 +707,15 @@ Inductive over_approx : sym_state -> state -> Prop :=
   | OA_State :
       forall s c, (exists m, over_approx_via s c m) -> over_approx s c
 .
+
+(* TODO: rename *)
+Lemma smt_lemma_1 : forall (c_ls c_gs : dv_store) (s_ls s_gs : smt_store) (t : option typ) (e : exp typ) (m : smt_model),
+  (forall x : raw_id, equiv_via_model (c_ls x) (s_ls x) m) ->
+  (forall x : raw_id, equiv_via_model (c_gs x) (s_gs x) m) ->
+  equiv_via_model (eval_exp c_ls c_gs t e) (sym_eval_exp s_ls s_gs t e) m
+.
+Proof.
+Admitted.
 
 Inductive well_defined_smt_store : smt_store -> list string -> Prop :=
   | WD_SMTStore : forall s syms,
