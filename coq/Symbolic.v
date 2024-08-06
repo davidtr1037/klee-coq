@@ -763,6 +763,11 @@ Lemma well_defined_sym_step : forall (s s' : sym_state),
 Proof.
 Admitted.
 
+Lemma well_defined_multi_sym_step : forall s s',
+  (well_defined s) -> (multi_sym_step s s') -> (well_defined s').
+Proof.
+Admitted.
+
 Lemma error_correspondence: forall c s,
   over_approx s c -> (error_sym_state s <-> error_state c).
 Proof.
