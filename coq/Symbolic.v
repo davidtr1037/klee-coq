@@ -16,6 +16,7 @@ From SE.SMT Require Import Expr.
 From SE.SMT Require Import Model.
 
 From SE.Utils Require Import ListUtil.
+From SE.Utils Require Import Util.
 
 (* TODO: smt_store -> sym_store? *)
 
@@ -693,13 +694,17 @@ Admitted.
 
 Inductive well_defined_smt_store : smt_store -> list string -> Prop :=
   | WD_SMTStore : forall s syms,
-      (forall x n, exists e, (s x) = Some e -> subexpr (SMT_Var n) e -> In n syms) ->
+      (forall x n se, (s x) = Some se -> subexpr (SMT_Var n) se -> In n syms) ->
       well_defined_smt_store s syms
 .
 
 Inductive well_defined : sym_state -> Prop :=
   | WD_State : forall ic c cs pbid ls stk gs syms pc mdl,
-      (well_defined_smt_store ls syms /\ well_defined_smt_store gs syms /\ (forall n, subexpr (SMT_Var n) pc -> In n syms)) ->
+      (
+        well_defined_smt_store ls syms /\
+        well_defined_smt_store gs syms /\
+        (forall n, subexpr (SMT_Var n) pc -> In n syms)
+      ) ->
       well_defined
         (mk_sym_state
           ic
@@ -720,21 +725,256 @@ Lemma well_defined_init_sym_state :
 Proof.
 Admitted.
 
-Lemma well_defined_sym_eval : forall (s : sym_state) (t : option typ) (e : exp typ),
-  (well_defined s) ->
-  (forall n, exists se,
-    (sym_eval_exp (sym_store s) (sym_globals s) t e) = Some se ->
-    subexpr (SMT_Var n) se ->
-    In n (sym_symbolics s)
-  )
-.
+(* TODO: remove? *)
+Lemma subexpr_ibinop : forall e op e1 e2,
+  e <> (sym_eval_ibinop op e1 e2) ->
+  subexpr e (sym_eval_ibinop op e1 e2) ->
+  subexpr e e1 \/ subexpr e e2 .
 Proof.
+  intros e op e1 e2 Hneq Hse.
+  destruct op; simpl in Hse; (
+    inversion Hse; subst;
+    [
+      destruct Hneq; reflexivity |
+      left; assumption |
+      right; assumption
+    ]
+  ).
+Qed.
+
+Lemma subexpr_var_ibinop : forall x op e1 e2,
+  subexpr (SMT_Var x) (sym_eval_ibinop op e1 e2) ->
+  subexpr (SMT_Var x) e1 \/ subexpr (SMT_Var x) e2 .
+Proof.
+  intros x op e1 e2 Hse.
+  destruct op; simpl in Hse; (
+    inversion Hse; subst;
+    [
+      left; assumption |
+      right; assumption
+    ]
+  ).
+Qed.
+
+Lemma subexpr_var_icmp : forall x op e1 e2,
+  subexpr (SMT_Var x) (sym_eval_icmp op e1 e2) ->
+  subexpr (SMT_Var x) e1 \/ subexpr (SMT_Var x) e2 .
+Proof.
+  intros x op e1 e2 Hse.
+  destruct op; simpl in Hse; (
+    inversion Hse; subst;
+    [
+      left; assumption |
+      right; assumption
+    ]
+  ).
+Qed.
+
+Lemma subexpr_var_conv : forall x conv e1 t1 t2 e2,
+  (sym_convert conv e1 t1 t2) = Some e2 ->
+  subexpr (SMT_Var x) e2 ->
+  subexpr (SMT_Var x) e1.
+Proof.
+  intros x conv e1 t1 t2 e2 Heq Hse.
+  destruct conv; simpl in *.
+  {
+    destruct t1; try (discriminate Heq).
+    {
+      destruct t2; try (discriminate Heq).
+      {
+        destruct (w0 <=? w)%positive eqn:E.
+        {
+          injection Heq. clear Heq. intros Heq.
+          subst.
+          inversion Hse; subst.
+          assumption.
+        }
+        { discriminate Heq. }
+      }
+    }
+  }
+  { admit. }
+  { admit. }
+  {
+    injection Heq. clear Heq. intros Heq.
+    subst.
+    assumption.
+  }
+Admitted.
+
+Lemma well_defined_sym_eval : forall s ot e n se,
+  (well_defined s) ->
+  (sym_eval_exp (sym_store s) (sym_globals s) ot e) = Some se ->
+  subexpr (SMT_Var n) se ->
+  In n (sym_symbolics s).
+Proof.
+  intros s ot e n se Hwd Heq Hse.
+  generalize dependent se.
+  generalize dependent ot.
+  induction e; intros ot se Heq Hse; inversion Hwd; subst; simpl in *.
+  {
+    unfold sym_lookup_ident.
+    destruct H as [H_1 [H_2 H_3]].
+    destruct id; simpl in Heq.
+    {
+      inversion H_2; subst.
+      specialize (H id n se).
+      apply H; assumption.
+    }
+    {
+      inversion H_1; subst.
+      specialize (H id n se).
+      apply H; assumption.
+    }
+  }
+  { admit. }
+  {
+    destruct b; simpl in Heq.
+    {
+      injection Heq. clear Heq.
+      intros Heq.
+      rewrite <- Heq in Hse.
+      inversion Hse.
+    }
+    {
+      injection Heq. clear Heq.  intros Heq.
+      rewrite <- Heq in Hse.
+      inversion Hse.
+    }
+  }
+  {
+    discriminate Heq.
+  }
+  {
+    discriminate Heq.
+  }
+  {
+    discriminate Heq.
+  }
+  {
+    discriminate Heq.
+  }
+  {
+    specialize (IHe1 (Some t)).
+    specialize (IHe2 (Some t)).
+    destruct (sym_eval_exp ls gs (Some t) e1) as [se1 | ] eqn:E1.
+    {
+      destruct (sym_eval_exp ls gs (Some t) e2) as [se2 | ] eqn:E2.
+      {
+        injection Heq. clear Heq. intros Heq.
+        subst.
+        apply subexpr_var_ibinop in Hse.
+        destruct Hse as [Hse | Hse].
+        {
+          apply (IHe1 se1).
+          { reflexivity. }
+          { assumption. }
+        }
+        {
+          apply (IHe2 se2).
+          { reflexivity. }
+          { assumption. }
+        }
+      }
+      { discriminate Heq. }
+    }
+    { discriminate Heq. }
+  }
+  {
+    specialize (IHe1 (Some t)).
+    specialize (IHe2 (Some t)).
+    destruct (sym_eval_exp ls gs (Some t) e1) as [se1 | ] eqn:E1.
+    {
+      destruct (sym_eval_exp ls gs (Some t) e2) as [se2 | ] eqn:E2.
+      {
+        injection Heq. clear Heq. intros Heq.
+        subst.
+        apply subexpr_var_icmp in Hse.
+        destruct Hse as [Hse | Hse].
+        {
+          apply (IHe1 se1).
+          { reflexivity. }
+          { assumption. }
+        }
+        {
+          apply (IHe2 se2).
+          { reflexivity. }
+          { assumption. }
+        }
+      }
+      { discriminate Heq. }
+    }
+    { discriminate Heq. }
+  }
+  {
+    specialize (IHe (Some t1)).
+    destruct (sym_eval_exp ls gs (Some t1) e) as [se' | ] eqn:E.
+    {
+      apply (IHe se').
+      { reflexivity. }
+      {
+        apply (subexpr_var_conv n conv se' t1 t2 se); assumption.
+      }
+    }
+    { discriminate Heq. }
+  }
+  { discriminate Heq. }
 Admitted.
 
 Lemma well_defined_sym_step : forall (s s' : sym_state),
   well_defined s -> sym_step s s' -> well_defined s'
 .
 Proof.
+  intros s s' Hwd Hstep.
+  destruct s as [ic c cs pbid ls stk gs syms pc mdl].
+  inversion Hwd; subst.
+  destruct H0 as [Hwd_ls [Hws_gs Hwd_pc]].
+  inversion Hstep; subst.
+  {
+    apply WD_State.
+    split.
+    {
+      inversion Hwd_ls; subst.
+      apply WD_SMTStore.
+      intros x n se' Heq Hse.
+      destruct (raw_id_eqb x v) eqn:E.
+      {
+        rewrite raw_id_eqb_eq in E.
+        rewrite E in *. clear E.
+        rewrite update_map_eq in Heq.
+        injection Heq. clear Heq. intros Heq.
+        rewrite <- Heq in *. clear Heq.
+        apply (well_defined_sym_eval
+          (mk_sym_state
+            ic
+            (CMD_Inst cid (INSTR_Op v e))
+            (c0 :: cs0)
+            pbid
+            ls
+            stk
+            gs
+            syms
+            pc
+            mdl
+          )
+          None
+          e
+          _
+          se
+        ); assumption.
+      }
+      {
+        rewrite raw_id_eqb_neq in E.
+        rewrite update_map_neq in Heq.
+        apply (H x n se'); assumption.
+        symmetry.
+        assumption.
+      }
+    }
+    {
+      split; assumption.
+    }
+  }
 Admitted.
 
 Lemma well_defined_multi_sym_step : forall s s',
