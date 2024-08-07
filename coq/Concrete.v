@@ -15,9 +15,9 @@ From SE Require Import Relation.
 From SE.Utils Require Import ListUtil.
 
 Record inst_counter := mk_inst_counter {
-  fid : function_id;
-  bid : block_id;
-  cid : cmd_id;
+  ic_fid : function_id;
+  ic_bid : block_id;
+  ic_cid : cmd_id;
 }.
 
 Definition dv_store := total_map (option dynamic_value).
@@ -130,16 +130,16 @@ Fixpoint eval_constant_exp (t : typ) (e : exp typ) : option dynamic_value :=
 .
 
 Definition next_inst_counter (ic : inst_counter) (c : llvm_cmd) : inst_counter :=
-  mk_inst_counter (fid ic) (bid ic) (get_cmd_id c)
+  mk_inst_counter (ic_fid ic) (ic_bid ic) (get_cmd_id c)
 .
 
 Definition next_inst_counter_on_branch (ic : inst_counter) (bid : block_id) (m : llvm_module) : option inst_counter :=
-  match (find_function m (fid ic)) with
+  match (find_function m (ic_fid ic)) with
   | Some d =>
       match (fetch_block d bid) with
       | Some b =>
           match (get_first_cmd_id b) with
-          | Some cid => Some (mk_inst_counter (fid ic) (blk_id b) cid)
+          | Some cid => Some (mk_inst_counter (ic_fid ic) (blk_id b) cid)
           | _ => None
           end
       | _ => None
@@ -210,8 +210,8 @@ Fixpoint get_trailing_cmds_by_cid (l : list llvm_cmd) (cid : cmd_id) :=
 .
 
 Definition get_trailing_cmds (d : llvm_definition) (ic : inst_counter) : option (list llvm_cmd) :=
-  match (fetch_block d (bid ic)) with
-  | Some b => get_trailing_cmds_by_cid (blk_cmds b) (cid ic)
+  match (fetch_block d (ic_bid ic)) with
+  | Some b => get_trailing_cmds_by_cid (blk_cmds b) (ic_cid ic)
   | _ => None
   end
 .
@@ -273,7 +273,7 @@ Inductive step : state -> state -> Prop :=
           m
         )
   | Step_UnconditionalBr : forall ic cid tbid pbid ls stk gs m d b c cs,
-      (find_function m (fid ic)) = Some d ->
+      (find_function m (ic_fid ic)) = Some d ->
       (fetch_block d tbid) = Some b ->
       (blk_cmds b) = c :: cs ->
       step
@@ -288,10 +288,10 @@ Inductive step : state -> state -> Prop :=
           m
         )
         (mk_state
-          (mk_inst_counter (fid ic) tbid (get_cmd_id c))
+          (mk_inst_counter (ic_fid ic) tbid (get_cmd_id c))
           c
           cs
-          (Some (bid ic))
+          (Some (ic_bid ic))
           ls
           stk
           gs
@@ -300,7 +300,7 @@ Inductive step : state -> state -> Prop :=
   (* TODO: t must by i1? *)
   | Step_Br_True : forall ic cid t e bid1 bid2 pbid ls stk gs m d b c cs,
       (eval_exp ls gs (Some t) e) = Some dv_true ->
-      (find_function m (fid ic)) = Some d ->
+      (find_function m (ic_fid ic)) = Some d ->
       (fetch_block d bid1) = Some b ->
       (blk_cmds b) = c :: cs ->
       step
@@ -315,10 +315,10 @@ Inductive step : state -> state -> Prop :=
           m
         )
         (mk_state
-          (mk_inst_counter (fid ic) bid1 (get_cmd_id c))
+          (mk_inst_counter (ic_fid ic) bid1 (get_cmd_id c))
           c
           cs
-          (Some (bid ic))
+          (Some (ic_bid ic))
           ls
           stk
           gs
@@ -327,7 +327,7 @@ Inductive step : state -> state -> Prop :=
   (* TODO: t must by i1? *)
   | Step_Br_False : forall ic cid t e bid1 bid2 pbid ls stk gs m d b c cs,
       (eval_exp ls gs (Some t) e) = Some dv_true ->
-      (find_function m (fid ic)) = Some d ->
+      (find_function m (ic_fid ic)) = Some d ->
       (fetch_block d bid2) = Some b ->
       (blk_cmds b) = c :: cs ->
       step
@@ -342,10 +342,10 @@ Inductive step : state -> state -> Prop :=
           m
         )
         (mk_state
-          (mk_inst_counter (fid ic) bid2 (get_cmd_id c))
+          (mk_inst_counter (ic_fid ic) bid2 (get_cmd_id c))
           c
           cs
-          (Some (bid ic))
+          (Some (ic_bid ic))
           ls
           stk
           gs
@@ -409,7 +409,7 @@ Inductive step : state -> state -> Prop :=
         )
   (* TODO: check the return type of the current function *)
   | Step_RetVoid : forall ic cid pbid ls ls' ic' pbid' stk gs m d c' cs',
-      (find_function m (fid ic')) = Some d ->
+      (find_function m (ic_fid ic')) = Some d ->
       (get_trailing_cmds d ic') = Some (c' :: cs') ->
       step
         (mk_state
@@ -435,7 +435,7 @@ Inductive step : state -> state -> Prop :=
   (* TODO: check the return type of the current function *)
   | Step_Ret : forall ic cid t e pbid ls ls' ic' pbid' v stk gs m dv d c' cs',
       (eval_exp ls gs (Some t) e) = Some dv ->
-      (find_function m (fid ic')) = Some d ->
+      (find_function m (ic_fid ic')) = Some d ->
       (get_trailing_cmds d ic') = Some (c' :: cs') ->
       step
         (mk_state

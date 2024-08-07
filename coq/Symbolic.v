@@ -297,7 +297,7 @@ Inductive sym_step : sym_state -> sym_state -> Prop :=
           m
         )
   | Sym_Step_UnconditionalBr : forall ic cid tbid pbid ls stk gs syms pc m d b c cs,
-      (find_function m (fid ic)) = Some d ->
+      (find_function m (ic_fid ic)) = Some d ->
       (fetch_block d tbid) = Some b ->
       (blk_cmds b) = c :: cs ->
       sym_step
@@ -314,10 +314,10 @@ Inductive sym_step : sym_state -> sym_state -> Prop :=
           m
         )
         (mk_sym_state
-          (mk_inst_counter (fid ic) tbid (get_cmd_id c))
+          (mk_inst_counter (ic_fid ic) tbid (get_cmd_id c))
           c
           cs
-          (Some (bid ic))
+          (Some (ic_bid ic))
           ls
           stk
           gs
@@ -328,7 +328,7 @@ Inductive sym_step : sym_state -> sym_state -> Prop :=
   (* TODO: t must by i1? *)
   | Sym_Step_Br_True : forall ic cid t e bid1 bid2 pbid ls stk gs syms pc m se d b c cs,
       (sym_eval_exp ls gs (Some t) e) = Some se ->
-      (find_function m (fid ic)) = Some d ->
+      (find_function m (ic_fid ic)) = Some d ->
       (fetch_block d bid1) = Some b ->
       (blk_cmds b) = c :: cs ->
       sym_step
@@ -345,10 +345,10 @@ Inductive sym_step : sym_state -> sym_state -> Prop :=
           m
         )
         (mk_sym_state
-          (mk_inst_counter (fid ic) bid1 (get_cmd_id c))
+          (mk_inst_counter (ic_fid ic) bid1 (get_cmd_id c))
           c
           cs
-          (Some (bid ic))
+          (Some (ic_bid ic))
           ls
           stk
           gs
@@ -359,7 +359,7 @@ Inductive sym_step : sym_state -> sym_state -> Prop :=
   (* TODO: t must by i1? *)
   | Sym_Step_Br_False : forall ic cid t e bid1 bid2 pbid ls stk gs syms pc m se d b c cs,
       (sym_eval_exp ls gs (Some t) e) = Some se ->
-      (find_function m (fid ic)) = Some d ->
+      (find_function m (ic_fid ic)) = Some d ->
       (fetch_block d bid2) = Some b ->
       (blk_cmds b) = c :: cs ->
       sym_step
@@ -376,10 +376,10 @@ Inductive sym_step : sym_state -> sym_state -> Prop :=
           m
         )
         (mk_sym_state
-          (mk_inst_counter (fid ic) bid2 (get_cmd_id c))
+          (mk_inst_counter (ic_fid ic) bid2 (get_cmd_id c))
           c
           cs
-          (Some (bid ic))
+          (Some (ic_bid ic))
           ls
           stk
           gs
@@ -453,7 +453,7 @@ Inductive sym_step : sym_state -> sym_state -> Prop :=
         )
   (* TODO: check the return type of the current function *)
   | Sym_Step_RetVoid : forall ic cid pbid ls ls' ic' pbid' stk gs syms pc m d c' cs',
-      (find_function m (fid ic')) = Some d ->
+      (find_function m (ic_fid ic')) = Some d ->
       (get_trailing_cmds d ic') = Some (c' :: cs') ->
       sym_step
         (mk_sym_state
@@ -483,7 +483,7 @@ Inductive sym_step : sym_state -> sym_state -> Prop :=
   (* TODO: check the return type of the current function *)
   | Sym_Step_Ret : forall ic cid t e pbid ls ls' ic' pbid' v stk gs syms pc m se d c' cs',
       (sym_eval_exp ls gs (Some t) e) = Some se ->
-      (find_function m (fid ic')) = Some d ->
+      (find_function m (ic_fid ic')) = Some d ->
       (get_trailing_cmds d ic') = Some (c' :: cs') ->
       sym_step
         (mk_sym_state
@@ -802,7 +802,7 @@ Proof.
   }
 Admitted.
 
-Lemma well_defined_sym_eval : forall s ot e n se,
+Lemma well_defined_sym_eval_exp : forall s ot e n se,
   (well_defined s) ->
   (sym_eval_exp (sym_store s) (sym_globals s) ot e) = Some se ->
   subexpr (SMT_Var n) se ->
@@ -921,6 +921,38 @@ Proof.
   { discriminate Heq. }
 Admitted.
 
+Lemma well_defined_sym_eval_phi : forall s t args pbid n se,
+  (well_defined s) ->
+  (sym_eval_phi_args (sym_store s) (sym_globals s) t args pbid) = Some se ->
+  subexpr (SMT_Var n) se ->
+  In n (sym_symbolics s).
+Proof.
+  intros s t args pbid n se Hwd Heq Hse.
+  induction args.
+  {
+    simpl in Heq.
+    discriminate Heq.
+  }
+  {
+    simpl in Heq.
+    destruct a as [bid e].
+    destruct (raw_id_eqb bid pbid) eqn:E in Heq.
+    {
+      apply (well_defined_sym_eval_exp
+        s
+        (Some t)
+        e
+        n
+        se
+      ); assumption.
+    }
+    {
+      apply IHargs in Heq.
+      assumption.
+    }
+  }
+Qed.
+
 Lemma well_defined_sym_step : forall (s s' : sym_state),
   well_defined s -> sym_step s s' -> well_defined s'
 .
@@ -929,6 +961,7 @@ Proof.
   destruct s as [ic c cs pbid ls stk gs syms pc mdl].
   inversion Hwd; subst.
   destruct H0 as [Hwd_ls [Hws_gs Hwd_pc]].
+  (* TODO: this inversion renames state variables *)
   inversion Hstep; subst.
   {
     apply WD_State.
@@ -944,7 +977,7 @@ Proof.
         rewrite update_map_eq in Heq.
         injection Heq. clear Heq. intros Heq.
         rewrite <- Heq in *. clear Heq.
-        apply (well_defined_sym_eval
+        apply (well_defined_sym_eval_exp
           (mk_sym_state
             ic
             (CMD_Inst cid (INSTR_Op v e))
@@ -959,7 +992,7 @@ Proof.
           )
           None
           e
-          _
+          n
           se
         ); assumption.
       }
@@ -973,6 +1006,133 @@ Proof.
     }
     {
       split; assumption.
+    }
+  }
+  {
+    apply WD_State.
+    split.
+    {
+      apply WD_SMTStore.
+      intros x n se' Heq Hse.
+      destruct (raw_id_eqb x v) eqn:E.
+      {
+        rewrite raw_id_eqb_eq in E.
+        rewrite E in *. clear E.
+        rewrite update_map_eq in Heq.
+        injection Heq. clear Heq. intros Heq.
+        rewrite <- Heq in *. clear Heq.
+        apply (well_defined_sym_eval_phi
+          (mk_sym_state
+            ic
+            (CMD_Phi cid (Phi v t args))
+            (c0 :: cs0)
+            (Some pbid0)
+            ls
+            stk
+            gs
+            syms
+            pc
+            mdl
+          )
+          t
+          args
+          pbid0
+          n
+          se
+        ); assumption.
+      }
+      {
+        inversion Hwd_ls; subst.
+        rewrite raw_id_eqb_neq in E.
+        rewrite update_map_neq in Heq.
+        apply (H x n se'); assumption.
+        symmetry.
+        assumption.
+      }
+    }
+    {
+      split; assumption.
+    }
+  }
+  {
+    apply WD_State.
+    split.
+    { assumption. }
+    { split; assumption. }
+  }
+  {
+    apply WD_State.
+    split.
+    { assumption. }
+    {
+      split.
+      { assumption. }
+      {
+        intros n Hse.
+        inversion Hse; subst.
+        {
+          apply Hwd_pc.
+          assumption.
+        }
+        {
+          apply (well_defined_sym_eval_exp
+            (mk_sym_state
+              ic
+              (CMD_Term cid (TERM_Br (t, e) bid1 bid2))
+              []
+              pbid
+              ls
+              stk
+              gs
+              syms
+              pc
+              mdl
+            )
+            (Some t)
+            e
+            n
+            se
+          ); assumption.
+        }
+      }
+    }
+  }
+  {
+    apply WD_State.
+    split.
+    { assumption. }
+    {
+      split.
+      { assumption. }
+      {
+        intros n Hse.
+        inversion Hse; subst.
+        {
+          apply Hwd_pc.
+          assumption.
+        }
+        {
+          inversion H1; subst.
+          apply (well_defined_sym_eval_exp
+            (mk_sym_state
+              ic
+              (CMD_Term cid (TERM_Br (t, e) bid1 bid2))
+              []
+              pbid
+              ls
+              stk
+              gs
+              syms
+              pc
+              mdl
+            )
+            (Some t)
+            e
+            n
+            se
+          ); assumption.
+        }
+      }
     }
   }
 Admitted.
