@@ -238,14 +238,5 @@ Definition convert conv x t1 t2 : option dynamic_value :=
       if (bits1 =? bits2)%positive then Some x else None
     | _, _, _ => None
     end
-  | Uitofp
-  | Sitofp
-  | Fptoui
-  | Fptosi
-  | Fptrunc
-  | Fpext
-  | Inttoptr
-  | Ptrtoint
-  | Addrspacecast => None
   end
 .

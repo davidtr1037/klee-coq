@@ -370,16 +370,7 @@ Variant conversion_type : Set :=
   | Trunc
   | Zext
   | Sext
-  | Fptrunc
-  | Fpext
-  | Uitofp
-  | Sitofp
-  | Fptoui
-  | Fptosi
-  | Inttoptr
-  | Ptrtoint
   | Bitcast
-  | Addrspacecast
 .
 
 Section TypedSyntax.
@@ -412,63 +403,42 @@ Section TypedSyntax.
    - OP_  prefix denotes syntax that requires further evaluation
  *)
 
-Unset Elimination Schemes.
+(* TODO: this disables the induction principle, why here? *)
+(* Unset Elimination Schemes. *)
 
 Inductive exp : Set :=
-| EXP_Ident (id:ident)
-| EXP_Integer (x:int_ast)
-| EXP_Float (f:float32)  (* 32-bit floating point values *)
-| EXP_Double (f:float)    (* 64-bit floating point values *)
-| EXP_Hex (f:float)    (* See LLVM documentation about hex float constants. *)
-| EXP_Bool (b:bool)
-| EXP_Null
-| EXP_Zero_initializer
-    (* change type of Cstring to string *)
-| EXP_Cstring (elts: list (T * exp))
-                      (* parsing guarantees that the elts of a Cstring will be of the form
-                         ((TYPE_I 8), Exp_Integer <byte>)
-                      *)
-
-| EXP_Undef
-| EXP_Poison
-| EXP_Struct (fields: list (T * exp))
-| EXP_Packed_struct (fields: list (T * exp))
-| EXP_Array (elts: list (T * exp))
-| EXP_Vector (elts: list (T * exp))
-| OP_IBinop (iop:ibinop) (t:T) (v1:exp) (v2:exp)
-| OP_ICmp (cmp:icmp)   (t:T) (v1:exp) (v2:exp)
-| OP_FBinop (fop:fbinop) (fm:list fast_math) (t:T) (v1:exp) (v2:exp)
-| OP_FCmp (cmp:fcmp)   (t:T) (v1:exp) (v2:exp)
-| OP_Conversion (conv:conversion_type) (t_from:T) (v:exp) (t_to:T)
-| OP_GetElementPtr (t:T) (ptrval:(T * exp)) (idxs:list (T * exp))
-| OP_ExtractElement (vec:(T * exp)) (idx:(T * exp))
-| OP_InsertElement (vec:(T * exp)) (elt:(T * exp)) (idx:(T * exp))
-| OP_ShuffleVector (vec1:(T * exp)) (vec2:(T * exp)) (idxmask:(T * exp))
-| OP_ExtractValue (vec:(T * exp)) (idxs:list int_ast)
-| OP_InsertValue (vec:(T * exp)) (elt:(T * exp)) (idxs:list int_ast)
-| OP_Select (cnd:(T * exp)) (v1:(T * exp)) (v2:(T * exp)) (* if * then * else *)
-| OP_Freeze (v:(T * exp))
+  | EXP_Ident (id:ident)
+  | EXP_Integer (x:int_ast)
+  | EXP_Bool (b:bool)
+  | EXP_Null (* TODO: is needed? *)
+  | EXP_Zero_initializer (* TODO: is needed? *)
+  | EXP_Undef
+  | EXP_Poison
+  | OP_IBinop (iop:ibinop) (t:T) (v1:exp) (v2:exp)
+  | OP_ICmp (cmp:icmp)   (t:T) (v1:exp) (v2:exp)
+  | OP_Conversion (conv:conversion_type) (t_from:T) (v:exp) (t_to:T)
+  | OP_Select (cnd:(T * exp)) (v1:(T * exp)) (v2:(T * exp)) (* if * then * else *)
 .
 
-Set Elimination Schemes.
+(* Set Elimination Schemes. *)
 
 Definition texp : Set := T * exp.
 
 Inductive metadata : Set :=
-| METADATA_Const (tv:texp)
-| METADATA_Null
-| METADATA_Nontemporal
-| METADATA_Invariant_load
-| METADATA_Invariant_group
-| METADATA_Nonnull
-| METADATA_Dereferenceable
-| METADATA_Dereferenceable_or_null
-| METADATA_Align
-| METADATA_Noundef
-| METADATA_Id (id:raw_id)  (* local or global? *)
-| METADATA_String (str:string)
-| METADATA_Named (strs:list string)
-| METADATA_Node (mds:list metadata)
+  | METADATA_Const (tv:texp)
+  | METADATA_Null
+  | METADATA_Nontemporal
+  | METADATA_Invariant_load
+  | METADATA_Invariant_group
+  | METADATA_Nonnull
+  | METADATA_Dereferenceable
+  | METADATA_Dereferenceable_or_null
+  | METADATA_Align
+  | METADATA_Noundef
+  | METADATA_Id (id:raw_id)  (* local or global? *)
+  | METADATA_String (str:string)
+  | METADATA_Named (strs:list string)
+  | METADATA_Node (mds:list metadata)
 .
 
 (* Used in switch branches which insist on integer literals *)

@@ -101,19 +101,11 @@ Fixpoint eval_exp (s : dv_store) (g : dv_store) (t : option typ) (e : exp typ) :
       | Some (TYPE_I bits) => make_dv bits n
       | _ => None
       end
-  | EXP_Float f => None
-  | EXP_Double f => None
-  | EXP_Hex f => None
   | EXP_Bool b => Some (make_bool b)
   | EXP_Null => None
   | EXP_Zero_initializer => None
-  | EXP_Cstring elts => None
   | EXP_Undef => Some DV_Undef
   | EXP_Poison => None
-  | EXP_Struct fields => None
-  | EXP_Packed_struct fields => None
-  | EXP_Array elts => None
-  | EXP_Vector elts => None
   | OP_IBinop iop t v1 v2 =>
       match (eval_exp s g (Some t) v1, eval_exp s g (Some t) v2) with
       | (Some dv1, Some dv2) => eval_ibinop iop dv1 dv2
@@ -124,21 +116,12 @@ Fixpoint eval_exp (s : dv_store) (g : dv_store) (t : option typ) (e : exp typ) :
       | (Some dv1, Some dv2) => eval_icmp icmp dv1 dv2
       | (_, _) => None
       end
-  | OP_FBinop fop _ _ _ _ => None
-  | OP_FCmp _ _ _ _ => None
   | OP_Conversion conv t1 e t2 =>
       match eval_exp s g (Some t1) e with
       | Some dv => convert conv dv t1 t2
       | _ => None
       end
-  | OP_GetElementPtr _ _ _ => None
-  | OP_ExtractElement _ _ => None
-  | OP_InsertElement _ _ _ => None
-  | OP_ShuffleVector _ _ _ => None
-  | OP_ExtractValue _ _ => None
-  | OP_InsertValue _ _ _ => None
   | OP_Select _ _ _ => None
-  | OP_Freeze _ => None
   end
 .
 

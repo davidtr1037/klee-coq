@@ -155,15 +155,6 @@ Definition sym_convert (conv : conversion_type) (e : smt_expr) t1 t2 : option sm
     | _, _ => None
     end
   | Bitcast => Some e
-  | Uitofp
-  | Sitofp
-  | Fptoui
-  | Fptosi
-  | Fptrunc
-  | Fpext
-  | Inttoptr
-  | Ptrtoint
-  | Addrspacecast => None
   end
 .
 
@@ -175,19 +166,11 @@ Fixpoint sym_eval_exp (s : smt_store) (g : smt_store) (t : option typ) (e : exp 
       | Some (TYPE_I bits) => make_smt_const bits n
       | _ => None
       end
-  | EXP_Float f => None
-  | EXP_Double f => None
-  | EXP_Hex f => None
   | EXP_Bool b => Some (make_smt_bool b)
   | EXP_Null => None
   | EXP_Zero_initializer => None
-  | EXP_Cstring elts => None
   | EXP_Undef => None (* TODO: how to handle? *)
   | EXP_Poison => None
-  | EXP_Struct fields => None
-  | EXP_Packed_struct fields => None
-  | EXP_Array elts => None
-  | EXP_Vector elts => None
   | OP_IBinop op t v1 v2 =>
       match (sym_eval_exp s g (Some t) v1, sym_eval_exp s g (Some t) v2) with
       | (Some e1, Some e2) => Some (sym_eval_ibinop op e1 e2)
@@ -198,21 +181,12 @@ Fixpoint sym_eval_exp (s : smt_store) (g : smt_store) (t : option typ) (e : exp 
       | (Some e1, Some e2) => Some (sym_eval_icmp op e1 e2)
       | (_, _) => None
       end
-  | OP_FBinop fop _ _ _ _ => None
-  | OP_FCmp _ _ _ _ => None
   | OP_Conversion conv t1 v t2 =>
       match sym_eval_exp s g (Some t1) v with
       | Some e => sym_convert conv e t1 t2
       | _ => None
       end
-  | OP_GetElementPtr _ _ _ => None
-  | OP_ExtractElement _ _ => None
-  | OP_InsertElement _ _ _ => None
-  | OP_ShuffleVector _ _ _ => None
-  | OP_ExtractValue _ _ => None
-  | OP_InsertValue _ _ _ => None
   | OP_Select _ _ _ => None
-  | OP_Freeze _ => None
   end
 .
 
