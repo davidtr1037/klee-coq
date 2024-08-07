@@ -72,46 +72,26 @@ Variant ident : Set :=
 | ID_Local  (id:raw_id)   (* %id *)
 .
 
-(* TODO: the type of sz should be positive? *)
 Unset Elimination Schemes.
 Inductive typ : Set :=
-| TYPE_I (w : positive)
-| TYPE_IPTR
-| TYPE_Pointer (t:typ)
-| TYPE_Void
-| TYPE_Half
-| TYPE_Float
-| TYPE_Double
-| TYPE_X86_fp80
-| TYPE_Fp128
-| TYPE_Ppc_fp128
-(* | TYPE_Label  label is not really a type *)
-(* | TYPE_Token -- used with exceptions *)
-| TYPE_Metadata
-| TYPE_X86_mmx
-| TYPE_Array (sz:N) (t:typ)
-| TYPE_Function (ret:typ) (args:list typ) (vararg:bool)
-                (* Langref doesn't specify that "..." appears only at the end of the arguments,
-                   but I believe it is implied *)
-| TYPE_Struct (fields:list typ)
-| TYPE_Packed_struct (fields:list typ)
-| TYPE_Opaque
-| TYPE_Vector (sz:N) (t:typ)     (* t must be integer, floating point, or pointer type *)
-| TYPE_Identified (id:ident) (* add *)
+  | TYPE_I (w : positive)
+  | TYPE_Pointer (t : typ) (* TODO: remove? *)
+  | TYPE_Void
+  | TYPE_Function (ret : typ) (args : list typ) (vararg : bool)
 .
 
 Variant linkage : Set :=
-| LINKAGE_Private
-| LINKAGE_Internal
-| LINKAGE_Available_externally
-| LINKAGE_Linkonce
-| LINKAGE_Weak
-| LINKAGE_Common
-| LINKAGE_Appending
-| LINKAGE_Extern_weak
-| LINKAGE_Linkonce_odr
-| LINKAGE_Weak_odr
-| LINKAGE_External
+  | LINKAGE_Private
+  | LINKAGE_Internal
+  | LINKAGE_Available_externally
+  | LINKAGE_Linkonce
+  | LINKAGE_Weak
+  | LINKAGE_Common
+  | LINKAGE_Appending
+  | LINKAGE_Extern_weak
+  | LINKAGE_Linkonce_odr
+  | LINKAGE_Weak_odr
+  | LINKAGE_External
 .
 
 Variant preemption_specifier : Set :=
@@ -407,17 +387,17 @@ Section TypedSyntax.
 (* Unset Elimination Schemes. *)
 
 Inductive exp : Set :=
-  | EXP_Ident (id:ident)
-  | EXP_Integer (x:int_ast)
-  | EXP_Bool (b:bool)
+  | EXP_Ident (id : ident)
+  | EXP_Integer (x : int_ast)
+  | EXP_Bool (b : bool)
   | EXP_Null (* TODO: is needed? *)
   | EXP_Zero_initializer (* TODO: is needed? *)
   | EXP_Undef
   | EXP_Poison
-  | OP_IBinop (iop:ibinop) (t:T) (v1:exp) (v2:exp)
-  | OP_ICmp (cmp:icmp)   (t:T) (v1:exp) (v2:exp)
-  | OP_Conversion (conv:conversion_type) (t_from:T) (v:exp) (t_to:T)
-  | OP_Select (cnd:(T * exp)) (v1:(T * exp)) (v2:(T * exp)) (* if * then * else *)
+  | OP_IBinop (op : ibinop) (t : T) (v1 : exp) (v2 : exp)
+  | OP_ICmp (op : icmp) (t : T) (v1 : exp) (v2 : exp)
+  | OP_Conversion (conv : conversion_type) (t1 : T) (v : exp) (t2 : T)
+  | OP_Select (cnd : (T * exp)) (v1 : (T * exp)) (v2 : (T * exp))
 .
 
 (* Set Elimination Schemes. *)
