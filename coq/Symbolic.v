@@ -1006,15 +1006,40 @@ Proof.
       simpl in Heq.
 *)
 
-Lemma well_defined_smt_store_ext : forall s n syms,
-  well_defined_smt_store s syms -> well_defined_smt_store s (n :: syms).
+Lemma well_defined_smt_store_ext : forall s sym syms,
+  well_defined_smt_store s syms -> well_defined_smt_store s (sym :: syms).
 Proof.
-Admitted.
+  intros s sym syms Hwd.
+  inversion Hwd; subst.
+  apply WD_SMTStore.
+  intros x n se Heq Hse.
+  apply in_cons.
+  apply (H x n se); assumption.
+Qed.
 
-Lemma well_defined_stack_ext : forall stk n syms,
-  well_defined_stack stk syms -> well_defined_stack stk (n :: syms).
+Lemma well_defined_stack_ext : forall stk sym syms,
+  well_defined_stack stk syms -> well_defined_stack stk (sym :: syms).
 Proof.
-Admitted.
+  intros stk sym syms Hwd.
+  induction Hwd.
+  { apply WD_EmptyStack. }
+  {
+    apply WD_Frame.
+    {
+      apply well_defined_smt_store_ext.
+      assumption.
+    }
+    { assumption. }
+  }
+  {
+    apply WD_FrameNoReturn.
+    {
+      apply well_defined_smt_store_ext.
+      assumption.
+    }
+    { assumption. }
+  }
+Qed.
 
 Lemma well_defined_sym_step : forall (s s' : sym_state),
   well_defined s -> sym_step s s' -> well_defined s'
