@@ -70,23 +70,6 @@ Lemma well_defined_init_sym_state :
 Proof.
 Admitted.
 
-(* TODO: remove? *)
-Lemma subexpr_ibinop : forall e op e1 e2,
-  e <> (sym_eval_ibinop op e1 e2) ->
-  subexpr e (sym_eval_ibinop op e1 e2) ->
-  subexpr e e1 \/ subexpr e e2 .
-Proof.
-  intros e op e1 e2 Hneq Hse.
-  destruct op; simpl in Hse; (
-    inversion Hse; subst;
-    [
-      destruct Hneq; reflexivity |
-      left; assumption |
-      right; assumption
-    ]
-  ).
-Qed.
-
 Lemma subexpr_var_ibinop : forall x op e1 e2,
   subexpr (SMT_Var x) (sym_eval_ibinop op e1 e2) ->
   subexpr (SMT_Var x) e1 \/ subexpr (SMT_Var x) e2 .
@@ -340,72 +323,13 @@ Proof.
   }
 Qed.
 
-Lemma L0 : forall d se ses ls,
-  create_local_smt_store d (se :: ses) = Some ls ->
-  exists x ls',
-    (create_local_smt_store d ses) = Some ls' /\
-    (x !-> Some se; ls') = ls.
-Proof.
-Admitted.
-
 (* TODO: rename *)
 Lemma L1 : forall ses syms d ls,
   (forall se n, In se ses -> subexpr (SMT_Var n) se -> In n syms) ->
   (create_local_smt_store d ses) = Some ls ->
   well_defined_smt_store ls syms.
 Proof.
-  intros ses syms d ls Hwd H.
-  generalize dependent ls.
-  induction ses; intros ls H.
-  {
-    unfold create_local_smt_store in H.
-    destruct (df_args d) eqn:Eargs; simpl in H.
-    {
-      inversion H; subst.
-      apply WD_SMTStore.
-      intros x n se Heq Hse.
-      inversion Heq.
-    }
-    { discriminate H. }
-  }
-  {
-    apply L0 in H.
-    destruct H as [y [ls' [H1 H2]]].
-    assert(Hls': well_defined_smt_store ls' syms).
-    {
-      apply IHses.
-      {
-        intros se n Hin Hse.
-        apply (Hwd se n).
-        { apply in_cons; assumption. }
-        { assumption. }
-      }
-      { assumption. }
-    }
-    subst.
-    apply WD_SMTStore.
-    intros x n se Heq Hse.
-    destruct (x =? y) eqn:E.
-    {
-      rewrite raw_id_eqb_eq in E.
-      subst.
-      rewrite update_map_eq in Heq.
-      inversion Heq; subst.
-      apply (Hwd se n).
-      { apply in_eq. }
-      { assumption. }
-    }
-    {
-      rewrite raw_id_eqb_neq in E.
-      rewrite update_map_neq in Heq.
-      {
-        inversion Hls'; subst.
-        apply (H x n se); assumption.
-      }
-      { symmetry. assumption. }
-    }
-  }
-Qed.
+Admitted.
 
 Lemma well_defined_smt_store_ext : forall s sym syms,
   well_defined_smt_store s syms -> well_defined_smt_store s (sym :: syms).
