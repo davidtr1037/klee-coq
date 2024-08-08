@@ -323,13 +323,84 @@ Proof.
   }
 Qed.
 
-(* TODO: rename *)
-Lemma L1 : forall ses syms d ls,
+Lemma L0 : forall l syms,
+  (forall x se n, In (x, se) l -> subexpr (SMT_Var n) se -> In n syms) ->
+  (well_defined_smt_store (fill_smt_store l) syms).
+Proof.
+  intros l syms Hwd.
+  induction l.
+  {
+    simpl.
+    apply WD_SMTStore.
+    intros x n se Heq Hse.
+    discriminate Heq.
+  }
+  {
+    simpl.
+    destruct a as [a_x a_se].
+    assert(Lwd: well_defined_smt_store (fill_smt_store l) syms).
+    {
+      apply IHl.
+      intros x se n Hin Hse.
+      apply (Hwd x se).
+      { apply in_cons. assumption. }
+      { assumption. }
+    }
+    apply WD_SMTStore.
+    intros x n se Heq Hse.
+    destruct (a_x =? x) eqn:E.
+    {
+      rewrite raw_id_eqb_eq in E.
+      rewrite E in Heq.
+      rewrite update_map_eq in Heq.
+      inversion Heq. clear Heq.
+      apply (Hwd a_x a_se).
+      { apply in_eq. }
+      { rewrite H0. assumption. }
+    }
+    {
+      rewrite raw_id_eqb_neq in E.
+      rewrite update_map_neq in Heq.
+      {
+        inversion Lwd; subst.
+        apply (H x n se); assumption.
+      }
+      { assumption. }
+    }
+  }
+Qed.
+
+Lemma L1 : forall (xs : list raw_id) ses l syms,
+  (forall se n, In se ses -> subexpr (SMT_Var n) se -> In n syms) ->
+  (merge_lists xs ses) = Some l ->
+  (forall x se n, In (x, se) l -> subexpr (SMT_Var n) se -> In n syms).
+Proof.
+Admitted.
+
+Lemma L2 : forall xs ses l syms,
+  (forall se n, In se ses -> subexpr (SMT_Var n) se -> In n syms) ->
+  (merge_lists xs ses) = Some l ->
+  (well_defined_smt_store (fill_smt_store l) syms).
+Proof.
+  intros xs ses l syms Hwd H.
+  apply L0.
+  apply (L1 xs ses); assumption.
+Qed.
+
+Lemma L3 : forall ses syms d ls,
   (forall se n, In se ses -> subexpr (SMT_Var n) se -> In n syms) ->
   (create_local_smt_store d ses) = Some ls ->
   well_defined_smt_store ls syms.
 Proof.
-Admitted.
+  intros ses syms d ls Hwd H.
+  unfold create_local_smt_store in H.
+  destruct (merge_lists (df_args d) ses) eqn:E.
+  {
+    inversion H; subst.
+    apply (L2 (df_args d) ses); assumption.
+  }
+  { discriminate H. }
+Qed.
 
 Lemma well_defined_smt_store_ext : forall s sym syms,
   well_defined_smt_store s syms -> well_defined_smt_store s (sym :: syms).
@@ -566,7 +637,7 @@ Proof.
     apply WD_State.
     split.
     {
-      apply (L1 ses syms d ls').
+      apply (L3 ses syms d ls').
       {
         intros se n Hin Hse.
         apply (well_defined_sym_eval_args
