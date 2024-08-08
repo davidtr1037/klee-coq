@@ -26,6 +26,7 @@ Definition empty_smt_store := empty_map (Some (SMT_Const_I1 zero)).
 
 Inductive sym_frame : Type :=
   | Sym_Frame (s : smt_store) (ic : inst_counter) (pbid : option block_id) (v : raw_id)
+  (* TODO: rename *)
   | Sym_Frame_NoReturn (s : smt_store) (ic : inst_counter) (pbid : option block_id)
 .
 
@@ -387,13 +388,13 @@ Inductive sym_step : sym_state -> sym_state -> Prop :=
           (SMT_BinOp SMT_And pc (SMT_Not se)) (* TODO: SMT_Not? *)
           m
         )
-  | Sym_Step_VoidCall : forall ic cid f args anns c cs pbid ls stk gs syms pc m d b c' cs' es ls',
+  | Sym_Step_VoidCall : forall ic cid f args anns c cs pbid ls stk gs syms pc m d b c' cs' ses ls',
       (find_function_by_exp m f) = Some d ->
       (dc_type (df_prototype d)) = TYPE_Function TYPE_Void (get_arg_types args) false ->
       (entry_block d) = Some b ->
       (blk_cmds b) = c' :: cs' ->
-      (sym_eval_args ls gs args) = Some es ->
-      (create_local_smt_store d es) = Some ls' ->
+      (sym_eval_args ls gs args) = Some ses ->
+      (create_local_smt_store d ses) = Some ls' ->
       sym_step
         (mk_sym_state
           ic
@@ -419,13 +420,13 @@ Inductive sym_step : sym_state -> sym_state -> Prop :=
           pc
           m
         )
-  | Sym_Step_Call : forall ic cid v t f args anns c cs pbid ls stk gs syms pc m d b c' cs' es ls',
+  | Sym_Step_Call : forall ic cid v t f args anns c cs pbid ls stk gs syms pc m d b c' cs' ses ls',
       (find_function_by_exp m f) = Some d ->
       (dc_type (df_prototype d)) = TYPE_Function t (get_arg_types args) false ->
       (entry_block d) = Some b ->
       (blk_cmds b) = c' :: cs' ->
-      (sym_eval_args ls gs args) = Some es ->
-      (create_local_smt_store d es) = Some ls' ->
+      (sym_eval_args ls gs args) = Some ses ->
+      (create_local_smt_store d ses) = Some ls' ->
       sym_step
         (mk_sym_state
           ic
@@ -698,11 +699,25 @@ Inductive well_defined_smt_store : smt_store -> list string -> Prop :=
       well_defined_smt_store s syms
 .
 
+Inductive well_defined_stack : list sym_frame -> list string -> Prop :=
+  | WD_EmptyStack : forall syms,
+      well_defined_stack [] syms
+  | WD_Frame : forall ls ic pbid v stk syms,
+      well_defined_smt_store ls syms ->
+      well_defined_stack stk syms ->
+      well_defined_stack ((Sym_Frame ls ic pbid v) :: stk) syms
+  | WD_FrameNoReturn : forall ls ic pbid stk syms,
+      well_defined_smt_store ls syms ->
+      well_defined_stack stk syms ->
+      well_defined_stack ((Sym_Frame_NoReturn ls ic pbid) :: stk) syms
+.
+
 Inductive well_defined : sym_state -> Prop :=
   | WD_State : forall ic c cs pbid ls stk gs syms pc mdl,
       (
         well_defined_smt_store ls syms /\
         well_defined_smt_store gs syms /\
+        well_defined_stack stk syms /\
         (forall n, subexpr (SMT_Var n) pc -> In n syms)
       ) ->
       well_defined
@@ -953,6 +968,54 @@ Proof.
   }
 Qed.
 
+(*
+Lemma well_defined_sym_eval_args : forall s args ses d ls,
+  (well_defined s) ->
+  (sym_eval_args (sym_store s) (sym_globals s) args) = Some ses ->
+  (create_local_smt_store d ses) = Some ls ->
+  (well_defined_smt_store ls (sym_symbolics s)).
+Proof.
+  intros s args ses d ls Hwd Heq Hls.
+  generalize dependent ses.
+  induction args; intros ses Heq Hls.
+  {
+    simpl in Heq.
+    injection Heq. clear Heq. intros Heq.
+    subst.
+    simpl in Hls.
+    unfold create_local_smt_store in Hls.
+    destruct (df_args d).
+    {
+      simpl in Hls.
+      injection Hls. clear Hls. intros Hls.
+      subst.
+      apply WD_SMTStore.
+      admit.
+    }
+    {
+      simpl in Hls.
+      discriminate Hls.
+    }
+  }
+  {
+    simpl in Heq.
+    destruct (sym_eval_arg (sym_store s) (sym_globals s) a).
+    {
+      destruct (sym_eval_args (sym_store s) (sym_globals s) args).
+      {
+      simpl in Heq.
+*)
+
+Lemma well_defined_smt_store_ext : forall s n syms,
+  well_defined_smt_store s syms -> well_defined_smt_store s (n :: syms).
+Proof.
+Admitted.
+
+Lemma well_defined_stack_ext : forall stk n syms,
+  well_defined_stack stk syms -> well_defined_stack stk (n :: syms).
+Proof.
+Admitted.
+
 Lemma well_defined_sym_step : forall (s s' : sym_state),
   well_defined s -> sym_step s s' -> well_defined s'
 .
@@ -960,7 +1023,7 @@ Proof.
   intros s s' Hwd Hstep.
   destruct s as [ic c cs pbid ls stk gs syms pc mdl].
   inversion Hwd; subst.
-  destruct H0 as [Hwd_ls [Hws_gs Hwd_pc]].
+  destruct H0 as [Hwd_ls [Hwd_gs [Hwd_stk Hwd_pc]]].
   (* TODO: this inversion renames state variables *)
   inversion Hstep; subst.
   {
@@ -1005,7 +1068,9 @@ Proof.
       }
     }
     {
-      split; assumption.
+      split.
+      { assumption. }
+      { split; assumption. }
     }
   }
   {
@@ -1051,14 +1116,20 @@ Proof.
       }
     }
     {
-      split; assumption.
+      split.
+      { assumption. }
+      { split; assumption. }
     }
   }
   {
     apply WD_State.
     split.
     { assumption. }
-    { split; assumption. }
+    {
+      split.
+      { assumption. }
+      { split; assumption. }
+    }
   }
   {
     apply WD_State.
@@ -1068,6 +1139,8 @@ Proof.
       split.
       { assumption. }
       {
+        split.
+        { assumption. }
         intros n Hse.
         inversion Hse; subst.
         {
@@ -1105,6 +1178,79 @@ Proof.
       split.
       { assumption. }
       {
+        split.
+        { assumption. }
+        {
+          intros n Hse.
+          inversion Hse; subst.
+          {
+            apply Hwd_pc.
+            assumption.
+          }
+          {
+            inversion H1; subst.
+            apply (well_defined_sym_eval_exp
+              (mk_sym_state
+                ic
+                (CMD_Term cid (TERM_Br (t, e) bid1 bid2))
+                []
+                pbid
+                ls
+                stk
+                gs
+                syms
+                pc
+                mdl
+              )
+              (Some t)
+              e
+              n
+              se
+            ); assumption.
+          }
+        }
+      }
+    }
+  }
+  {
+    apply WD_State.
+    split.
+    {
+      admit.
+    }
+    {
+      split.
+      { assumption. }
+      {
+        split.
+        { admit. }
+        { assumption. }
+      }
+    }
+  }
+  { admit. }
+  {
+    apply WD_State.
+    inversion Hwd_stk; subst.
+    split.
+    { assumption.  }
+    {
+      split.
+      { assumption. }
+      { split; assumption. }
+    }
+  }
+  { admit. }
+  {
+    apply WD_State.
+    split.
+    { assumption. }
+    {
+      split.
+      { assumption. }
+      {
+        split.
+        { assumption. }
         intros n Hse.
         inversion Hse; subst.
         {
@@ -1112,12 +1258,11 @@ Proof.
           assumption.
         }
         {
-          inversion H1; subst.
           apply (well_defined_sym_eval_exp
             (mk_sym_state
               ic
-              (CMD_Term cid (TERM_Br (t, e) bid1 bid2))
-              []
+              (CMD_Inst cid (INSTR_VoidCall (TYPE_Void, klee_assume_exp) [(t, e, attrs)] []))
+              (c0 :: cs0)
               pbid
               ls
               stk
@@ -1130,7 +1275,59 @@ Proof.
             e
             n
             se
-          ); assumption.
+          ).
+          { assumption. }
+          { assumption. }
+          {
+            apply (subexpr_var_conv n Trunc se t (TYPE_I 1) cond); assumption.
+          }
+        }
+      }
+    }
+  }
+  {
+    apply WD_State.
+    split.
+    {
+      inversion Hwd_ls; subst.
+      apply WD_SMTStore.
+      intros x n se' Heq Hse.
+      destruct (raw_id_eqb x v) eqn:E.
+      {
+        rewrite raw_id_eqb_eq in E.
+        rewrite E in *. clear E.
+        rewrite update_map_eq in Heq.
+        injection Heq. clear Heq. intros Heq.
+        subst.
+        inversion Hse; subst.
+        apply in_eq.
+      }
+      {
+        rewrite raw_id_eqb_neq in E.
+        rewrite update_map_neq in Heq.
+        apply in_cons.
+        apply (H x n se'); try assumption.
+        symmetry.
+        assumption.
+      }
+    }
+    {
+      split.
+      {
+        apply well_defined_smt_store_ext.
+        assumption.
+      }
+      {
+        split.
+        {
+          apply well_defined_stack_ext.
+          assumption.
+        }
+        {
+          intros n Hse.
+          apply in_cons.
+          apply Hwd_pc.
+          assumption.
         }
       }
     }
