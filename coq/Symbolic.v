@@ -693,6 +693,10 @@ Lemma smt_lemma_1 : forall (c_ls c_gs : dv_store) (s_ls s_gs : smt_store) (t : o
 Proof.
 Admitted.
 
+(* TODO: ... *)
+Inductive well_defined_smt_expr : smt_expr -> list string -> Prop :=
+.
+
 Inductive well_defined_smt_store : smt_store -> list string -> Prop :=
   | WD_SMTStore : forall s syms,
       (forall x n se, (s x) = Some se -> subexpr (SMT_Var n) se -> In n syms) ->
@@ -968,43 +972,21 @@ Proof.
   }
 Qed.
 
-(*
-Lemma well_defined_sym_eval_args : forall s args ses d ls,
+Lemma well_defined_sym_eval_args : forall s args ses se n,
   (well_defined s) ->
   (sym_eval_args (sym_store s) (sym_globals s) args) = Some ses ->
-  (create_local_smt_store d ses) = Some ls ->
-  (well_defined_smt_store ls (sym_symbolics s)).
+  In se ses ->
+  subexpr (SMT_Var n) se ->
+  In n (sym_symbolics s).
 Proof.
-  intros s args ses d ls Hwd Heq Hls.
-  generalize dependent ses.
-  induction args; intros ses Heq Hls.
-  {
-    simpl in Heq.
-    injection Heq. clear Heq. intros Heq.
-    subst.
-    simpl in Hls.
-    unfold create_local_smt_store in Hls.
-    destruct (df_args d).
-    {
-      simpl in Hls.
-      injection Hls. clear Hls. intros Hls.
-      subst.
-      apply WD_SMTStore.
-      admit.
-    }
-    {
-      simpl in Hls.
-      discriminate Hls.
-    }
-  }
-  {
-    simpl in Heq.
-    destruct (sym_eval_arg (sym_store s) (sym_globals s) a).
-    {
-      destruct (sym_eval_args (sym_store s) (sym_globals s) args).
-      {
-      simpl in Heq.
-*)
+Admitted.
+
+Lemma L1 : forall ses syms d ls,
+  (forall se n, In se ses -> subexpr (SMT_Var n) se -> In n syms) ->
+  (create_local_smt_store d ses) = Some ls ->
+  well_defined_smt_store ls syms.
+Proof.
+Admitted.
 
 Lemma well_defined_smt_store_ext : forall s sym syms,
   well_defined_smt_store s syms -> well_defined_smt_store s (sym :: syms).
@@ -1241,14 +1223,36 @@ Proof.
     apply WD_State.
     split.
     {
-      admit.
+      apply (L1 ses syms d ls').
+      {
+        intros se n Hin Hse.
+        apply (well_defined_sym_eval_args
+          (mk_sym_state
+            ic
+            (CMD_Inst cid (INSTR_VoidCall (TYPE_Void, f) args anns))
+            (c0 :: cs0)
+            pbid
+            ls
+            stk
+            gs
+            syms
+            pc
+            mdl
+          )
+          args
+          ses
+          se
+          n
+        ); assumption.
+      }
+      { assumption. }
     }
     {
       split.
       { assumption. }
       {
         split.
-        { admit. }
+        { apply WD_FrameNoReturn; assumption. }
         { assumption. }
       }
     }
