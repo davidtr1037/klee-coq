@@ -182,6 +182,20 @@ Proof.
   }
 Qed.
 
+(* TODO: rename *)
+Lemma well_defined_smt_expr_ext : forall se sym syms,
+  well_defined_smt_expr se syms ->
+  well_defined_smt_expr se (sym :: syms).
+Proof.
+  intros se sym syms Hwd.
+  apply WD_Expr.
+  intros n Hse.
+  apply in_cons.
+  inversion Hwd; subst.
+  apply H.
+  assumption.
+Qed.
+
 Lemma well_defined_empty_smt_store : forall syms, well_defined_smt_store empty_smt_store syms.
 Proof.
   intros syms.
@@ -215,6 +229,19 @@ Proof.
     }
     { assumption. }
   }
+Qed.
+
+(* TODO: rename *)
+Lemma well_defined_smt_store_ext : forall s sym syms,
+  well_defined_smt_store s syms -> well_defined_smt_store s (sym :: syms).
+Proof.
+  intros s sym syms Hwd.
+  inversion Hwd; subst.
+  apply WD_SMTStore.
+  intros x se Heq.
+  apply well_defined_smt_expr_ext.
+  apply (H x se).
+  assumption.
 Qed.
 
 Lemma well_defined_sym_eval_exp : forall s ot e se,
@@ -450,7 +477,7 @@ Proof.
   }
 Qed.
 
-(* TODO: raw_id can by any type *)
+(* TODO: generalize? *)
 Lemma well_defined_via_merge_lists : forall (A : Type) (la : list A) ses l syms,
   (forall se, In se ses -> well_defined_smt_expr se syms) ->
   (merge_lists la ses) = Some l ->
@@ -510,23 +537,7 @@ Proof.
   { discriminate H. }
 Qed.
 
-Lemma well_defined_smt_store_ext : forall s sym syms,
-  well_defined_smt_store s syms -> well_defined_smt_store s (sym :: syms).
-Proof.
-  intros s sym syms Hwd.
-  inversion Hwd; subst.
-  apply WD_SMTStore.
-  intros x se Heq.
-  apply WD_Expr.
-  intros n Hse.
-  apply in_cons.
-  assert(L : well_defined_smt_expr se syms).
-  { apply (H x se). assumption. }
-  inversion L; subst.
-  apply H0.
-  assumption.
-Qed.
-
+(* TODO: rename *)
 Lemma well_defined_stack_ext : forall stk sym syms,
   well_defined_stack stk syms -> well_defined_stack stk (sym :: syms).
 Proof.
@@ -930,13 +941,8 @@ Proof.
         rewrite raw_id_eqb_neq in E.
         rewrite update_map_neq in Heq.
         {
-          apply WD_Expr.
-          intros n Hse.
-          apply in_cons.
-          assert(L : well_defined_smt_expr se' syms).
-          { apply (H x se'). assumption. }
-          inversion L; subst.
-          apply H0.
+          apply well_defined_smt_expr_ext.
+          apply (H x se').
           assumption.
         }
         { symmetry. assumption. }
@@ -955,12 +961,7 @@ Proof.
           assumption.
         }
         {
-          (* TODO: WD e s --> WD e (_ :: s) *)
-          apply WD_Expr.
-          intros n Hse.
-          apply in_cons.
-          inversion Hwd_pc; subst.
-          apply H.
+          apply well_defined_smt_expr_ext.
           assumption.
         }
       }
