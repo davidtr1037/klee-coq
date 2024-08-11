@@ -44,6 +44,7 @@ Inductive well_defined_stack : list sym_frame -> list string -> Prop :=
       well_defined_stack ((Sym_Frame_NoReturn ls ic pbid) :: stk) syms
 .
 
+(* TODO: use record getters? *)
 Inductive well_defined : sym_state -> Prop :=
   | WD_State : forall ic c cs pbid ls stk gs syms pc mdl,
       (
