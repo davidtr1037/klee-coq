@@ -96,6 +96,35 @@ Proof.
       }
     }
   }
+  { admit. }
+  {
+    inversion Hoa; subst.
+    destruct H as [m H].
+    inversion H; subst.
+    exists (mk_sym_state
+      (mk_inst_counter (ic_fid c_ic) (tbid) (get_cmd_id c))
+      c
+      cs
+      (Some (ic_bid c_ic))
+      s_ls
+      s_stk
+      s_gs
+      s_syms
+      s_pc
+      c_mdl
+    ).
+    split.
+    { apply Sym_Step_UnconditionalBr with (d := d) (b := b); assumption. }
+    {
+      apply OA_State.
+      exists m.
+      apply OAV_State.
+      destruct H22 as [H22_1 [H22_2 H22_3]].
+      split.
+      { assumption. }
+      { split; assumption. }
+    }
+  }
 Admitted.
 
 (* TODO: add module preconditions *)
