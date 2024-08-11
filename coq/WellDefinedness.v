@@ -451,21 +451,21 @@ Proof.
 Qed.
 
 (* TODO: raw_id can by any type *)
-Lemma L1 : forall (xs : list raw_id) ses l syms,
+Lemma well_defined_via_merge_lists : forall (A : Type) (la : list A) ses l syms,
   (forall se, In se ses -> well_defined_smt_expr se syms) ->
-  (merge_lists xs ses) = Some l ->
-  (forall x se, In (x, se) l -> well_defined_smt_expr se syms).
+  (merge_lists la ses) = Some l ->
+  (forall a se, In (a, se) l -> well_defined_smt_expr se syms).
 Proof.
-  intros xs ses l syms Hwd H.
-  generalize dependent xs.
+  intros A la ses l syms Hwd H.
+  generalize dependent la.
   generalize dependent ses.
-  induction l; intros ses Hwd xs H.
+  induction l; intros ses Hwd la H.
   {
-    intros x se Hin.
+    intros a se Hin.
     inversion Hin.
   }
   {
-    destruct xs as [ | x' xs'] eqn:E1, ses as [ | se' ses'] eqn:E2.
+    destruct la as [ | a' la'] eqn:E1, ses as [ | se' ses'] eqn:E2.
     { discriminate H. }
     { discriminate H. }
     { discriminate H. }
@@ -473,7 +473,7 @@ Proof.
       apply merge_lists_decompose in H.
       destruct H as [l' [H1 H2]].
       inversion H2; subst.
-      intros x se Hin.
+      intros a se Hin.
       inversion Hin; subst.
       {
         inversion H; subst.
@@ -481,7 +481,7 @@ Proof.
         apply in_eq.
       }
       {
-        apply IHl with (ses := ses') (xs := xs') (x := x) (se := se); try assumption.
+        apply IHl with (ses := ses') (la := la') (a := a) (se := se); try assumption.
         {
           (* TODO: add a lemma? *)
           intros se0 Hin0.
@@ -494,17 +494,7 @@ Proof.
   }
 Qed.
 
-Lemma L2 : forall xs ses l syms,
-  (forall se, In se ses -> well_defined_smt_expr se syms) ->
-  (merge_lists xs ses) = Some l ->
-  (well_defined_smt_store (fill_smt_store l) syms).
-Proof.
-  intros xs ses l syms Hwd H.
-  apply well_defined_fill_smt_store.
-  apply (L1 xs ses); assumption.
-Qed.
-
-Lemma L3 : forall ses syms d ls,
+Lemma well_defined_create_local_smt_store : forall ses syms d ls,
   (forall se, In se ses -> well_defined_smt_expr se syms) ->
   (create_local_smt_store d ses) = Some ls ->
   well_defined_smt_store ls syms.
@@ -514,7 +504,8 @@ Proof.
   destruct (merge_lists (df_args d) ses) eqn:E.
   {
     inversion H; subst.
-    apply (L2 (df_args d) ses); assumption.
+    apply well_defined_fill_smt_store.
+    apply (well_defined_via_merge_lists raw_id (df_args d) ses); assumption.
   }
   { discriminate H. }
 Qed.
@@ -756,7 +747,7 @@ Proof.
     apply WD_State.
     split.
     {
-      apply (L3 ses syms d ls').
+      apply (well_defined_create_local_smt_store ses syms d ls').
       {
         intros se Hin.
         apply (well_defined_sym_eval_args
@@ -793,7 +784,7 @@ Proof.
     apply WD_State.
     split.
     {
-      apply (L3 ses syms d ls').
+      apply (well_defined_create_local_smt_store ses syms d ls').
       {
         intros se Hin.
         apply (well_defined_sym_eval_args
