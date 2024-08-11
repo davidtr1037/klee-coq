@@ -9,6 +9,7 @@ DynamicValue.v
 IDMap.v
 Symbolic.v
 LLVMAst.v
+Module.v
 Numeric/Archi.v
 Numeric/Floats.v
 Numeric/IEEE754_extra.v
