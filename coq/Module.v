@@ -18,9 +18,15 @@ Inductive is_supported_cmd : llvm_cmd -> Prop :=
       is_supported_cmd (CMD_Term n t)
 .
 
+Inductive is_supported_cmd_list : list llvm_cmd -> Prop :=
+  | IS_CmdList : forall l,
+      (forall c, In c l -> is_supported_cmd c) ->
+      is_supported_cmd_list l
+.
+
 Inductive is_supported_block : llvm_block -> Prop :=
   | IS_Block : forall b,
-      (forall c, In c (blk_cmds b) -> is_supported_cmd c) ->
+      is_supported_cmd_list (blk_cmds b) ->
       is_supported_block b
 .
 

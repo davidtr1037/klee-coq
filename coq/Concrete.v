@@ -10,6 +10,7 @@ From SE Require Import CFG.
 From SE Require Import DynamicValue.
 From SE Require Import IDMap.
 From SE Require Import LLVMAst.
+From SE Require Import Module.
 From SE Require Import Relation.
 
 From SE.Utils Require Import ListUtil.
@@ -590,6 +591,23 @@ Definition init_state (m : llvm_module) (d : llvm_definition) : option state :=
     end
   | _ => None
   end
+.
+
+Inductive is_supported_state : state -> Prop :=
+  | IS_State : forall ic c cs pbid ls stk gs mdl,
+      is_supported_cmd c ->
+      is_supported_cmd_list cs ->
+      is_supported_state
+        (mk_state
+          ic
+          c
+          cs
+          pbid
+          ls
+          stk
+          gs
+          mdl
+        )
 .
 
 (* TODO: add assumptions about the module? *)

@@ -9,6 +9,7 @@ From SE Require Import CFG.
 From SE Require Import Concrete.
 From SE Require Import DynamicValue.
 From SE Require Import IDMap.
+From SE Require Import Module.
 From SE Require Import LLVMAst.
 From SE Require Import Relation.
 
