@@ -69,7 +69,7 @@ Inductive well_defined : sym_state -> Prop :=
 .
 
 Lemma well_defined_init_sym_state :
-  forall mdl d, exists s, (init_sym_state mdl d) = Some s -> well_defined s.
+  forall mdl d s, (init_sym_state mdl d) = Some s -> well_defined s.
 Proof.
 Admitted.
 
