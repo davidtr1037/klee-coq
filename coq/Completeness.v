@@ -13,14 +13,7 @@ From SE.SMT Require Import Expr.
 From SE.SMT Require Import Model.
 
 (* TODO: rename *)
-Lemma smt_lemma_1 : forall c_ls s_ls c_gs s_gs ot e m,
-  (forall (x : raw_id), equiv_via_model (c_ls x) (s_ls x) m) ->
-  (forall (x : raw_id), equiv_via_model (c_gs x) (s_gs x) m) ->
-  equiv_via_model (eval_exp c_ls c_gs ot e) (sym_eval_exp s_ls s_gs ot e) m.
-Proof.
-Admitted.
-
-Lemma smt_lemma_2 : forall c_ls s_ls c_gs s_gs ot e m,
+Lemma eval_correspondence : forall c_ls s_ls c_gs s_gs ot e m,
   is_supported_exp e ->
   (forall (x : raw_id), equiv_via_model (c_ls x) (s_ls x) m) ->
   (forall (x : raw_id), equiv_via_model (c_gs x) (s_gs x) m) ->
@@ -143,7 +136,7 @@ Proof.
     ).
     {
       destruct H20 as [H20_1 [H20_2 H20_3]].
-      apply smt_lemma_2; try assumption.
+      apply eval_correspondence; try assumption.
       inversion Hiss; subst.
       inversion H2; subst.
       assumption.
@@ -234,8 +227,8 @@ Proof.
   }
 Admitted.
 
-(* TODO: rename *)
-Lemma X0 : forall mdl d c,
+(* TODO: should be iff *)
+Lemma initialization_correspondence : forall mdl d c,
   (init_state mdl d) = Some c -> (exists s, (init_sym_state mdl d) = Some s).
 Proof.
 Admitted.
@@ -249,12 +242,14 @@ Lemma completeness :
       (init_sym_state mdl d) = Some init_s /\ multi_sym_step init_s s /\ over_approx s c).
 Proof.
   intros mdl d init_c c Hism Hinit Hms.
+  (* TODO: rename *)
   assert(L0: exists init_s, init_sym_state mdl d = Some init_s).
-  { apply (X0 mdl d init_c). assumption. }
+  { apply (initialization_correspondence mdl d init_c). assumption. }
   destruct L0 as [init_s L0].
   exists init_s.
   induction Hms as [init_c c | init_c c c'].
   {
+    (* TODO: rename *)
     assert(L1: exists s, sym_step init_s s /\ over_approx s c).
     {
       apply completeness_single_step with (c := init_c).
@@ -274,12 +269,14 @@ Proof.
     }
   }
   {
+    (* TODO: rename *)
     assert(L2:
       exists s,
         init_sym_state mdl d = Some init_s /\ multi_sym_step init_s s /\ over_approx s c
     ).
     { apply IHHms. assumption. }
     destruct L2 as [s [L2_1 [L2_2 L2_3]]].
+    (* TODO: rename *)
     assert(L3: exists s', sym_step s s' /\ over_approx s' c').
     {
       apply completeness_single_step with (c := c).
