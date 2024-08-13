@@ -234,13 +234,72 @@ Proof.
   }
 Admitted.
 
-(* TODO: add module preconditions *)
-Lemma completeness :
-  forall (mdl : llvm_module) (d : llvm_definition) (c : state),
-    exists init_c,
-      (init_state mdl d) = Some init_c ->
-      multi_step init_c c ->
-      (exists init_s s,
-        (init_sym_state mdl d) = Some init_s /\ multi_sym_step init_s s /\ over_approx s c).
+(* TODO: rename *)
+Lemma X0 : forall mdl d c,
+  (init_state mdl d) = Some c -> (exists s, (init_sym_state mdl d) = Some s).
 Proof.
+Admitted.
+
+Lemma completeness :
+  forall (mdl : llvm_module) (d : llvm_definition) (init_c c : state),
+    is_supported_module mdl ->
+    (init_state mdl d) = Some init_c ->
+    multi_step init_c c ->
+    (exists init_s s,
+      (init_sym_state mdl d) = Some init_s /\ multi_sym_step init_s s /\ over_approx s c).
+Proof.
+  intros mdl d init_c c Hism Hinit Hms.
+  assert(L0: exists init_s, init_sym_state mdl d = Some init_s).
+  { apply (X0 mdl d init_c). assumption. }
+  destruct L0 as [init_s L0].
+  exists init_s.
+  induction Hms as [init_c c | init_c c c'].
+  {
+    assert(L1: exists s, sym_step init_s s /\ over_approx s c).
+    {
+      apply completeness_single_step with (c := init_c).
+      { admit. (* TODO: add is_supported_* lemmas *) }
+      { assumption. }
+      { apply (well_defined_init_sym_state mdl d). assumption. }
+      { admit. (* TODO: over-approx between initial states *) }
+    }
+    destruct L1 as [s [L1_1 L1_2]].
+    exists s.
+    split.
+    { assumption. }
+    {
+      split.
+      { apply multi_base. assumption. }
+      { assumption. }
+    }
+  }
+  {
+    assert(L2:
+      exists s,
+        init_sym_state mdl d = Some init_s /\ multi_sym_step init_s s /\ over_approx s c
+    ).
+    { apply IHHms. assumption. }
+    destruct L2 as [s [L2_1 [L2_2 L2_3]]].
+    assert(L3: exists s', sym_step s s' /\ over_approx s' c').
+    {
+      apply completeness_single_step with (c := c).
+      { admit. }
+      { assumption. }
+      {
+        apply well_defined_multi_sym_step with (s := init_s).
+        apply (well_defined_init_sym_state mdl d).
+        { assumption. }
+        { assumption. }
+      }
+      { assumption. }
+    }
+    destruct L3 as [s' [L3_1 L3_2]].
+    exists s'.
+    split.
+    { assumption. }
+    {
+      split.
+      { apply multi_trans with (y := s); assumption. }
+      { assumption. }
+    }
 Admitted.
