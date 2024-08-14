@@ -3,6 +3,7 @@ From Coq Require Import List.
 Import ListNotations.
 
 From SE Require Import CFG.
+From SE Require Import Concrete.
 From SE Require Import LLVMAst.
 
 Inductive is_supported_exp : (exp typ) -> Prop :=
@@ -52,4 +53,21 @@ Inductive is_supported_module : llvm_module -> Prop :=
   | IS_Module : forall mdl,
       (forall d, In d (m_definitions mdl) -> is_supported_definition d) ->
       is_supported_module mdl
+.
+
+Inductive is_supported_state : state -> Prop :=
+  | IS_State : forall ic c cs pbid ls stk gs mdl,
+      is_supported_cmd c ->
+      is_supported_cmd_list cs ->
+      is_supported_state
+        (mk_state
+          ic
+          c
+          cs
+          pbid
+          ls
+          stk
+          gs
+          mdl
+        )
 .
