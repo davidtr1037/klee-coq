@@ -681,9 +681,9 @@ Inductive over_approx_stack_via : list sym_frame -> list frame -> smt_model -> P
 
 Inductive over_approx_via : sym_state -> state -> smt_model -> Prop :=
   | OAV_State : forall ic c cs pbid s_ls s_stk s_gs syms pc mdl c_ls c_stk c_gs m,
-      (forall (x : raw_id), equiv_via_model (c_ls x) (s_ls x) m) ->
+      (over_approx_store_via s_ls c_ls m) ->
       (over_approx_stack_via s_stk c_stk m) ->
-      (forall (x : raw_id), equiv_via_model (c_gs x) (s_gs x) m) ->
+      (over_approx_store_via s_gs c_gs m) ->
       ((smt_eval m pc) = Some di_true) ->
       over_approx_via
         (mk_sym_state

@@ -15,10 +15,11 @@ From SE.SMT Require Import Expr.
 From SE.SMT Require Import Model.
 
 (* TODO: rename *)
+(* TODO: use over_approx_store_via *)
 Lemma eval_correspondence : forall c_ls s_ls c_gs s_gs ot e m,
   is_supported_exp e ->
-  (forall (x : raw_id), equiv_via_model (c_ls x) (s_ls x) m) ->
-  (forall (x : raw_id), equiv_via_model (c_gs x) (s_gs x) m) ->
+  over_approx_store_via s_ls c_ls m ->
+  over_approx_store_via s_gs c_gs m ->
   equiv_via_model (eval_exp c_ls c_gs ot e) (sym_eval_exp s_ls s_gs ot e) m.
 Proof.
   intros c_ls s_ls c_gs s_gs ot e m His Hls Hgs.
@@ -28,11 +29,13 @@ Proof.
     destruct id.
     {
       unfold lookup_ident, sym_lookup_ident.
-      apply Hgs.
+      inversion Hgs; subst.
+      apply H.
     }
     {
       unfold lookup_ident, sym_lookup_ident.
-      apply Hls.
+      inversion Hls; subst.
+      apply H.
     }
   }
   {
@@ -116,10 +119,11 @@ Qed.
 
 Lemma store_correspondence_update : forall dv se m v c_s s_s,
   equiv_via_model (Some dv) (Some se) m ->
-  (forall x, equiv_via_model (c_s x) (s_s x) m) ->
-  (forall x, equiv_via_model ((v !-> Some dv; c_s) x) ((v !-> Some se; s_s) x) m).
+  over_approx_store_via s_s c_s m ->
+  over_approx_store_via (v !-> Some se; s_s) (v !-> Some dv; c_s) m.
 Proof.
   intros dv se m v c_s s_s H1 H2.
+  apply OAStore.
   intros x.
   destruct (raw_id_eqb x v) eqn:E.
   {
@@ -131,7 +135,8 @@ Proof.
   {
     rewrite raw_id_eqb_neq in E.
     rewrite update_map_neq, update_map_neq; try (symmetry; assumption).
-    apply H2.
+    inversion H2; subst.
+    apply H.
   }
 Qed.
 
@@ -346,7 +351,27 @@ Proof.
     inversion Hoa; subst.
     destruct H as [m H].
     inversion H; subst.
-    admit.
+    inversion H22; subst.
+    inversion H3; subst.
+    exists (mk_sym_state
+      ic'
+      c'0
+      cs'
+      pbid'
+      s_s
+      s_stk0
+      s_gs
+      s_syms
+      s_pc
+      c_mdl
+    ).
+    split.
+    { apply Sym_Step_RetVoid with (d := d); assumption. }
+    {
+      apply OA_State.
+      exists m.
+      apply OAV_State; assumption.
+    }
   }
   { admit. }
   { admit. } (* make_symbolic *)
