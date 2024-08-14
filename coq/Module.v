@@ -1,3 +1,4 @@
+(* TODO: rename to ModuleAssumptions? *)
 From Coq Require Import List.
 
 Import ListNotations.

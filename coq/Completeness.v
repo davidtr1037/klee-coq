@@ -233,6 +233,27 @@ Lemma initialization_correspondence : forall mdl d,
 Proof.
 Admitted.
 
+Lemma init_state_supported : forall mdl d s,
+  is_supported_module mdl ->
+  init_state mdl d = Some s -> is_supported_state s.
+Proof.
+Admitted.
+
+Lemma multi_step_supported : forall mdl s s',
+  is_supported_module mdl ->
+  multi_step s s' ->
+  is_supported_state s ->
+  is_supported_state s'.
+Proof.
+Admitted.
+
+Lemma over_approx_init_states : forall mdl d s c,
+  init_sym_state mdl d = Some s ->
+  init_state mdl d = Some c ->
+  over_approx s c.
+Proof.
+Admitted.
+
 Lemma completeness :
   forall (mdl : llvm_module) (d : llvm_definition) (init_c c : state),
     is_supported_module mdl ->
@@ -253,10 +274,10 @@ Proof.
     assert(L1: exists s, sym_step init_s s /\ over_approx s c).
     {
       apply completeness_single_step with (c := init_c).
-      { admit. (* TODO: add is_supported_* lemmas *) }
+      { apply (init_state_supported mdl d); assumption. }
       { assumption. }
       { apply (well_defined_init_sym_state mdl d). assumption. }
-      { admit. (* TODO: over-approx between initial states *) }
+      { apply (over_approx_init_states mdl d); assumption. }
     }
     destruct L1 as [s [L1_1 L1_2]].
     exists s.
@@ -280,7 +301,10 @@ Proof.
     assert(L3: exists s', sym_step s s' /\ over_approx s' c').
     {
       apply completeness_single_step with (c := c).
-      { admit. }
+      {
+        apply (multi_step_supported mdl init_c); try assumption.
+        apply (init_state_supported mdl d); assumption.
+      }
       { assumption. }
       {
         apply well_defined_multi_sym_step with (s := init_s).
@@ -299,4 +323,5 @@ Proof.
       { apply multi_trans with (y := s); assumption. }
       { assumption. }
     }
-Admitted.
+  }
+Qed.
