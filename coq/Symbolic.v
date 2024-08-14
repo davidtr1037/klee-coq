@@ -648,6 +648,37 @@ Inductive equiv_via_model : option dynamic_value -> option smt_expr -> smt_model
       (smt_eval m se) = Some di -> equiv_via_model (Some (DV_Int di)) (Some se) m
 .
 
+(* TODO: use in the relevant locations *)
+Inductive over_approx_store_via : smt_store -> dv_store -> smt_model -> Prop :=
+  | OAStore : forall c_s s_s m,
+      (forall (x : raw_id), equiv_via_model (c_s x) (s_s x) m) ->
+      over_approx_store_via s_s c_s m
+.
+
+Inductive over_approx_frame_via : sym_frame -> frame -> smt_model -> Prop :=
+  | OAFrame : forall s_s c_s m ic pbid v,
+      over_approx_store_via s_s c_s m ->
+      over_approx_frame_via
+        (Sym_Frame s_s ic pbid v)
+        (Frame c_s ic pbid v)
+        m
+  | OAFrame_NoReturn : forall s_s c_s m ic pbid,
+      over_approx_store_via s_s c_s m ->
+      over_approx_frame_via
+        (Sym_Frame_NoReturn s_s ic pbid)
+        (Frame_NoReturn c_s ic pbid)
+        m
+.
+
+Inductive over_approx_stack_via : list sym_frame -> list frame -> smt_model -> Prop :=
+  | OAStack_Empty : forall m,
+      over_approx_stack_via [] [] m
+  | OAStack_NonEmpty : forall s_f s_stk c_f c_stk m,
+      over_approx_frame_via s_f c_f m ->
+      over_approx_stack_via s_stk c_stk m ->
+      over_approx_stack_via (s_f :: s_stk) (c_f :: c_stk) m
+.
+
 Inductive over_approx_via : sym_state -> state -> smt_model -> Prop :=
   | OAV_State :
       forall ic c cs pbid s_ls s_stk s_gs syms pc mdl c_ls c_stk c_gs m,

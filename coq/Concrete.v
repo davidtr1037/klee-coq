@@ -63,6 +63,7 @@ Fixpoint get_arg_types (args : list (function_arg)) : list typ :=
   end
 .
 
+(* TODO: handle TERM_Unreachable? *)
 Inductive error_state : state -> Prop :=
   | ES_Assert : forall ic cid args anns cs pbid ls stk gs m d,
       (find_function m assert_id) = None ->
