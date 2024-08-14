@@ -18,8 +18,9 @@ Inductive is_supported_exp : (exp typ) -> Prop :=
 .
 
 Inductive is_supported_cmd : llvm_cmd -> Prop :=
-  | IS_Phi : forall n p,
-      is_supported_cmd (CMD_Phi n p)
+  | IS_Phi : forall n v t args,
+      (forall bid e, In (bid, e) args -> is_supported_exp e) ->
+      is_supported_cmd (CMD_Phi n (Phi v t args))
   | IS_INSTR_Op : forall n v e,
       is_supported_exp e ->
       is_supported_cmd (CMD_Inst n (INSTR_Op v e))

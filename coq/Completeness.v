@@ -1,4 +1,7 @@
+From Coq Require Import List.
 From Coq Require Import ZArith.
+
+Import ListNotations.
 
 From SE Require Import BitVectors.
 From SE Require Import CFG.
@@ -14,7 +17,7 @@ From SE Require Import WellDefinedness.
 From SE.SMT Require Import Expr.
 From SE.SMT Require Import Model.
 
-(* TODO: rename *)
+(* TODO: rename to: eval_exp_correspondence *)
 (* TODO: use over_approx_store_via *)
 Lemma eval_correspondence : forall c_ls s_ls c_gs s_gs ot e m,
   is_supported_exp e ->
@@ -140,6 +143,17 @@ Proof.
   }
 Qed.
 
+Lemma eval_phi_args_correspondence : forall c_ls s_ls c_gs s_gs t args pbid m,
+  (forall bid e, In (bid, e) args -> is_supported_exp e) ->
+  over_approx_store_via s_ls c_ls m ->
+  over_approx_store_via s_gs c_gs m ->
+  equiv_via_model
+    (eval_phi_args c_ls c_gs t args pbid)
+    (sym_eval_phi_args s_ls s_gs t args pbid)
+    m.
+Proof.
+Admitted.
+
 Lemma completeness_single_step :
   forall c c' s,
     is_supported_state c ->
@@ -238,7 +252,91 @@ Proof.
       }
     }
   }
-  { admit. } (* phi *)
+  {
+    inversion Hoa; subst.
+    destruct H as [m H].
+    inversion H; subst.
+    assert(L :
+      equiv_via_model
+        (eval_phi_args c_ls c_gs t args pbid)
+        (sym_eval_phi_args s_ls s_gs t args pbid)
+        m
+    ).
+    {
+      apply eval_phi_args_correspondence; try assumption.
+      inversion Hiss; subst.
+      inversion H2; subst.
+      assumption.
+    }
+    inversion L; subst.
+    { rewrite H8 in *. discriminate H1. }
+    {
+      exists (mk_sym_state
+        (next_inst_counter c_ic c)
+        c
+        cs
+        (Some pbid)
+        (v !-> Some se; s_ls)
+        s_stk
+        s_gs
+        s_syms
+        s_pc
+        c_mdl
+      ).
+      split.
+      {
+        apply Sym_Step_Phi.
+        symmetry.
+        assumption.
+      }
+      {
+        apply OA_State.
+        exists m.
+        apply OAV_State; try assumption.
+        apply store_correspondence_update.
+        {
+          rewrite H8 in H0.
+          rewrite <- H0.
+          apply EVM_NoneViaModel.
+          assumption.
+        }
+        { assumption. }
+      }
+    }
+    {
+      exists (mk_sym_state
+        (next_inst_counter c_ic c)
+        c
+        cs
+        (Some pbid)
+        (v !-> Some se; s_ls)
+        s_stk
+        s_gs
+        s_syms
+        s_pc
+        c_mdl
+      ).
+      split.
+      {
+        apply Sym_Step_Phi.
+        symmetry.
+        assumption.
+      }
+      {
+        apply OA_State.
+        exists m.
+        apply OAV_State; try assumption.
+        apply store_correspondence_update.
+        {
+          rewrite H8 in H0.
+          rewrite <- H0.
+          apply EVM_Some.
+          assumption.
+        }
+        { assumption. }
+      }
+    }
+  }
   {
     inversion Hoa; subst.
     destruct H as [m H].
