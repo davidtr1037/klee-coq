@@ -200,10 +200,9 @@ Proof.
       inversion L1_3; subst.
       destruct H as [m H].
       inversion H; subst.
-      destruct H0 as [H0_1 [H0_2 H0_3]].
       inversion L; subst.
-      unfold unsat in H1.
-      destruct H1.
+      unfold unsat in H5.
+      destruct H5.
       unfold sat.
       exists m.
       unfold sat_via.

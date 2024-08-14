@@ -680,10 +680,10 @@ Inductive over_approx_stack_via : list sym_frame -> list frame -> smt_model -> P
 .
 
 Inductive over_approx_via : sym_state -> state -> smt_model -> Prop :=
-  | OAV_State :
-      forall ic c cs pbid s_ls s_stk s_gs syms pc mdl c_ls c_stk c_gs m,
-      (forall (x : raw_id), equiv_via_model (c_ls x) (s_ls x) m) /\
-      (forall (x : raw_id), equiv_via_model (c_gs x) (s_gs x) m) /\
+  | OAV_State : forall ic c cs pbid s_ls s_stk s_gs syms pc mdl c_ls c_stk c_gs m,
+      (forall (x : raw_id), equiv_via_model (c_ls x) (s_ls x) m) ->
+      (over_approx_stack_via s_stk c_stk m) ->
+      (forall (x : raw_id), equiv_via_model (c_gs x) (s_gs x) m) ->
       ((smt_eval m pc) = Some di_true) ->
       over_approx_via
         (mk_sym_state
@@ -715,15 +715,6 @@ Inductive over_approx : sym_state -> state -> Prop :=
   | OA_State :
       forall s c, (exists m, over_approx_via s c m) -> over_approx s c
 .
-
-(* TODO: rename *)
-Lemma smt_lemma_1 : forall (c_ls c_gs : dv_store) (s_ls s_gs : smt_store) (t : option typ) (e : exp typ) (m : smt_model),
-  (forall x : raw_id, equiv_via_model (c_ls x) (s_ls x) m) ->
-  (forall x : raw_id, equiv_via_model (c_gs x) (s_gs x) m) ->
-  equiv_via_model (eval_exp c_ls c_gs t e) (sym_eval_exp s_ls s_gs t e) m
-.
-Proof.
-Admitted.
 
 Lemma error_correspondence: forall c s,
   over_approx s c -> (error_sym_state s <-> error_state c).

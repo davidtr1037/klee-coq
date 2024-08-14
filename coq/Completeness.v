@@ -151,7 +151,6 @@ Proof.
     inversion Hoa; subst.
     destruct H as [m H].
     inversion H; subst.
-    destruct H20 as [H20_1 [H20_2 H20_3]].
     assert(L :
       equiv_via_model
         (eval_exp c_ls c_gs None e)
@@ -189,23 +188,15 @@ Proof.
       {
         apply OA_State.
         exists m.
-        apply OAV_State.
-        split.
+        apply OAV_State; try assumption.
+        apply store_correspondence_update.
         {
-          apply store_correspondence_update.
-          {
-            rewrite H8 in H0.
-            rewrite <- H0.
-            apply EVM_NoneViaModel.
-            assumption.
-          }
-          { assumption. }
+          rewrite H8 in H0.
+          rewrite <- H0.
+          apply EVM_NoneViaModel.
+          assumption.
         }
-        {
-          split.
-          { apply H20_2. }
-          { assumption. }
-        }
+        { assumption. }
       }
     }
     {
@@ -230,19 +221,15 @@ Proof.
       {
         apply OA_State.
         exists m.
-        apply OAV_State.
-        split.
+        apply OAV_State; try assumption.
+        apply store_correspondence_update.
         {
-          apply store_correspondence_update.
-          {
-            rewrite H8 in H0.
-            rewrite <- H0.
-            apply EVM_Some.
-            assumption.
-          }
-          { assumption. }
+          rewrite H8 in H0.
+          rewrite <- H0.
+          apply EVM_Some.
+          assumption.
         }
-        { split; assumption. }
+        { assumption. }
       }
     }
   }
@@ -268,18 +255,13 @@ Proof.
     {
       apply OA_State.
       exists m.
-      apply OAV_State.
-      destruct H22 as [H22_1 [H22_2 H22_3]].
-      split.
-      { assumption. }
-      { split; assumption. }
+      apply OAV_State; try assumption.
     }
   }
   { (* TERM_Br True *)
     inversion Hoa; subst.
     destruct H as [m H].
     inversion H; subst.
-    destruct H23 as [H23_1 [H23_2 H23_3]].
     assert(L :
       equiv_via_model
         (eval_exp c_ls c_gs (Some (TYPE_I 1)) e)
@@ -316,17 +298,9 @@ Proof.
       {
         apply OA_State.
         exists m.
-        apply OAV_State.
-        split.
-        { assumption. }
-        {
-          split.
-          { assumption. }
-          {
-            rewrite H8 in H0.
-            discriminate H0.
-          }
-        }
+        apply OAV_State; try assumption.
+        rewrite H8 in H0.
+        discriminate H0.
       }
     }
     {
@@ -351,25 +325,17 @@ Proof.
       {
         apply OA_State.
         exists m.
-        apply OAV_State.
-        split.
-        { assumption. }
-        {
-          split.
-          { assumption. }
-          {
-            simpl.
-            rewrite H23_3, H2.
-            rewrite H8 in L.
-            inversion L; subst.
-            rewrite <- H1 in H4.
-            inversion H4; subst.
-            rewrite H2 in H5.
-            inversion H5; subst.
-            simpl.
-            reflexivity.
-          }
-        }
+        apply OAV_State; try assumption.
+        simpl.
+        rewrite H26, H2.
+        rewrite H8 in L.
+        inversion L; subst.
+        rewrite <- H1 in H4.
+        inversion H4; subst.
+        rewrite H2 in H5.
+        inversion H5; subst.
+        simpl.
+        reflexivity.
       }
     }
   }
