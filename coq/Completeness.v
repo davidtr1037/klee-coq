@@ -1,3 +1,5 @@
+From Coq Require Import ZArith.
+
 From SE Require Import BitVectors.
 From SE Require Import CFG.
 From SE Require Import Concrete.
@@ -149,6 +151,7 @@ Proof.
     inversion Hoa; subst.
     destruct H as [m H].
     inversion H; subst.
+    destruct H20 as [H20_1 [H20_2 H20_3]].
     assert(L :
       equiv_via_model
         (eval_exp c_ls c_gs None e)
@@ -156,7 +159,6 @@ Proof.
         m
     ).
     {
-      destruct H20 as [H20_1 [H20_2 H20_3]].
       apply eval_correspondence; try assumption.
       inversion Hiss; subst.
       inversion H2; subst.
@@ -188,7 +190,6 @@ Proof.
         apply OA_State.
         exists m.
         apply OAV_State.
-        destruct H20 as [H20_1 [H20_2 H20_3]].
         split.
         {
           apply store_correspondence_update.
@@ -230,7 +231,6 @@ Proof.
         apply OA_State.
         exists m.
         apply OAV_State.
-        destruct H20 as [H20_1 [H20_2 H20_3]].
         split.
         {
           apply store_correspondence_update.
@@ -246,7 +246,7 @@ Proof.
       }
     }
   }
-  { admit. }
+  { admit. } (* phi *)
   {
     inversion Hoa; subst.
     destruct H as [m H].
@@ -275,6 +275,116 @@ Proof.
       { split; assumption. }
     }
   }
+  { (* TERM_Br True *)
+    inversion Hoa; subst.
+    destruct H as [m H].
+    inversion H; subst.
+    destruct H23 as [H23_1 [H23_2 H23_3]].
+    assert(L :
+      equiv_via_model
+        (eval_exp c_ls c_gs (Some (TYPE_I 1)) e)
+        (sym_eval_exp s_ls s_gs (Some (TYPE_I 1)) e)
+        m
+    ).
+    {
+      apply eval_correspondence; try assumption.
+      inversion Hiss; subst.
+      inversion H2; subst.
+      assumption.
+    }
+    inversion L; subst.
+    { rewrite H8 in *. discriminate H1. }
+    {
+      exists (mk_sym_state
+        (mk_inst_counter (ic_fid c_ic) (bid1) (get_cmd_id c))
+        c
+        cs
+        (Some (ic_bid c_ic))
+        s_ls
+        s_stk
+        s_gs
+        s_syms
+        (SMT_BinOp SMT_And s_pc se)
+        c_mdl
+      ).
+      split.
+      {
+        apply Sym_Step_Br_True with (d := d) (b := b); try assumption.
+        symmetry.
+        assumption.
+      }
+      {
+        apply OA_State.
+        exists m.
+        apply OAV_State.
+        split.
+        { assumption. }
+        {
+          split.
+          { assumption. }
+          {
+            rewrite H8 in H0.
+            discriminate H0.
+          }
+        }
+      }
+    }
+    {
+      exists (mk_sym_state
+        (mk_inst_counter (ic_fid c_ic) (bid1) (get_cmd_id c))
+        c
+        cs
+        (Some (ic_bid c_ic))
+        s_ls
+        s_stk
+        s_gs
+        s_syms
+        (SMT_BinOp SMT_And s_pc se)
+        c_mdl
+      ).
+      split.
+      {
+        apply Sym_Step_Br_True with (d := d) (b := b); try assumption.
+        symmetry.
+        assumption.
+      }
+      {
+        apply OA_State.
+        exists m.
+        apply OAV_State.
+        split.
+        { assumption. }
+        {
+          split.
+          { assumption. }
+          {
+            simpl.
+            rewrite H23_3, H2.
+            rewrite H8 in L.
+            inversion L; subst.
+            rewrite <- H1 in H4.
+            inversion H4; subst.
+            rewrite H2 in H5.
+            inversion H5; subst.
+            simpl.
+            reflexivity.
+          }
+        }
+      }
+    }
+  }
+  { admit.  } (* TERM_Br False *)
+  { admit. }
+  { admit. }
+  {
+    inversion Hoa; subst.
+    destruct H as [m H].
+    inversion H; subst.
+    admit.
+  }
+  { admit. }
+  { admit. } (* make_symbolic *)
+  { admit. } (* assume *)
 Admitted.
 
 (* TODO: should be iff *)
