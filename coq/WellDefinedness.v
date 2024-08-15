@@ -410,131 +410,25 @@ Proof.
   }
 Qed.
 
-Lemma well_defined_sym_eval_args : forall s args ses se,
-  well_defined s ->
-  (sym_eval_args (sym_store s) (sym_globals s) args) = Some ses ->
-  In se ses ->
-  well_defined_smt_expr se (sym_symbolics s).
+(* TODO: rename *)
+Lemma X : forall ls gs l r syms,
+  well_defined_smt_store ls syms ->
+  well_defined_smt_store gs syms ->
+  fill_smt_store ls gs l = Some r ->
+  well_defined_smt_store r syms.
 Proof.
-  intros s args ses se Hwd Heq Hin.
-  generalize dependent se.
-  generalize dependent ses.
-  induction args; intros ses Heq se Hin.
-  {
-    simpl in Heq.
-    inversion Heq; subst.
-    inversion Hin.
-  }
-  {
-    simpl in Heq.
-    destruct (sym_eval_arg (sym_store s) (sym_globals s) a) as [se' | ] eqn:Earg.
-    {
-      destruct (sym_eval_args (sym_store s) (sym_globals s) args) eqn:Eargs.
-      {
-        inversion Heq; subst.
-        inversion Hin; subst.
-        {
-          unfold sym_eval_arg in Earg.
-          destruct a, t.
-          apply (well_defined_sym_eval_exp _ (Some t) e se); assumption.
-        }
-        {
-          apply IHargs with (ses := l) (se := se).
-          { reflexivity. }
-          { assumption. }
-        }
-      }
-      { discriminate Heq. }
-    }
-    { discriminate Heq. }
-  }
-Qed.
-
-Lemma well_defined_fill_smt_store : forall l syms,
-  (forall x se, In (x, se) l -> well_defined_smt_expr se syms) ->
-  (well_defined_smt_store (fill_smt_store l) syms).
+Admitted.
+ 
+Lemma well_defined_create_local_smt_store : forall d ls gs args r syms,
+  well_defined_smt_store ls syms ->
+  well_defined_smt_store gs syms ->
+  (create_local_smt_store d ls gs args) = Some r ->
+  well_defined_smt_store r syms.
 Proof.
-  intros l syms Hwd.
-  induction l.
-  {
-    simpl.
-    apply well_defined_empty_smt_store.
-  }
-  {
-    simpl.
-    destruct a as [a_x a_se].
-    apply well_defined_smt_store_update.
-    {
-      apply IHl.
-      intros x se Hin.
-      apply (Hwd x se).
-      apply in_cons.
-      assumption.
-    }
-    {
-      apply (Hwd a_x a_se).
-      apply in_eq.
-    }
-  }
-Qed.
-
-(* TODO: generalize? *)
-Lemma well_defined_via_merge_lists : forall (A : Type) (la : list A) ses l syms,
-  (forall se, In se ses -> well_defined_smt_expr se syms) ->
-  (merge_lists la ses) = Some l ->
-  (forall a se, In (a, se) l -> well_defined_smt_expr se syms).
-Proof.
-  intros A la ses l syms Hwd H.
-  generalize dependent la.
-  generalize dependent ses.
-  induction l; intros ses Hwd la H.
-  {
-    intros a se Hin.
-    inversion Hin.
-  }
-  {
-    destruct la as [ | a' la'] eqn:E1, ses as [ | se' ses'] eqn:E2.
-    { discriminate H. }
-    { discriminate H. }
-    { discriminate H. }
-    {
-      apply merge_lists_decompose in H.
-      destruct H as [l' [H1 H2]].
-      inversion H2; subst.
-      intros a se Hin.
-      inversion Hin; subst.
-      {
-        inversion H; subst.
-        apply (Hwd se).
-        apply in_eq.
-      }
-      {
-        apply IHl with (ses := ses') (la := la') (a := a) (se := se); try assumption.
-        {
-          (* TODO: add a lemma? *)
-          intros se0 Hin0.
-          apply (Hwd se0).
-          apply in_cons.
-          assumption.
-        }
-      }
-    }
-  }
-Qed.
-
-Lemma well_defined_create_local_smt_store : forall ses syms d ls,
-  (forall se, In se ses -> well_defined_smt_expr se syms) ->
-  (create_local_smt_store d ses) = Some ls ->
-  well_defined_smt_store ls syms.
-Proof.
-  intros ses syms d ls Hwd H.
+  intros d ls gs args r syms Hls Hgs H.
   unfold create_local_smt_store in H.
-  destruct (merge_lists (df_args d) ses) eqn:E.
-  {
-    inversion H; subst.
-    apply well_defined_fill_smt_store.
-    apply (well_defined_via_merge_lists raw_id (df_args d) ses); assumption.
-  }
+  destruct (merge_lists (df_args d) args) eqn:E.
+  { apply X with (ls := ls) (gs := gs) (l := l); assumption. }
   { discriminate H. }
 Qed.
 
@@ -758,30 +652,7 @@ Proof.
   {
     apply WD_State.
     split.
-    {
-      apply (well_defined_create_local_smt_store ses syms d ls').
-      {
-        intros se Hin.
-        apply (well_defined_sym_eval_args
-          (mk_sym_state
-            ic
-            (CMD_Inst cid (INSTR_VoidCall (TYPE_Void, f) args anns))
-            (c0 :: cs0)
-            pbid
-            ls
-            stk
-            gs
-            syms
-            pc
-            mdl
-          )
-          args
-          ses
-          se
-        ); assumption.
-      }
-      { assumption. }
-    }
+    { apply (well_defined_create_local_smt_store d ls gs args); assumption. }
     {
       split.
       { assumption. }
@@ -795,30 +666,7 @@ Proof.
   {
     apply WD_State.
     split.
-    {
-      apply (well_defined_create_local_smt_store ses syms d ls').
-      {
-        intros se Hin.
-        apply (well_defined_sym_eval_args
-          (mk_sym_state
-            ic
-            (CMD_Inst cid (INSTR_Call v (t, f) args anns))
-            (c0 :: cs0)
-            pbid
-            ls
-            stk
-            gs
-            syms
-            pc
-            mdl
-          )
-          args
-          ses
-          se
-        ); assumption.
-      }
-      { assumption. }
-    }
+    { apply (well_defined_create_local_smt_store d ls gs args); assumption. }
     {
       split.
       { assumption. }

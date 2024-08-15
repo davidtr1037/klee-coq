@@ -156,37 +156,24 @@ Definition find_function_by_exp (m : llvm_module) (e : exp typ) : option llvm_de
   end
 .
 
-Definition eval_arg (ls : dv_store) (gs : dv_store) (arg : function_arg) : option dynamic_value :=
-  match arg with
-  | ((t, e), _) => eval_exp ls gs (Some t) e
-  end
-.
-
-Fixpoint eval_args (ls : dv_store) (gs : dv_store) (args : list function_arg) : option (list dynamic_value) :=
-  match args with
-  | arg :: tail =>
-      match (eval_arg ls gs arg) with
-      | Some dv =>
-          match (eval_args ls gs tail) with
-          | Some dvs => Some (dv :: dvs)
-          | _ => None
-          end
-      | _ => None
-      end
-  | _ => Some []
-  end
-.
-
-Fixpoint fill_store (l : list (raw_id * dynamic_value)) : dv_store :=
+Fixpoint fill_store (ls : dv_store) (gs : dv_store) (l : list (raw_id * function_arg)) : option dv_store :=
   match l with
-  | (id, dv) :: tail => (id !-> Some dv; (fill_store tail))
-  | [] => empty_dv_store
+  | (id, ((t, e), _)) :: tail =>
+      match (eval_exp ls gs (Some t) e) with
+      | Some dv =>
+          match (fill_store ls gs tail) with
+          | Some s => Some (id !-> Some dv; s)
+          | None => None
+          end
+      | None => None
+      end
+  | [] => Some empty_dv_store
   end
 .
 
-Definition create_local_store (d : llvm_definition) (dvs : list dynamic_value) : option dv_store :=
-  match (merge_lists (df_args d) dvs) with
-  | Some l => Some (fill_store l)
+Definition create_local_store (d : llvm_definition) (ls : dv_store) (gs : dv_store) (args : list function_arg) : option dv_store :=
+  match (merge_lists (df_args d) args) with
+  | Some l => fill_store ls gs l
   | None => None
   end
 .
@@ -350,13 +337,12 @@ Inductive step : state -> state -> Prop :=
           gs
           m
         )
-  | Step_VoidCall : forall ic cid f args anns c cs pbid ls stk gs m d b c' cs' dvs ls',
+  | Step_VoidCall : forall ic cid f args anns c cs pbid ls stk gs m d b c' cs' ls',
       (find_function_by_exp m f) = Some d ->
       (dc_type (df_prototype d)) = TYPE_Function TYPE_Void (get_arg_types args) false ->
       (entry_block d) = Some b ->
       (blk_cmds b) = c' :: cs' ->
-      (eval_args ls gs args) = Some dvs ->
-      (create_local_store d dvs) = Some ls' ->
+      (create_local_store d ls gs args) = Some ls' ->
       step
         (mk_state
           ic
@@ -378,13 +364,12 @@ Inductive step : state -> state -> Prop :=
           gs
           m
         )
-  | Step_Call : forall ic cid v t f args anns c cs pbid ls stk gs m d b c' cs' dvs ls',
+  | Step_Call : forall ic cid v t f args anns c cs pbid ls stk gs m d b c' cs' ls',
       (find_function_by_exp m f) = Some d ->
       (dc_type (df_prototype d)) = TYPE_Function t (get_arg_types args) false ->
       (entry_block d) = Some b ->
       (blk_cmds b) = c' :: cs' ->
-      (eval_args ls gs args) = Some dvs ->
-      (create_local_store d dvs) = Some ls' ->
+      (create_local_store d ls gs args) = Some ls' ->
       step
         (mk_state
           ic

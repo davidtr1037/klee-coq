@@ -443,7 +443,40 @@ Proof.
     }
   }
   { admit.  } (* TERM_Br False *)
-  { admit. }
+  {
+    inversion Hoa; subst.
+    destruct H as [m H].
+    inversion H; subst.
+    assert(L :
+      exists s_ls',
+        create_local_smt_store d s_ls s_gs args = Some s_ls' /\
+        over_approx_store_via s_ls' ls' m
+    ).
+    { admit. }
+    destruct L as [s_ls' [L_1 L_2]].
+    exists (mk_sym_state
+      (mk_inst_counter (get_fid d) (blk_id b) (get_cmd_id c'0))
+      c'0
+      cs'
+      None
+      s_ls'
+      ((Sym_Frame_NoReturn s_ls (next_inst_counter c_ic c) c_pbid) :: s_stk)
+      s_gs
+      s_syms
+      s_pc
+      c_mdl
+    ).
+    split.
+    { apply Sym_Step_VoidCall; assumption. }
+    {
+      apply OA_State.
+      exists m.
+      apply OAV_State; try assumption.
+      apply OAStack_NonEmpty; try assumption.
+      apply OAFrame_NoReturn.
+      assumption.
+    }
+  }
   { admit. }
   {
     inversion Hoa; subst.

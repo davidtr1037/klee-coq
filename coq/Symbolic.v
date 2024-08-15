@@ -196,37 +196,24 @@ Definition sym_eval_constant_exp (t : typ) (e : exp typ) : option smt_expr :=
   sym_eval_exp empty_smt_store empty_smt_store (Some t) e
 .
 
-Definition sym_eval_arg (ls : smt_store) (gs : smt_store) (arg : function_arg) : option smt_expr :=
-  match arg with
-  | ((t, e), _) => sym_eval_exp ls gs (Some t) e
-  end
-.
-
-Fixpoint sym_eval_args (ls : smt_store) (gs : smt_store) (args : list function_arg) : option (list smt_expr) :=
-  match args with
-  | arg :: tail =>
-      match (sym_eval_arg ls gs arg) with
-      | Some e =>
-          match (sym_eval_args ls gs tail) with
-          | Some es => Some (e :: es)
-          | _ => None
-          end
-      | _ => None
-      end
-  | _ => Some []
-  end
-.
-
-Fixpoint fill_smt_store (l : list (raw_id * smt_expr)) : smt_store :=
+Fixpoint fill_smt_store (ls : smt_store) (gs : smt_store) (l : list (raw_id * function_arg)) : option smt_store :=
   match l with
-  | (id, e) :: tail => (id !-> Some e; (fill_smt_store tail))
-  | [] => empty_smt_store
+  | (id, ((t, e), _)) :: tail =>
+      match (sym_eval_exp ls gs (Some t) e) with
+      | Some se =>
+          match (fill_smt_store ls gs tail) with
+          | Some r => Some (id !-> Some se; r)
+          | None => None
+          end
+      | None => None
+      end
+  | [] => Some empty_smt_store
   end
 .
 
-Definition create_local_smt_store (d : llvm_definition) (es : list smt_expr) : option smt_store :=
-  match (merge_lists (df_args d) es) with
-  | Some l => Some (fill_smt_store l)
+Definition create_local_smt_store (d : llvm_definition) (ls : smt_store) (gs : smt_store) (args : list function_arg) : option smt_store :=
+  match (merge_lists (df_args d) args) with
+  | Some l => fill_smt_store ls gs l
   | None => None
   end
 .
@@ -386,13 +373,12 @@ Inductive sym_step : sym_state -> sym_state -> Prop :=
           (SMT_BinOp SMT_And pc (SMT_Not se)) (* TODO: SMT_Not? *)
           m
         )
-  | Sym_Step_VoidCall : forall ic cid f args anns c cs pbid ls stk gs syms pc m d b c' cs' ses ls',
+  | Sym_Step_VoidCall : forall ic cid f args anns c cs pbid ls stk gs syms pc m d b c' cs' ls',
       (find_function_by_exp m f) = Some d ->
       (dc_type (df_prototype d)) = TYPE_Function TYPE_Void (get_arg_types args) false ->
       (entry_block d) = Some b ->
       (blk_cmds b) = c' :: cs' ->
-      (sym_eval_args ls gs args) = Some ses ->
-      (create_local_smt_store d ses) = Some ls' ->
+      (create_local_smt_store d ls gs args) = Some ls' ->
       sym_step
         (mk_sym_state
           ic
@@ -418,13 +404,12 @@ Inductive sym_step : sym_state -> sym_state -> Prop :=
           pc
           m
         )
-  | Sym_Step_Call : forall ic cid v t f args anns c cs pbid ls stk gs syms pc m d b c' cs' ses ls',
+  | Sym_Step_Call : forall ic cid v t f args anns c cs pbid ls stk gs syms pc m d b c' cs' ls',
       (find_function_by_exp m f) = Some d ->
       (dc_type (df_prototype d)) = TYPE_Function t (get_arg_types args) false ->
       (entry_block d) = Some b ->
       (blk_cmds b) = c' :: cs' ->
-      (sym_eval_args ls gs args) = Some ses ->
-      (create_local_smt_store d ses) = Some ls' ->
+      (create_local_smt_store d ls gs args) = Some ls' ->
       sym_step
         (mk_sym_state
           ic
