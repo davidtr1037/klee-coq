@@ -1,4 +1,5 @@
 From Coq Require Import List.
+From Coq Require Import String.
 From Coq Require Import ZArith.
 
 Import ListNotations.
@@ -16,6 +17,9 @@ From SE Require Import WellDefinedness.
 
 From SE.SMT Require Import Expr.
 From SE.SMT Require Import Model.
+
+(* TODO: fix namespace issues *)
+From SE.Utils Require StringMap.
 
 (* TODO: rename to: eval_exp_correspondence *)
 (* TODO: use over_approx_store_via *)
@@ -151,6 +155,36 @@ Lemma eval_phi_args_correspondence : forall c_ls s_ls c_gs s_gs t args pbid m,
     (eval_phi_args c_ls c_gs t args pbid)
     (sym_eval_phi_args s_ls s_gs t args pbid)
     m.
+Proof.
+Admitted.
+
+(* TODO: move from here? *)
+Lemma name_choice : forall (syms : list string), exists sym, ~ In sym syms.
+Proof.
+Admitted.
+
+(* TODO: rename and locate *)
+Lemma LX1 : forall s_s c_s m name n syms,
+  over_approx_store_via s_s c_s m ->
+  well_defined_smt_store s_s syms ->
+  ~ In name syms ->
+  over_approx_store_via
+    s_s
+    c_s
+    (mk_smt_model (StringMap.update_map (bv_model m) name (DI_I32 (repr n))))
+.
+Proof.
+Admitted.
+
+Lemma LX2 : forall s_stk c_stk m name n syms,
+  over_approx_stack_via s_stk c_stk m ->
+  well_defined_stack s_stk syms ->
+  ~ In name syms ->
+  over_approx_stack_via
+    s_stk
+    c_stk
+    (mk_smt_model (StringMap.update_map (bv_model m) name (DI_I32 (repr n))))
+.
 Proof.
 Admitted.
 
@@ -592,7 +626,60 @@ Proof.
       }
     }
   }
-  { admit. } (* make_symbolic *)
+  {
+    inversion Hoa; subst.
+    destruct H as [m H].
+    inversion H; subst.
+    inversion Hwd; subst.
+    destruct H1 as [H1_1 [H1_2 [H1_3 H1_4]]].
+    assert(L1: exists name, ~ In name s_syms).
+    { apply name_choice. }
+    destruct L1 as [name L1].
+    exists (mk_sym_state
+      (next_inst_counter c_ic c)
+      c
+      cs
+      c_pbid
+      (v !-> Some (SMT_Var name); s_ls)
+      s_stk
+      s_gs
+      (name :: s_syms)
+      s_pc
+      c_mdl
+    ).
+    split.
+    { apply Sym_Step_MakeSymbolicInt32 with (d := d); assumption. }
+    {
+      apply OA_State.
+      exists (mk_smt_model (StringMap.update_map (bv_model m) name (DI_I32 (repr n)))).
+      apply OAV_State.
+      {
+        apply store_correspondence_update.
+        {
+          apply EVM_Some.
+          simpl.
+          rewrite StringMap.update_map_eq.
+          reflexivity.
+        }
+        {
+          apply LX1 with (syms := s_syms); assumption.
+        }
+      }
+      { apply LX2 with (syms := s_syms); assumption. }
+      { apply LX1 with (syms := s_syms); assumption. }
+      {
+        rewrite <- H25.
+        symmetry.
+        apply subexpr_non_interference.
+        inversion H1_4; subst.
+        specialize (H0 name).
+        intros Hse.
+        apply H0 in Hse.
+        apply L1 in Hse.
+        assumption.
+      }
+    }
+  }
   { admit. } (* assume *)
 Admitted.
 

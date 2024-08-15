@@ -45,6 +45,7 @@ Inductive well_defined_stack : list sym_frame -> list string -> Prop :=
 .
 
 (* TODO: use record getters? *)
+(* TODO: avoid conjunction *)
 Inductive well_defined : sym_state -> Prop :=
   | WD_State : forall ic c cs pbid ls stk gs syms pc mdl,
       (
