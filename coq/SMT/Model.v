@@ -2,11 +2,11 @@ From Coq Require Import Strings.String.
 
 From SE Require Import BitVectors.
 From SE Require Import DynamicValue.
-(* TODO: avoid this dependency *)
-From SE Require Import LLVMAst.
-(* TODO: is needed? *)
+
 From SE.Numeric Require Import Integers.
+
 From SE.SMT Require Import Expr.
+
 From SE.Utils Require Import StringMap.
 
 Inductive symbol : Type :=
