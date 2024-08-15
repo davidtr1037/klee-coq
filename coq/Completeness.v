@@ -476,7 +476,87 @@ Proof.
       }
     }
   }
-  { admit.  } (* TERM_Br False *)
+  {
+    inversion Hoa; subst.
+    destruct H as [m H].
+    inversion H; subst.
+    assert(L :
+      equiv_via_model
+        (eval_exp c_ls c_gs (Some (TYPE_I 1)) e)
+        (sym_eval_exp s_ls s_gs (Some (TYPE_I 1)) e)
+        m
+    ).
+    {
+      apply eval_correspondence; try assumption.
+      inversion Hiss; subst.
+      inversion H2; subst.
+      assumption.
+    }
+    inversion L; subst.
+    { rewrite H8 in *. discriminate H1. }
+    {
+      exists (mk_sym_state
+        (mk_inst_counter (ic_fid c_ic) (bid2) (get_cmd_id c))
+        c
+        cs
+        (Some (ic_bid c_ic))
+        s_ls
+        s_stk
+        s_gs
+        s_syms
+        (SMT_BinOp SMT_And s_pc (SMT_Not se))
+        c_mdl
+      ).
+      split.
+      {
+        apply Sym_Step_Br_False with (d := d) (b := b); try assumption.
+        symmetry.
+        assumption.
+      }
+      {
+        apply OA_State.
+        exists m.
+        apply OAV_State; try assumption.
+        rewrite H8 in H0.
+        discriminate H0.
+      }
+    }
+    {
+      exists (mk_sym_state
+        (mk_inst_counter (ic_fid c_ic) (bid2) (get_cmd_id c))
+        c
+        cs
+        (Some (ic_bid c_ic))
+        s_ls
+        s_stk
+        s_gs
+        s_syms
+        (SMT_BinOp SMT_And s_pc (SMT_Not se))
+        c_mdl
+      ).
+      split.
+      {
+        apply Sym_Step_Br_False with (d := d) (b := b); try assumption.
+        symmetry.
+        assumption.
+      }
+      {
+        apply OA_State.
+        exists m.
+        apply OAV_State; try assumption.
+        simpl.
+        rewrite H26, H2.
+        rewrite H8 in L.
+        inversion L; subst.
+        rewrite <- H1 in H4.
+        inversion H4; subst.
+        rewrite H2 in H5.
+        inversion H5; subst.
+        simpl.
+        reflexivity.
+      }
+    }
+  }
   {
     inversion Hoa; subst.
     destruct H as [m H].

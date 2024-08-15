@@ -312,7 +312,7 @@ Inductive step : state -> state -> Prop :=
           m
         )
   | Step_Br_False : forall ic cid e bid1 bid2 pbid ls stk gs m d b c cs,
-      (eval_exp ls gs (Some (TYPE_I 1)) e) = Some dv_true ->
+      (eval_exp ls gs (Some (TYPE_I 1)) e) = Some dv_false ->
       (find_function m (ic_fid ic)) = Some d ->
       (fetch_block d bid2) = Some b ->
       (blk_cmds b) = c :: cs ->
