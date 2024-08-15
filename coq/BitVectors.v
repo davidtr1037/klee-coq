@@ -335,3 +335,8 @@ Global Instance VInt64 : VInt Int64.int := {
 
   repr := Int64.repr;
 }.
+
+Lemma int1_and_true : forall (n1 n2 : int1),
+  to_dint (and n1 n2) = di_true -> DI_I1 n1 = di_true.
+Proof.
+Admitted.

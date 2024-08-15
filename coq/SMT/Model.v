@@ -1,4 +1,3 @@
-Require Import Lia.
 From Coq Require Import Strings.String.
 From Coq Require Import ZArith.
 
@@ -10,6 +9,7 @@ From SE.Numeric Require Import Integers.
 From SE.SMT Require Import Expr.
 
 From SE.Utils Require Import StringMap.
+From SE.Utils Require Import Util.
 
 Inductive symbol : Type :=
   | Symbol_BV (s : string)
@@ -146,7 +146,9 @@ Proof.
   exists m.
   unfold sat_via in *.
   simpl in Hsat.
-  destruct (smt_eval m e1) as [di1 | ] eqn:E1, (smt_eval m e2) as [di2 | ] eqn:E2.
+  destruct (smt_eval m e1) as [di1 | ] eqn:E1, (smt_eval m e2) as [di2 | ] eqn:E2; try (
+    discriminate Hsat
+  ).
   {
     destruct di1, di2;
     try (
@@ -157,10 +159,13 @@ Proof.
       rename n into n1, n0 into n2.
       unfold smt_eval_binop in Hsat.
       unfold smt_eval_binop_generic in Hsat.
-      admit.
+      apply injection_some in Hsat.
+      apply f_equal.
+      apply (int1_and_true n1 n2).
+      assumption.
     }
   }
-Admitted.
+Qed.
 
 Lemma subexpr_non_interference : forall e x m n,
   (~ subexpr (SMT_Var x) e) -> smt_eval m e = smt_eval (mk_smt_model (x !-> n; bv_model m)) e.
