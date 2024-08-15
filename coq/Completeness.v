@@ -477,7 +477,40 @@ Proof.
       assumption.
     }
   }
-  { admit. }
+  {
+    inversion Hoa; subst.
+    destruct H as [m H].
+    inversion H; subst.
+    assert(L :
+      exists s_ls',
+        create_local_smt_store d s_ls s_gs args = Some s_ls' /\
+        over_approx_store_via s_ls' ls' m
+    ).
+    { admit. }
+    destruct L as [s_ls' [L_1 L_2]].
+    exists (mk_sym_state
+      (mk_inst_counter (get_fid d) (blk_id b) (get_cmd_id c'0))
+      c'0
+      cs'
+      None
+      s_ls'
+      ((Sym_Frame s_ls (next_inst_counter c_ic c) c_pbid v) :: s_stk)
+      s_gs
+      s_syms
+      s_pc
+      c_mdl
+    ).
+    split.
+    { apply Sym_Step_Call; assumption. }
+    {
+      apply OA_State.
+      exists m.
+      apply OAV_State; try assumption.
+      apply OAStack_NonEmpty; try assumption.
+      apply OAFrame.
+      assumption.
+    }
+  }
   {
     inversion Hoa; subst.
     destruct H as [m H].
@@ -504,7 +537,61 @@ Proof.
       apply OAV_State; assumption.
     }
   }
-  { admit. }
+  {
+    inversion Hoa; subst.
+    destruct H as [m H].
+    inversion H; subst.
+    inversion H23; subst.
+    inversion H3; subst.
+    assert(L :
+      equiv_via_model
+        (eval_exp c_ls c_gs (Some t) e)
+        (sym_eval_exp s_ls s_gs (Some t) e)
+        m
+    ).
+    {
+      apply eval_correspondence; try assumption.
+      inversion Hiss; subst.
+      inversion H2; subst.
+      assumption.
+    }
+    inversion L; subst.
+    { rewrite H8 in *. discriminate H1. }
+    { rewrite H8 in H0.  discriminate H0.  }
+    {
+      exists (mk_sym_state
+        ic'
+        c'0
+        cs'
+        pbid'
+        (v !-> Some se; s_s)
+        s_stk0
+        s_gs
+        s_syms
+        s_pc
+        c_mdl
+      ).
+      split.
+      {
+        apply Sym_Step_Ret with (d := d); try assumption.
+        symmetry.
+        assumption.
+      }
+      {
+        apply OA_State.
+        exists m.
+        apply OAV_State; try assumption.
+        apply store_correspondence_update.
+        {
+          rewrite H8 in H0.
+          rewrite <- H0.
+          apply EVM_Some.
+          assumption.
+        }
+        { assumption. }
+      }
+    }
+  }
   { admit. } (* make_symbolic *)
   { admit. } (* assume *)
 Admitted.
