@@ -124,13 +124,13 @@ Proof.
   }
 Qed.
 
-Lemma store_correspondence_update : forall dv se m v c_s s_s,
+Lemma store_update_correspondence : forall dv se m v c_s s_s,
   equiv_via_model (Some dv) (Some se) m ->
   over_approx_store_via s_s c_s m ->
   over_approx_store_via (v !-> Some se; s_s) (v !-> Some dv; c_s) m.
 Proof.
   intros dv se m v c_s s_s H1 H2.
-  apply OAStore.
+  apply OA_Store.
   intros x.
   destruct (raw_id_eqb x v) eqn:E.
   {
@@ -158,10 +158,23 @@ Lemma eval_phi_args_correspondence : forall c_ls s_ls c_gs s_gs t args pbid m,
 Proof.
 Admitted.
 
-(* TODO: move from here? *)
-Lemma name_choice : forall (syms : list string), exists sym, ~ In sym syms.
+Lemma LX0 : forall s x se name syms,
+  well_defined_smt_store s syms ->
+  ~ In name syms ->
+  s x = Some se ->
+  ~ subexpr (SMT_Var name) se.
 Proof.
-Admitted.
+  intros s x se name syms Hwd Hin Heq.
+  inversion Hwd; subst.
+  specialize (H x se).
+  apply H in Heq.
+  inversion Heq; subst.
+  specialize (H0 name).
+  intros Hse.
+  apply H0 in Hse.
+  apply Hin in Hse.
+  assumption.
+Qed.
 
 (* TODO: rename and locate *)
 Lemma LX1 : forall s_s c_s m name n syms,
@@ -174,7 +187,34 @@ Lemma LX1 : forall s_s c_s m name n syms,
     (mk_smt_model (StringMap.update_map (bv_model m) name (DI_I32 (repr n))))
 .
 Proof.
-Admitted.
+  intros s_s c_s m name n syms Hoa Hwd Hin.
+  apply OA_Store.
+  intros x.
+  inversion Hoa; subst.
+  specialize (H x).
+  inversion H; subst.
+  { apply EVM_None. }
+  {
+    apply EVM_NoneViaModel.
+    rewrite <- subexpr_non_interference with (x := name) (n := (DI_I32 (repr n))).
+    { assumption. }
+    {
+      apply (LX0 s_s x se name syms); try assumption.
+      symmetry.
+      assumption.
+    }
+  }
+  {
+    apply EVM_Some.
+    rewrite <- subexpr_non_interference with (x := name) (n := (DI_I32 (repr n))).
+    { assumption. }
+    {
+      apply (LX0 s_s x se name syms); try assumption.
+      symmetry.
+      assumption.
+    }
+  }
+Qed.
 
 Lemma LX2 : forall s_stk c_stk m name n syms,
   over_approx_stack_via s_stk c_stk m ->
@@ -186,7 +226,32 @@ Lemma LX2 : forall s_stk c_stk m name n syms,
     (mk_smt_model (StringMap.update_map (bv_model m) name (DI_I32 (repr n))))
 .
 Proof.
-Admitted.
+  intros s_stk c_stk m name n syms Hoa Hwd Hin.
+  induction Hoa.
+  { apply OA_Stack_Empty. }
+  {
+    apply OA_Stack_NonEmpty.
+    {
+      inversion H; subst.
+      {
+        apply OA_Frame.
+        apply LX1 with (syms := syms); try assumption.
+        inversion Hwd; subst.
+        assumption.
+      }
+      {
+        apply OA_Frame_NoReturn.
+        apply LX1 with (syms := syms); try assumption.
+        inversion Hwd; subst.
+        assumption.
+      }
+    }
+    {
+      apply IHHoa.
+      inversion Hwd; subst; assumption.
+    }
+  }
+Qed.
 
 Lemma completeness_single_step :
   forall c c' s,
@@ -242,7 +307,7 @@ Proof.
         apply OA_State.
         exists m.
         apply OAV_State; try assumption.
-        apply store_correspondence_update.
+        apply store_update_correspondence.
         {
           rewrite H8 in H0.
           rewrite <- H0.
@@ -275,7 +340,7 @@ Proof.
         apply OA_State.
         exists m.
         apply OAV_State; try assumption.
-        apply store_correspondence_update.
+        apply store_update_correspondence.
         {
           rewrite H8 in H0.
           rewrite <- H0.
@@ -327,7 +392,7 @@ Proof.
         apply OA_State.
         exists m.
         apply OAV_State; try assumption.
-        apply store_correspondence_update.
+        apply store_update_correspondence.
         {
           rewrite H8 in H0.
           rewrite <- H0.
@@ -360,7 +425,7 @@ Proof.
         apply OA_State.
         exists m.
         apply OAV_State; try assumption.
-        apply store_correspondence_update.
+        apply store_update_correspondence.
         {
           rewrite H8 in H0.
           rewrite <- H0.
@@ -586,8 +651,8 @@ Proof.
       apply OA_State.
       exists m.
       apply OAV_State; try assumption.
-      apply OAStack_NonEmpty; try assumption.
-      apply OAFrame_NoReturn.
+      apply OA_Stack_NonEmpty; try assumption.
+      apply OA_Frame_NoReturn.
       assumption.
     }
   }
@@ -620,8 +685,8 @@ Proof.
       apply OA_State.
       exists m.
       apply OAV_State; try assumption.
-      apply OAStack_NonEmpty; try assumption.
-      apply OAFrame.
+      apply OA_Stack_NonEmpty; try assumption.
+      apply OA_Frame.
       assumption.
     }
   }
@@ -695,7 +760,7 @@ Proof.
         apply OA_State.
         exists m.
         apply OAV_State; try assumption.
-        apply store_correspondence_update.
+        apply store_update_correspondence.
         {
           rewrite H8 in H0.
           rewrite <- H0.
@@ -734,7 +799,7 @@ Proof.
       exists (mk_smt_model (StringMap.update_map (bv_model m) name (DI_I32 (repr n)))).
       apply OAV_State.
       {
-        apply store_correspondence_update.
+        apply store_update_correspondence.
         {
           apply EVM_Some.
           simpl.

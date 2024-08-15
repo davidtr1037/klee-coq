@@ -635,19 +635,19 @@ Inductive equiv_via_model : option dynamic_value -> option smt_expr -> smt_model
 
 (* TODO: use in the relevant locations *)
 Inductive over_approx_store_via : smt_store -> dv_store -> smt_model -> Prop :=
-  | OAStore : forall c_s s_s m,
+  | OA_Store : forall c_s s_s m,
       (forall (x : raw_id), equiv_via_model (c_s x) (s_s x) m) ->
       over_approx_store_via s_s c_s m
 .
 
 Inductive over_approx_frame_via : sym_frame -> frame -> smt_model -> Prop :=
-  | OAFrame : forall s_s c_s m ic pbid v,
+  | OA_Frame : forall s_s c_s m ic pbid v,
       over_approx_store_via s_s c_s m ->
       over_approx_frame_via
         (Sym_Frame s_s ic pbid v)
         (Frame c_s ic pbid v)
         m
-  | OAFrame_NoReturn : forall s_s c_s m ic pbid,
+  | OA_Frame_NoReturn : forall s_s c_s m ic pbid,
       over_approx_store_via s_s c_s m ->
       over_approx_frame_via
         (Sym_Frame_NoReturn s_s ic pbid)
@@ -656,9 +656,9 @@ Inductive over_approx_frame_via : sym_frame -> frame -> smt_model -> Prop :=
 .
 
 Inductive over_approx_stack_via : list sym_frame -> list frame -> smt_model -> Prop :=
-  | OAStack_Empty : forall m,
+  | OA_Stack_Empty : forall m,
       over_approx_stack_via [] [] m
-  | OAStack_NonEmpty : forall s_f s_stk c_f c_stk m,
+  | OA_Stack_NonEmpty : forall s_f s_stk c_f c_stk m,
       over_approx_frame_via s_f c_f m ->
       over_approx_stack_via s_stk c_stk m ->
       over_approx_stack_via (s_f :: s_stk) (c_f :: c_stk) m
@@ -713,5 +713,10 @@ Admitted.
 
 Lemma pc_unsat_lemma : forall s s',
   sym_step s s' -> unsat_sym_state s -> unsat_sym_state s'.
+Proof.
+Admitted.
+
+(* TODO: define as an axiom? *)
+Lemma name_choice : forall (syms : list string), exists sym, ~ In sym syms.
 Proof.
 Admitted.
