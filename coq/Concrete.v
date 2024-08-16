@@ -538,6 +538,7 @@ Fixpoint init_global_store_internal (gs : dv_store) (l : list llvm_global) : opt
   end
 .
 
+(* TODO: change later? *)
 Definition init_global_store (m : llvm_module) : option dv_store := Some empty_dv_store.
 
 (* TODO: assumes that there are no parameters *)

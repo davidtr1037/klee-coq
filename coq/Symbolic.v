@@ -564,6 +564,7 @@ Definition init_local_smt_store (m : llvm_module) (d : llvm_definition) : smt_st
   empty_smt_store
 .
 
+(* TODO: rename to avoid namespace issues *)
 Definition get_global_initializer (g : llvm_global) : option smt_expr :=
   match (g_exp g) with
   | Some e => (sym_eval_constant_exp (g_typ g) e)
@@ -571,6 +572,7 @@ Definition get_global_initializer (g : llvm_global) : option smt_expr :=
   end
 .
 
+(* TODO: rename to avoid namespace issues *)
 Definition add_global (gs : smt_store) (g : llvm_global) : option smt_store :=
   match (get_global_initializer g) with
   | Some dv => Some ((g_ident g) !-> Some dv; gs)
@@ -589,6 +591,7 @@ Fixpoint init_global_smt_store_internal (gs : smt_store) (l : list llvm_global) 
   end
 .
 
+(* TODO: change later? *)
 Definition init_global_smt_store (m : llvm_module) : option smt_store := Some empty_smt_store.
 
 Definition init_sym_state (m : llvm_module) (d : llvm_definition) : option sym_state :=
