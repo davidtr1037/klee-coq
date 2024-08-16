@@ -589,9 +589,7 @@ Fixpoint init_global_smt_store_internal (gs : smt_store) (l : list llvm_global) 
   end
 .
 
-Definition init_global_smt_store (m : llvm_module) : option smt_store :=
-  init_global_smt_store_internal empty_smt_store (m_globals m)
-.
+Definition init_global_smt_store (m : llvm_module) : option smt_store := Some empty_smt_store.
 
 Definition init_sym_state (m : llvm_module) (d : llvm_definition) : option sym_state :=
   match (init_global_smt_store m) with

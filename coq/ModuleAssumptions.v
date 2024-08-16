@@ -58,8 +58,16 @@ Inductive is_supported_definition : llvm_definition -> Prop :=
       is_supported_definition d
 .
 
+Inductive is_supported_global : llvm_global -> Prop :=
+  | IS_Global : forall (g : llvm_global) (e : exp typ),
+      (g_exp g) = Some e ->
+      is_supported_exp e ->
+      is_supported_global g
+.
+
 Inductive is_supported_module : llvm_module -> Prop :=
   | IS_Module : forall mdl,
+      (forall g, In g (m_globals mdl) -> is_supported_global g) ->
       (forall d, In d (m_definitions mdl) -> is_supported_definition d) ->
       is_supported_module mdl
 .

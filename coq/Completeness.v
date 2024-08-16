@@ -964,14 +964,16 @@ Proof.
   apply OAV_State.
   {
     unfold init_local_smt_store, init_local_store.
-    apply OA_Store.
-    intros x.
-    unfold empty_dv_store, empty_smt_store.
-    rewrite apply_empty_map, apply_empty_map.
-    apply EVM_None.
+    apply empty_store_correspondence.
   }
   { apply OA_Stack_Empty. }
-  { apply LX3 with (mdl := mdl); assumption. }
+  {
+    unfold init_global_smt_store in Es_gs.
+    inversion Es_gs; subst.
+    unfold init_global_store in Ec_gs.
+    inversion Ec_gs; subst.
+    apply empty_store_correspondence.
+  }
   { reflexivity. }
 Qed.
 
