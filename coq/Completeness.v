@@ -156,7 +156,31 @@ Lemma eval_phi_args_correspondence : forall c_ls s_ls c_gs s_gs t args pbid m,
     (sym_eval_phi_args s_ls s_gs t args pbid)
     m.
 Proof.
-Admitted.
+  intros c_ls s_ls c_gs s_gs t args pbid m His Hoal Hoag.
+  induction args as [ | arg args_tail].
+  {
+    simpl.
+    apply EVM_None.
+  }
+  {
+    simpl.
+    destruct arg as [bid e].
+    destruct (raw_id_eqb bid pbid) eqn:E.
+    {
+      rewrite raw_id_eqb_eq in E.
+      apply eval_correspondence; try assumption.
+      apply (His bid).
+      apply in_eq.
+    }
+    {
+      apply IHargs_tail.
+      intros bid' e' Hin.
+      apply (His bid').
+      apply in_cons.
+      assumption.
+    }
+  }
+Qed.
 
 (* TODO: rename *)
 Lemma LX0 : forall s x se name syms,
@@ -830,7 +854,6 @@ Proof.
   { admit. } (* assume *)
 Admitted.
 
-(* TODO: should be iff *)
 Lemma initialization_correspondence : forall mdl d,
   (exists c, (init_state mdl d) = Some c) <-> (exists s, (init_sym_state mdl d) = Some s).
 Proof.
