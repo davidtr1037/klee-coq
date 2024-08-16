@@ -539,35 +539,31 @@ Fixpoint init_global_store_internal (gs : dv_store) (l : list llvm_global) : opt
 .
 
 (* TODO: change later? *)
-Definition init_global_store (m : llvm_module) : option dv_store := Some empty_dv_store.
+Definition init_global_store (m : llvm_module) : dv_store := empty_dv_store.
 
 (* TODO: assumes that there are no parameters *)
 Definition init_state (m : llvm_module) (d : llvm_definition) : option state :=
-  match (init_global_store m) with
-  | Some gs =>
-    match (build_inst_counter m d) with
-    | Some ic =>
-        match (entry_block d) with
-        | Some b =>
-            match (blk_cmds b) with
-            | cmd :: tail =>
-                Some (mk_state
-                  ic
-                  cmd
-                  tail
-                  None
-                  (init_local_store m d)
-                  []
-                  gs
-                  m
-                )
-            | _ => None
-            end
-        | None => None
-        end
-    | None => None
-    end
-  | _ => None
+  match (build_inst_counter m d) with
+  | Some ic =>
+      match (entry_block d) with
+      | Some b =>
+          match (blk_cmds b) with
+          | cmd :: tail =>
+              Some (mk_state
+                ic
+                cmd
+                tail
+                None
+                (init_local_store m d)
+                []
+                (init_global_store m)
+                m
+              )
+          | _ => None
+          end
+      | None => None
+      end
+  | None => None
   end
 .
 

@@ -873,7 +873,6 @@ Proof.
   {
     destruct H as [c H].
     unfold init_state in H.
-    destruct (init_global_store mdl) as [c_gs | ] eqn:Ec_gs; try discriminate H.
     destruct (build_inst_counter mdl d) as [c_ic | ] eqn:Ec_ic; try discriminate H.
     destruct (entry_block d) as [c_b | ] eqn:Ec_b; try discriminate H.
     destruct (blk_cmds c_b) as [ | c_cmd c_cmds ] eqn:Ec_cs; try discriminate H.
@@ -884,7 +883,7 @@ Proof.
       None
       (init_local_smt_store mdl d)
       []
-      empty_smt_store
+      (init_global_smt_store mdl)
       []
       SMT_True
       mdl
@@ -897,7 +896,6 @@ Proof.
   {
     destruct H as [s H].
     unfold init_sym_state in H.
-    destruct (init_global_smt_store mdl) as [s_gs | ] eqn:Es_gs; try discriminate H.
     destruct (build_inst_counter mdl d) as [s_ic | ] eqn:Es_ic; try discriminate H.
     destruct (entry_block d) as [s_b | ] eqn:Es_b; try discriminate H.
     destruct (blk_cmds s_b) as [ | s_cmd s_cmds ] eqn:Es_cs; try discriminate H.
@@ -908,7 +906,7 @@ Proof.
       None
       (init_local_store mdl d)
       []
-      empty_dv_store
+      (init_global_store mdl)
       mdl
     ).
     unfold init_state.
@@ -925,12 +923,10 @@ Lemma over_approx_init_states : forall mdl d s c,
 Proof.
   intros mdl d s c Hs Hc.
   unfold init_sym_state in Hs.
-  destruct (init_global_smt_store mdl) as [s_gs | ] eqn:Es_gs; try discriminate Hs.
   destruct (build_inst_counter mdl d) as [s_ic | ] eqn:Es_ic; try discriminate Hs.
   destruct (entry_block d) as [s_b | ] eqn:Es_b; try discriminate Hs.
   destruct (blk_cmds s_b) as [ | s_cmd s_cmds ] eqn:Es_cs; try discriminate Hs.
   unfold init_state in Hc.
-  destruct (init_global_store mdl) as [c_gs | ] eqn:Ec_gs; try discriminate Hc.
   destruct (build_inst_counter mdl d) as [c_ic | ] eqn:Ec_ic; try discriminate Hc.
   destruct (entry_block d) as [c_b | ] eqn:Ec_b; try discriminate Hc.
   destruct (blk_cmds c_b) as [ | c_cmd c_cmds ] eqn:Ec_cs; try discriminate Hc.
@@ -949,10 +945,7 @@ Proof.
   }
   { apply OA_Stack_Empty. }
   {
-    unfold init_global_smt_store in Es_gs.
-    inversion Es_gs; subst.
-    unfold init_global_store in Ec_gs.
-    inversion Ec_gs; subst.
+    unfold init_global_smt_store, init_global_store.
     apply empty_store_correspondence.
   }
   { reflexivity. }

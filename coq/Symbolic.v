@@ -592,36 +592,32 @@ Fixpoint init_global_smt_store_internal (gs : smt_store) (l : list llvm_global) 
 .
 
 (* TODO: change later? *)
-Definition init_global_smt_store (m : llvm_module) : option smt_store := Some empty_smt_store.
+Definition init_global_smt_store (m : llvm_module) : smt_store := empty_smt_store.
 
 Definition init_sym_state (m : llvm_module) (d : llvm_definition) : option sym_state :=
-  match (init_global_smt_store m) with
-  | Some gs =>
-    match (build_inst_counter m d) with
-    | Some ic =>
-        match (entry_block d) with
-        | Some b =>
-            match (blk_cmds b) with
-            | cmd :: tail =>
-                Some (mk_sym_state
-                  ic
-                  cmd
-                  tail
-                  None
-                  (init_local_smt_store m d)
-                  []
-                  gs
-                  []
-                  SMT_True
-                  m
-                )
-            | _ => None
-            end
-        | None => None
-        end
-    | None => None
-    end
-  | _ => None
+  match (build_inst_counter m d) with
+  | Some ic =>
+      match (entry_block d) with
+      | Some b =>
+          match (blk_cmds b) with
+          | cmd :: tail =>
+              Some (mk_sym_state
+                ic
+                cmd
+                tail
+                None
+                (init_local_smt_store m d)
+                []
+                (init_global_smt_store m)
+                []
+                SMT_True
+                m
+              )
+          | _ => None
+          end
+      | None => None
+      end
+  | None => None
   end
 .
 
