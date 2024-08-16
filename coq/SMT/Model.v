@@ -20,7 +20,7 @@ Record smt_model := mk_smt_model {
   bv_model : total_map dynamic_int;
 }.
 
-(* TODO: define default model *)
+Definition default_model := mk_smt_model (empty_map di_false).
 
 Definition smt_eval_binop_generic {Int} `{VInt Int} (op : smt_binop) (x y : Int) : dynamic_int :=
   match op with

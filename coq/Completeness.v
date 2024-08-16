@@ -124,6 +124,17 @@ Proof.
   }
 Qed.
 
+Lemma empty_store_correspondence : forall m,
+  over_approx_store_via empty_smt_store empty_dv_store m.
+Proof.
+  intros m.
+  apply OA_Store.
+  intros x.
+  unfold empty_dv_store, empty_smt_store.
+  rewrite apply_empty_map, apply_empty_map.
+  apply EVM_None.
+Qed.
+
 Lemma store_update_correspondence : forall dv se m v c_s s_s,
   equiv_via_model (Some dv) (Some se) m ->
   over_approx_store_via s_s c_s m ->
@@ -859,12 +870,110 @@ Lemma initialization_correspondence : forall mdl d,
 Proof.
 Admitted.
 
+Lemma LX4 : forall g s_s s_s' c_s c_s' m,
+  over_approx_store_via s_s c_s m ->
+  add_global s_s g = Some s_s' ->
+  Concrete.add_global c_s g = Some c_s' ->
+  over_approx_store_via s_s' c_s' m.
+Proof.
+  intros g s_s s_s' c_s c_s' m Hoa Hs Hc.
+  unfold add_global in Hs.
+  unfold Concrete.add_global in Hc.
+  destruct
+    (get_global_initializer g) as [se | ] eqn:Esg,
+    (Concrete.get_global_initializer g) as [dv | ] eqn:Ecg.
+  {
+    inversion Hs; subst.
+    inversion Hc; subst.
+    apply store_update_correspondence; try assumption.
+    unfold get_global_initializer in Esg.
+    destruct (g_exp g) as [e | ] eqn:Eexp.
+    {
+      unfold sym_eval_constant_exp in Esg.
+      unfold Concrete.get_global_initializer in Ecg.
+      rewrite Eexp in Ecg.
+      destruct (eval_constant_exp (g_typ g) e) eqn:Eceval.
+      {
+        inversion Ecg; subst.
+        rewrite <- Eceval, <- Esg.
+        apply eval_correspondence.
+        { admit. }
+        { apply empty_store_correspondence. }
+        { apply empty_store_correspondence. }
+      }
+      { inversion Ecg. }
+    }
+    { inversion Esg. }
+  }
+  { inversion Hc. }
+  { inversion Hs. }
+  { inversion Hc. }
+Admitted.
+
+Lemma LX3 : forall l s_s s_s' c_s c_s',
+  over_approx_store_via s_s c_s default_model ->
+  init_global_smt_store_internal s_s l = Some s_s' ->
+  init_global_store_internal c_s l = Some c_s' ->
+  over_approx_store_via s_s' c_s' default_model.
+Proof.
+  intros l s_s s_s' c_s c_s' Hs Hc.
+  generalize dependent c_s.
+  generalize dependent s_s.
+  induction l as [ | g  tail]; intros s_s Hs c_s Hoa Hc.
+  {
+    admit.
+  }
+  {
+    simpl in Hs, Hc.
+    destruct
+      (add_global s_s g) as [s_s'' | ] eqn:Es, (Concrete.add_global c_s g) as [c_s'' | ] eqn:Ec.
+    {
+      apply IHtail with (s_s := s_s'') (c_s := c_s''); try assumption.
+      apply LX4 with (g := g) (s_s := s_s) (c_s := c_s); assumption.
+    }
+    { inversion Hc. }
+    { inversion Hs. }
+    { inversion Hc. }
+  }
+Admitted.
+
 Lemma over_approx_init_states : forall mdl d s c,
   init_sym_state mdl d = Some s ->
   init_state mdl d = Some c ->
   over_approx s c.
 Proof.
-Admitted.
+  intros mdl d s c Hs Hc.
+  unfold init_sym_state in Hs.
+  destruct (init_global_smt_store mdl) as [s_gs | ] eqn:Es_gs; try discriminate Hs.
+  destruct (build_inst_counter mdl d) as [s_ic | ] eqn:Es_ic; try discriminate Hs.
+  destruct (entry_block d) as [s_b | ] eqn:Es_b; try discriminate Hs.
+  destruct (blk_cmds s_b) as [ | s_cmd s_cmds ] eqn:Es_cs; try discriminate Hs.
+  unfold init_state in Hc.
+  destruct (init_global_store mdl) as [c_gs | ] eqn:Ec_gs; try discriminate Hc.
+  destruct (build_inst_counter mdl d) as [c_ic | ] eqn:Ec_ic; try discriminate Hc.
+  destruct (entry_block d) as [c_b | ] eqn:Ec_b; try discriminate Hc.
+  destruct (blk_cmds c_b) as [ | c_cmd c_cmds ] eqn:Ec_cs; try discriminate Hc.
+  inversion Es_ic; subst.
+  inversion Es_b; subst.
+  rewrite Ec_cs in Es_cs.
+  inversion Es_cs; subst.
+  apply OA_State.
+  exists default_model.
+  inversion Hs; subst.
+  inversion Hc; subst.
+  apply OAV_State.
+  {
+    unfold init_local_smt_store, init_local_store.
+    apply OA_Store.
+    intros x.
+    unfold empty_dv_store, empty_smt_store.
+    rewrite apply_empty_map, apply_empty_map.
+    apply EVM_None.
+  }
+  { apply OA_Stack_Empty. }
+  { apply LX3 with (mdl := mdl); assumption. }
+  { reflexivity. }
+Qed.
 
 Lemma completeness :
   forall (mdl : llvm_module) (d : llvm_definition) (init_c c : state),

@@ -515,11 +515,7 @@ Definition init_local_store (m : llvm_module) (d : llvm_definition) := empty_dv_
 
 Definition get_global_initializer (g : llvm_global) : option dynamic_value :=
   match (g_exp g) with
-  | Some e =>
-      match (eval_constant_exp (g_typ g) e) with
-      | Some dv => Some dv
-      | _ => None
-      end
+  | Some e => eval_constant_exp (g_typ g) e
   | _ => Some DV_Undef (* TODO: check against the specifiction *)
   end
 .
