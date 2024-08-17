@@ -69,11 +69,6 @@ Inductive well_defined : sym_state -> Prop :=
         )
 .
 
-Lemma well_defined_init_sym_state :
-  forall mdl d s, (init_sym_state mdl d) = Some s -> well_defined s.
-Proof.
-Admitted.
-
 Lemma subexpr_var_ibinop : forall x op e1 e2,
   subexpr (SMT_Var x) (sym_eval_ibinop op e1 e2) ->
   subexpr (SMT_Var x) e1 \/ subexpr (SMT_Var x) e2 .
@@ -204,6 +199,39 @@ Proof.
   apply WD_SMTStore.
   intros x se Heq.
   inversion Heq; subst.
+Qed.
+
+Lemma well_defined_init_sym_state : forall mdl d s,
+  (init_sym_state mdl d) = Some s -> well_defined s.
+Proof.
+  intros mdl d s H.
+  unfold init_sym_state in H.
+  destruct (build_inst_counter mdl d) as [s_ic | ] eqn:Es_ic; try discriminate H.
+  destruct (entry_block d) as [s_b | ] eqn:Es_b; try discriminate H.
+  destruct (blk_cmds s_b) as [ | s_cmd s_cmds ] eqn:Es_cs; try discriminate H.
+  inversion H; subst.
+  apply WD_State.
+  split.
+  {
+    unfold init_local_smt_store.
+    apply well_defined_empty_smt_store.
+  }
+  {
+    split.
+    {
+      unfold init_local_smt_store.
+      apply well_defined_empty_smt_store.
+    }
+    {
+      split.
+      { apply WD_EmptyStack. }
+      {
+        apply WD_Expr.
+        intros n Hse.
+        inversion Hse.
+      }
+    }
+  }
 Qed.
 
 Lemma well_defined_smt_store_update : forall ls x se syms,
