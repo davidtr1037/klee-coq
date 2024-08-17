@@ -274,6 +274,7 @@ Proof.
   assumption.
 Qed.
 
+(* TODO: pass only local/global store? *)
 Lemma well_defined_sym_eval_exp : forall s ot e se,
   well_defined s ->
   (sym_eval_exp (sym_store s) (sym_globals s) ot e) = Some se ->
@@ -439,13 +440,37 @@ Proof.
   }
 Qed.
 
-(* TODO: rename *)
-Lemma X : forall ls gs l r syms,
+Lemma well_defined_fill_smt_store : forall ls gs l r syms,
   well_defined_smt_store ls syms ->
   well_defined_smt_store gs syms ->
   fill_smt_store ls gs l = Some r ->
   well_defined_smt_store r syms.
 Proof.
+  intros ls gs l r syms Hwdl Hwdg Heq.
+  generalize dependent r.
+  induction l as [ | (x, arg) tail]; intros r Heq.
+  {
+    admit.
+  }
+  {
+    simpl in Heq.
+    destruct arg, t.
+    destruct (sym_eval_exp ls gs (Some t) e) as [se | ] eqn:Eeval.
+    {
+      destruct (fill_smt_store ls gs tail) as [r' | ]  eqn:Efs.
+      {
+        inversion Heq; subst.
+        apply well_defined_smt_store_update.
+        {
+          apply (IHtail r').
+          reflexivity.
+        }
+        { admit. (* TODO: use something similar to well_defined_sym_eval_exp. *) }
+      }
+      { discriminate Heq. }
+    }
+    { discriminate Heq. }
+  }
 Admitted.
  
 Lemma well_defined_create_local_smt_store : forall d ls gs args r syms,
@@ -457,7 +482,7 @@ Proof.
   intros d ls gs args r syms Hls Hgs H.
   unfold create_local_smt_store in H.
   destruct (merge_lists (df_args d) args) eqn:E.
-  { apply X with (ls := ls) (gs := gs) (l := l); assumption. }
+  { apply well_defined_fill_smt_store with (ls := ls) (gs := gs) (l := l); assumption. }
   { discriminate H. }
 Qed.
 
