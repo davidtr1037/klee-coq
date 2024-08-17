@@ -197,11 +197,12 @@ Qed.
 Lemma fill_store_correspondence : forall c_ls s_ls c_gs s_gs m l c_ls',
   over_approx_store_via s_ls c_ls m ->
   over_approx_store_via s_gs c_gs m ->
+  (forall x t e attrs, In (x, ((t, e), attrs)) l -> is_supported_exp e) ->
   fill_store c_ls c_gs l = Some c_ls' ->
   exists s_ls',
     fill_smt_store s_ls s_gs l = Some s_ls' /\ over_approx_store_via s_ls' c_ls' m.
 Proof.
-  intros c_ls s_ls c_gs s_gs m l c_ls' Hoac Hoag Hc.
+  intros c_ls s_ls c_gs s_gs m l c_ls' Hoac Hoag His Hc.
   generalize dependent c_ls'.
   induction l as [ | (x, arg) tail].
   {
@@ -218,7 +219,7 @@ Proof.
   {
     intros c_ls' Hc.
     simpl in Hc.
-    destruct arg, t.
+    destruct arg as [y attrs]. destruct y.
     assert(L :
       equiv_via_model
         (eval_exp c_ls c_gs (Some t) e)
@@ -227,24 +228,39 @@ Proof.
     ).
     {
       apply eval_correspondence; try assumption.
-      admit. (* TODO: is_supported_exp *)
+      apply (His x t e attrs).
+      apply in_eq.
     }
     destruct (eval_exp c_ls c_gs (Some t) e) as [dv | ] eqn:Eeval.
     {
       destruct (fill_store c_ls c_gs tail) as [c_ls'' | ] eqn:Efc.
       {
-        specialize (IHtail c_ls'').
-        destruct IHtail as [s_ls'' IHtail].
+        assert(L2 :
+          forall c_ls',
+            Some c_ls'' = Some c_ls' ->
+            exists s_ls' : smt_store,
+              fill_smt_store s_ls s_gs tail = Some s_ls' /\
+              over_approx_store_via s_ls' c_ls' m
+        ).
+        {
+          apply IHtail.
+          intros x' t' e' attrs' Hin.
+          apply (His x' t' e' attrs').
+          apply in_cons.
+          assumption.
+        }
+        specialize (L2 c_ls'').
+        destruct L2 as [s_ls'' L2].
         { reflexivity. }
         {
-          destruct IHtail as [IHtail_1 IHtail_2].
+          destruct L2 as [L2_1 L2_2].
           inversion L; subst.
           exists (x !-> Some se; s_ls'').
           split.
           {
             simpl.
             rewrite <- H0.
-            rewrite IHtail_1.
+            rewrite L2_1.
             reflexivity.
           }
           {
@@ -258,17 +274,18 @@ Proof.
       { inversion Hc. }
     }
     { discriminate Hc. }
-Admitted.
+Qed.
 
 Lemma create_local_store_correspondence : forall d c_ls c_gs s_ls s_gs m args c_ls',
   over_approx_store_via s_ls c_ls m ->
   over_approx_store_via s_gs c_gs m ->
+  (forall t e attrs, In ((t, e), attrs) args -> is_supported_exp e) ->
   create_local_store d c_ls c_gs args = Some c_ls' ->
   exists s_ls',
     create_local_smt_store d s_ls s_gs args = Some s_ls' /\
     over_approx_store_via s_ls' c_ls' m.
 Proof.
-  intros d c_ls c_gs s_ls s_gs m args c_ls' Hoal Hoag Hc.
+  intros d c_ls c_gs s_ls s_gs m args c_ls' Hoal Hoag His Hc.
   unfold create_local_store in Hc.
   unfold create_local_smt_store.
   destruct (ListUtil.merge_lists (df_args d)) eqn:E.

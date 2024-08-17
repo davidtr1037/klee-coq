@@ -25,8 +25,10 @@ Inductive is_supported_cmd : llvm_cmd -> Prop :=
       is_supported_exp e ->
       is_supported_cmd (CMD_Inst n (INSTR_Op v e))
   | IS_INSTR_VoidCall : forall n f args anns,
+      (forall t e attrs, In ((t, e), attrs) args -> is_supported_exp e) ->
       is_supported_cmd (CMD_Inst n (INSTR_VoidCall f args anns))
   | IS_INSTR_Call : forall n v f args anns,
+      (forall t e attrs, In ((t, e), attrs) args -> is_supported_exp e) ->
       is_supported_cmd (CMD_Inst n (INSTR_Call v f args anns))
   | IS_Term_Ret : forall n t e,
       is_supported_exp e ->
