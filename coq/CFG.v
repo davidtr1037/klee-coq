@@ -128,3 +128,17 @@ Definition find_function_by_exp (m : llvm_module) (e : exp typ) : option llvm_de
   | _ => None
   end
 .
+
+(* TODO: rename *)
+Lemma LX1 : forall mdl d fid,
+  find_function mdl fid = Some d ->
+  In d (m_definitions mdl).
+Proof.
+Admitted.
+
+(* TODO: rename *)
+Lemma LX2 : forall d bid b,
+  fetch_block d bid = Some b ->
+  In b (blks (df_body d)).
+Proof.
+Admitted.

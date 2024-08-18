@@ -110,45 +110,96 @@ Proof.
   admit.
 Admitted.
 
-(* TODO: remove *)
-Lemma LX0 : forall mdl e d,
-  find_function_by_exp mdl e = Some d ->
-  In d (m_definitions mdl).
-Proof.
-Admitted.
-
-(* TODO: remove *)
-Lemma LX1 : forall mdl d fid,
+(* TODO: rename *)
+Lemma LX5 : forall mdl fid d bid b cs,
+  is_supported_module mdl ->
   find_function mdl fid = Some d ->
-  In d (m_definitions mdl).
+  fetch_block d bid = Some b ->
+  (blk_cmds b) = cs ->
+  is_supported_cmd_list cs.
 Proof.
-Admitted.
+  intros mdl fid d bid b cs Hism Hf Hb Hcs.
+  inversion Hism; subst.
+  apply LX1 in Hf.
+  apply H0 in Hf.
+  inversion Hf; subst.
+  apply LX2 in Hb.
+  apply H1 in Hb.
+  inversion Hb; subst.
+  assumption.
+Qed.
 
+(* TODO: rename *)
+Lemma LX5_exp : forall mdl e d b cs,
+  is_supported_module mdl ->
+  find_function_by_exp mdl e = Some d ->
+  entry_block d = Some b ->
+  (blk_cmds b) = cs ->
+  is_supported_cmd_list cs.
+Proof.
+  intros mdl e d b cs Hism Hf Hb Hcs.
+  unfold find_function_by_exp in Hf.
+  destruct e eqn:Ee; try inversion Hf.
+  destruct id as [fid | fid] eqn:Eid; try inversion Hf.
+  unfold entry_block in Hb.
+  apply (LX5 mdl fid d (init (df_body d)) b cs); assumption.
+Qed.
+
+Lemma trailing_cmds_subset : forall cs ic cs',
+  get_trailing_cmds_by_cid cs ic = Some cs' ->
+  (forall c, In c cs' -> In c cs).
+Proof.
+  intros cs ic cs' Heq.
+  generalize dependent cs'.
+  induction cs as [ | c tail]. intros cs' Heq.
+  {
+    simpl in Heq.
+    inversion Heq.
+  }
+  {
+    intros cs' Ht.
+    intros c' Hin.
+    simpl in Ht.
+    destruct (PeanoNat.Nat.eqb (get_cmd_id c) ic) eqn:E.
+    {
+      inversion Ht; subst.
+      assumption.
+    }
+    {
+      apply IHtail with (c := c') in Ht; try assumption.
+      apply in_cons.
+      assumption.
+    }
+  }
+Qed.
+
+(* TODO: rename *)
 Lemma LX4 : forall mdl fid d ic cs,
   is_supported_module mdl ->
   find_function mdl fid = Some d ->
   get_trailing_cmds d ic = Some cs ->
   is_supported_cmd_list cs.
 Proof.
-Admitted.
-
-Lemma LX5 : forall mdl fid d bid b cs,
-  is_supported_module mdl ->
-  find_function mdl fid = Some d ->
-  fetch_block d bid = Some b ->
-  blk_cmds b = cs ->
-  is_supported_cmd_list cs.
-Proof.
-Admitted.
-
-Lemma LX5_exp : forall mdl e d b cs,
-  is_supported_module mdl ->
-  find_function_by_exp mdl e = Some d ->
-  entry_block d = Some b ->
-  blk_cmds b = cs ->
-  is_supported_cmd_list cs.
-Proof.
-Admitted.
+  intros mdl fid d ic cs Hism Hf Ht.
+  unfold get_trailing_cmds in Ht.
+  destruct (fetch_block d (ic_bid ic)) as [b | ] eqn:E.
+  {
+    apply IS_CmdList.
+    assert(L : forall c, In c cs -> In c (blk_cmds b)).
+    { apply trailing_cmds_subset with (ic := (ic_cid ic)). assumption. }
+    destruct (blk_cmds b) as [ | c' cs'] eqn:Ecmds.
+    { simpl in Ht. inversion Ht. }
+    {
+      apply (LX5 mdl fid d (ic_bid ic) b (c' :: cs')) in Hism; try assumption.
+      inversion Hism; subst.
+      intros c Hin.
+      apply H.
+      apply L.
+      assumption.
+    }
+  }
+  { inversion Ht. }
+Qed.
 
 Lemma LX6 : forall ic c cs pbid ls stk gs mdl,
   is_supported_cmd_list (c :: cs) ->
@@ -164,7 +215,18 @@ Lemma LX6 : forall ic c cs pbid ls stk gs mdl,
       mdl
     ).
 Proof.
-Admitted.
+  intros ic c cs pbid ls stk gs mdl H.
+  inversion H; subst.
+  apply IS_State.
+  { apply H0. apply in_eq. }
+  {
+    apply IS_CmdList.
+    intros c' Hin.
+    apply H0.
+    apply in_cons.
+    assumption.
+  }
+Qed.
 
 Lemma step_supported : forall mdl s s',
   is_supported_module mdl ->
