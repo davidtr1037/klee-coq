@@ -149,13 +149,6 @@ Definition next_inst_counter_on_branch (ic : inst_counter) (bid : block_id) (m :
   end
 .
 
-Definition find_function_by_exp (m : llvm_module) (e : exp typ) : option llvm_definition :=
-  match e with
-  | EXP_Ident (ID_Global id) => find_function m id
-  | _ => None
-  end
-.
-
 Fixpoint fill_store (ls : dv_store) (gs : dv_store) (l : list (raw_id * function_arg)) : option dv_store :=
   match l with
   | (id, ((t, e), _)) :: tail =>

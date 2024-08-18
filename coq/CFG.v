@@ -98,12 +98,12 @@ Definition get_fid(d : llvm_definition) : function_id :=
   (dc_name (df_prototype d))
 .
 
-Definition entry_block (d : llvm_definition) : option llvm_block :=
-  find_block (blks (df_body d)) (init (df_body d))
-.
-
 Definition fetch_block (d : llvm_definition) (bid : block_id) : option llvm_block :=
   find_block (blks (df_body d)) bid
+.
+
+Definition entry_block (d : llvm_definition) : option llvm_block :=
+  fetch_block d (init (df_body d))
 .
 
 Definition match_declaration (fid : function_id) (d : llvm_declaration) : option (llvm_declaration) :=
@@ -120,4 +120,11 @@ Definition match_function (fid : function_id) (d : llvm_definition) : option (ll
 
 Definition find_function (m : llvm_module) (fid : function_id) : option (llvm_definition) :=
   find_map (match_function fid) (m_definitions m)
+.
+
+Definition find_function_by_exp (m : llvm_module) (e : exp typ) : option llvm_definition :=
+  match e with
+  | EXP_Ident (ID_Global id) => find_function m id
+  | _ => None
+  end
 .
