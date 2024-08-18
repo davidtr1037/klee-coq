@@ -200,7 +200,7 @@ Proof.
 Qed.
 
 (* TODO: rename *)
-Lemma LX6 : forall ic c cs pbid ls stk gs mdl,
+Lemma is_supported_lemma : forall ic c cs pbid ls stk gs mdl,
   is_supported_cmd_list (c :: cs) ->
   is_supported_state
     (mk_state
@@ -237,38 +237,38 @@ Lemma step_supported : forall mdl s s',
 Proof.
   intros mdl s s' Hism Hm Hs His.
   inversion Hs; subst; inversion His; subst.
-  { apply LX6; assumption. }
-  { apply LX6; assumption. }
+  { apply is_supported_lemma; assumption. }
+  { apply is_supported_lemma; assumption. }
   {
-    apply LX6.
+    apply is_supported_lemma.
     apply (is_supported_propagation m (ic_fid ic) d tbid b (c :: cs)); assumption.
   }
   {
-    apply LX6.
+    apply is_supported_lemma.
     apply (is_supported_propagation m (ic_fid ic) d bid1 b (c :: cs)); assumption.
   }
   {
-    apply LX6.
+    apply is_supported_lemma.
     apply (is_supported_propagation m (ic_fid ic) d bid2 b (c :: cs)); assumption.
   }
   {
-    apply LX6.
+    apply is_supported_lemma.
     apply (is_supported_propagation_with_exp m f d b (c' :: cs')); assumption.
   }
   {
-    apply LX6.
+    apply is_supported_lemma.
     apply (is_supported_propagation_with_exp m f d b (c' :: cs')); assumption.
   }
   {
-    apply LX6.
+    apply is_supported_lemma.
     apply (is_supported_propagation_traling_cmds m (ic_fid ic') d ic' (c' :: cs')); assumption.
   }
   {
-    apply LX6.
+    apply is_supported_lemma.
     apply (is_supported_propagation_traling_cmds m (ic_fid ic') d ic' (c' :: cs')); assumption.
   }
-  { apply LX6; assumption. }
-  { apply LX6; assumption. }
+  { apply is_supported_lemma; assumption. }
+  { apply is_supported_lemma; assumption. }
 Qed.
 
 Lemma step_preserves_module : forall mdl s s',
