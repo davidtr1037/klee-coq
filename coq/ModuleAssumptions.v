@@ -110,40 +110,59 @@ Proof.
   admit.
 Admitted.
 
+(* TODO: remove *)
 Lemma LX0 : forall mdl e d,
   find_function_by_exp mdl e = Some d ->
   In d (m_definitions mdl).
 Proof.
 Admitted.
 
+(* TODO: remove *)
 Lemma LX1 : forall mdl d fid,
   find_function mdl fid = Some d ->
   In d (m_definitions mdl).
 Proof.
 Admitted.
 
-Lemma LX2 : forall d bid b,
-  fetch_block d bid = Some b ->
-  In b (blks (df_body d)).
+Lemma LX4 : forall mdl fid d ic cs,
+  is_supported_module mdl ->
+  find_function mdl fid = Some d ->
+  get_trailing_cmds d ic = Some cs ->
+  is_supported_cmd_list cs.
 Proof.
 Admitted.
 
-Lemma LX3 : forall c cs,
-  is_supported_cmd_list (c :: cs)  -> is_supported_cmd_list cs.
-Proof.
-  intros c cs H.
-  apply IS_CmdList.
-  intros c' Hin.
-  inversion H; subst.
-  apply H0.
-  apply in_cons.
-  assumption.
-Qed.
-
-Lemma LX4: forall d ic cs,
-  is_supported_definition d ->
-  get_trailing_cmds d ic = Some (cs) ->
+Lemma LX5 : forall mdl fid d bid b cs,
+  is_supported_module mdl ->
+  find_function mdl fid = Some d ->
+  fetch_block d bid = Some b ->
+  blk_cmds b = cs ->
   is_supported_cmd_list cs.
+Proof.
+Admitted.
+
+Lemma LX5_exp : forall mdl e d b cs,
+  is_supported_module mdl ->
+  find_function_by_exp mdl e = Some d ->
+  entry_block d = Some b ->
+  blk_cmds b = cs ->
+  is_supported_cmd_list cs.
+Proof.
+Admitted.
+
+Lemma LX6 : forall ic c cs pbid ls stk gs mdl,
+  is_supported_cmd_list (c :: cs) ->
+  is_supported_state
+    (mk_state
+      ic
+      c
+      cs
+      pbid
+      ls
+      stk
+      gs
+      mdl
+    ).
 Proof.
 Admitted.
 
@@ -156,127 +175,38 @@ Lemma step_supported : forall mdl s s',
 Proof.
   intros mdl s s' Hism Hm Hs His.
   inversion Hs; subst; inversion His; subst.
+  { apply LX6; assumption. }
+  { apply LX6; assumption. }
   {
-    inversion H9; subst.
-    apply IS_State.
-    { apply (H0 c). apply in_eq. }
-    { apply (LX3 c cs); assumption. }
+    apply LX6.
+    apply (LX5 m (ic_fid ic) d tbid b (c :: cs)); assumption.
   }
-  { (* phi *)
-    inversion H9; subst.
-    apply IS_State.
-    { apply (H0 c). apply in_eq. }
-    { apply (LX3 c cs); assumption. }
+  {
+    apply LX6.
+    apply (LX5 m (ic_fid ic) d bid1 b (c :: cs)); assumption.
   }
-  { (* uncond branch *)
-    inversion Hism; subst.
-    apply LX1 in H.
-    specialize (H3 d).
-    apply H3 in H.
-    apply LX2 in H0.
-    inversion H; subst.
-    apply H5 in H0.
-    inversion H0; subst.
-    rewrite H1 in H6.
-    inversion H6; subst.
-    apply IS_State.
-    { apply H7. apply in_eq. }
-    { apply (LX3 c cs); assumption. }
+  {
+    apply LX6.
+    apply (LX5 m (ic_fid ic) d bid2 b (c :: cs)); assumption.
   }
-  { (* true branch *)
-    inversion Hism; subst.
-    apply LX1 in H0.
-    specialize (H4 d).
-    apply H4 in H0.
-    apply LX2 in H1.
-    inversion H0; subst.
-    apply H6 in H1.
-    inversion H1; subst.
-    rewrite H2 in H7.
-    inversion H7; subst.
-    apply IS_State.
-    { apply H8. apply in_eq. }
-    { apply (LX3 c cs); assumption. }
+  {
+    apply LX6.
+    apply (LX5_exp m f d b (c' :: cs')); assumption.
   }
-  { (* false branch *)
-    inversion Hism; subst.
-    apply LX1 in H0.
-    specialize (H4 d).
-    apply H4 in H0.
-    apply LX2 in H1.
-    inversion H0; subst.
-    apply H6 in H1.
-    inversion H1; subst.
-    rewrite H2 in H7.
-    inversion H7; subst.
-    apply IS_State.
-    { apply H8. apply in_eq. }
-    { apply (LX3 c cs); assumption. }
+  {
+    apply LX6.
+    apply (LX5_exp m f d b (c' :: cs')); assumption.
   }
-  { (* Call *)
-    inversion Hism; subst.
-    apply LX0 in H.
-    specialize (H5 d).
-    apply H5 in H.
-    apply LX2 in H1.
-    inversion H; subst.
-    apply H7 in H1.
-    inversion H1; subst.
-    rewrite H2 in H8.
-    inversion H8; subst.
-    apply IS_State.
-    { apply H9. apply in_eq. }
-    { apply (LX3 c' cs'); assumption. }
+  {
+    apply LX6.
+    apply (LX4 m (ic_fid ic') d ic' (c' :: cs')); assumption.
   }
-  { (* VoidCall *)
-    inversion Hism; subst.
-    apply LX0 in H.
-    specialize (H5 d).
-    apply H5 in H.
-    apply LX2 in H1.
-    inversion H; subst.
-    apply H7 in H1.
-    inversion H1; subst.
-    rewrite H2 in H8.
-    inversion H8; subst.
-    apply IS_State.
-    { apply H9. apply in_eq. }
-    { apply (LX3 c' cs'); assumption. }
+  {
+    apply LX6.
+    apply (LX4 m (ic_fid ic') d ic' (c' :: cs')); assumption.
   }
-  { (* RetVoid *)
-    inversion Hism; subst.
-    apply LX1 in H.
-    specialize (H2 d).
-    apply H2 in H.
-    apply LX4 in H0; try assumption.
-    inversion H0; subst.
-    apply IS_State.
-    { apply H4. apply in_eq. }
-    { apply (LX3 c' cs'); assumption. }
-  }
-  { (* Ret *)
-    inversion Hism; subst.
-    apply LX1 in H0.
-    specialize (H3 d).
-    apply H3 in H0.
-    apply LX4 in H1; try assumption.
-    inversion H1; subst.
-    apply IS_State.
-    { apply H5. apply in_eq. }
-    { apply (LX3 c' cs'); assumption. }
-  }
-  { (* make_symbolic: similar to op *)
-    inversion H11; subst.
-    apply IS_State.
-    { apply (H2 c). apply in_eq. }
-    { apply (LX3 c cs); assumption. }
-  }
-  { (* assume: *)
-    inversion H13; subst.
-    apply IS_State.
-    { apply (H4 c). apply in_eq. }
-    { apply (LX3 c cs); assumption. }
-  }
+  { apply LX6; assumption. }
+  { apply LX6; assumption. }
 Qed.
 
 Lemma step_same_module : forall mdl s s',
