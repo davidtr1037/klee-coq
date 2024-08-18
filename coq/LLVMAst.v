@@ -55,17 +55,46 @@ Notation "x =? y" := (raw_id_eqb x y).
 Lemma raw_id_eqb_refl :
   forall x, raw_id_eqb x x = true.
 Proof.
-Admitted.
+  intros x.
+  destruct x; simpl.
+  { apply String.eqb_eq. reflexivity. }
+  { apply Z.eqb_eq. reflexivity. }
+  { apply Z.eqb_eq. reflexivity. }
+Qed.
 
 Lemma raw_id_eqb_eq :
   forall x y, raw_id_eqb x y = true <-> x = y.
 Proof.
-Admitted.
+  intros x y.
+  split; intros H.
+  {
+    destruct x, y; inversion H.
+    { apply String.eqb_eq in H1. subst. reflexivity. }
+    { apply Z.eqb_eq in H1. subst. reflexivity. }
+    { apply Z.eqb_eq in H1. subst. reflexivity. }
+  }
+  {
+    subst.
+    apply raw_id_eqb_refl.
+  }
+Qed.
 
 Lemma raw_id_eqb_neq :
   forall x y, raw_id_eqb x y = false <-> x <> y.
 Proof.
-Admitted.
+  intros x y.
+  split; intros H.
+  {
+    destruct x, y; try (intros Hf; inversion Hf);
+    (subst; apply raw_id_eqb_eq in Hf; rewrite Hf in H; discriminate H).
+  }
+  {
+    destruct x, y; try reflexivity.
+    { simpl. apply String.eqb_neq. intros Hf. subst. apply H. reflexivity. }
+    { simpl. apply Z.eqb_neq. intros Hf. subst. apply H. reflexivity. }
+    { simpl. apply Z.eqb_neq. intros Hf. subst. apply H. reflexivity. }
+  }
+Qed.
 
 Variant ident : Set :=
 | ID_Global (id:raw_id)   (* @id *)
