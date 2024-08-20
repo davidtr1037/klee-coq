@@ -44,6 +44,31 @@ Inductive equiv_smt_store : smt_store -> smt_store -> Prop :=
       ) -> equiv_smt_store s1 s2
 .
 
+Lemma equiv_smt_store_symmetry : forall s1 s2,
+  equiv_smt_store s1 s2 -> equiv_smt_store s2 s1.
+Proof.
+  intros s1 s2 Heq.
+  inversion Heq; subst.
+  apply EquivSMTSTore.
+  intros x.
+  specialize (H x).
+  destruct H as [H | H].
+  {
+    destruct H as [H_1 H_2].
+    left.
+    split; assumption.
+  }
+  {
+    destruct H as [se1 [se2 [H_1 [H_2 H_3]]]].
+    right.
+    exists se2, se1.
+    split; try assumption.
+    split; try assumption.
+    apply equiv_smt_expr_symmetry.
+    assumption.
+  }
+Qed.
+
 Lemma equiv_empty_smt_store : equiv_smt_store empty_smt_store empty_smt_store.
 Proof.
   apply EquivSMTSTore.
@@ -191,9 +216,27 @@ Inductive equiv_sym_stack : list sym_frame -> list sym_frame -> Prop :=
       equiv_sym_stack (f1 :: stk1) (f2 :: stk2)
 .
 
+Lemma equiv_sym_stack_symmetry : forall stk1 stk2,
+  equiv_sym_stack stk1 stk2 -> equiv_sym_stack stk2 stk1.
+Proof.
+  intros stk1 stk2 Heq.
+  induction Heq.
+  { apply EquivSymStack_Empty. }
+  {
+    apply EquivSymStack_NonEmpty.
+    { assumption. }
+    {
+      inversion H; subst.
+      apply EquivSymFrame.
+      apply equiv_smt_store_symmetry.
+      assumption.
+    }
+  }
+Qed.
+
 (* TODO: handle syms *)
 Inductive equiv_sym_state : sym_state -> sym_state -> Prop :=
-  | Sym_State_Equiv : forall ic c cs pbid ls1 stk1 gs1 pc1 ls2 stk2 gs2 pc2 syms mdl,
+  | EquivSymState : forall ic c cs pbid ls1 stk1 gs1 pc1 ls2 stk2 gs2 pc2 syms mdl,
       equiv_smt_store ls1 ls2 ->
       equiv_sym_stack stk1 stk2 ->
       equiv_smt_store gs1 gs2 ->
@@ -226,9 +269,16 @@ Inductive equiv_sym_state : sym_state -> sym_state -> Prop :=
 .
 
 Lemma equiv_sym_state_symmetry: forall s1 s2,
-  equiv_sym_state s1 s2 <-> equiv_sym_state s2 s1.
+  equiv_sym_state s1 s2 -> equiv_sym_state s2 s1.
 Proof.
-Admitted.
+  intros s1 s2 Heq.
+  inversion Heq; subst.
+  apply EquivSymState.
+  { apply equiv_smt_store_symmetry. assumption. }
+  { apply equiv_sym_stack_symmetry. assumption. }
+  { apply equiv_smt_store_symmetry. assumption. }
+  { apply equiv_smt_expr_symmetry. assumption. }
+Qed.
 
 Lemma equiv_sym_state_transitivity: forall s1 s2 s3,
   equiv_sym_state s1 s2 -> equiv_sym_state s2 s3 -> equiv_sym_state s1 s3.
@@ -376,7 +426,7 @@ Proof.
     split.
     { apply Sym_Step_OP; assumption. }
     {
-      apply Sym_State_Equiv; try assumption.
+      apply EquivSymState; try assumption.
       apply equiv_smt_store_update; assumption.
     }
   }
@@ -399,7 +449,7 @@ Proof.
     split.
     { apply Sym_Step_Phi; assumption. }
     {
-      apply Sym_State_Equiv; try assumption.
+      apply EquivSymState; try assumption.
       apply equiv_smt_store_update; assumption.
     }
   }
@@ -418,7 +468,7 @@ Proof.
     ).
     split.
     { apply Sym_Step_UnconditionalBr with (d := d) (b := b); assumption. }
-    { apply Sym_State_Equiv; try assumption. }
+    { apply EquivSymState; try assumption. }
   }
   {
     rename se into se1.
@@ -439,7 +489,7 @@ Proof.
     split.
     { apply Sym_Step_Br_True with (d := d) (b := b); assumption. }
     {
-      apply Sym_State_Equiv; try assumption.
+      apply EquivSymState; try assumption.
       apply equiv_smt_and; assumption.
     }
   }
@@ -462,7 +512,7 @@ Proof.
     split.
     { apply Sym_Step_Br_False with (d := d) (b := b); assumption. }
     {
-      apply Sym_State_Equiv; try assumption.
+      apply EquivSymState; try assumption.
       apply equiv_smt_and; try assumption.
       apply equiv_smt_not.
       assumption.
@@ -491,7 +541,7 @@ Proof.
     split.
     { apply Sym_Step_VoidCall; assumption. }
     {
-      apply Sym_State_Equiv; try assumption.
+      apply EquivSymState; try assumption.
       apply EquivSymStack_NonEmpty; try assumption.
       apply EquivSymFrame.
       assumption.
@@ -520,7 +570,7 @@ Proof.
     split.
     { apply Sym_Step_Call; assumption. }
     {
-      apply Sym_State_Equiv; try assumption.
+      apply EquivSymState; try assumption.
       apply EquivSymStack_NonEmpty; try assumption.
       apply EquivSymFrame.
       assumption.
@@ -546,7 +596,7 @@ Proof.
     ).
     split.
     { apply Sym_Step_RetVoid with (d := d); assumption. }
-    { apply Sym_State_Equiv; assumption. }
+    { apply EquivSymState; assumption. }
   }
   {
     rename se into se1.
@@ -572,7 +622,7 @@ Proof.
     split.
     { apply Sym_Step_Ret with (d := d); assumption. }
     {
-      apply Sym_State_Equiv; try assumption.
+      apply EquivSymState; try assumption.
       apply equiv_smt_store_update; assumption.
     }
   }
@@ -595,7 +645,7 @@ Proof.
     split.
     { apply Sym_Step_Assume with (d := d); assumption. }
     {
-      apply Sym_State_Equiv; try assumption.
+      apply EquivSymState; try assumption.
       apply equiv_smt_and; assumption.
     }
   }
