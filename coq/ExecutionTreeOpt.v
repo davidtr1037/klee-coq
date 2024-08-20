@@ -38,9 +38,9 @@ Definition execution_tree := tree sym_state.
 
 Inductive equiv_smt_store : smt_store -> smt_store -> Prop :=
   | EquivSMTSTore : forall (s1 s2 : smt_store),
-      (forall x se1 se2,
+      (forall x,
         ((s1 x) = None /\ (s2 x) = None) \/
-        ((s1 x) = Some se1 /\ (s2 x) = Some se2 /\ equiv_smt_expr se1 se2)
+        (exists se1 se2, (s1 x) = Some se1 /\ (s2 x) = Some se2 /\ equiv_smt_expr se1 se2)
       ) -> equiv_smt_store s1 s2
 .
 
@@ -49,7 +49,27 @@ Lemma equiv_smt_store_update : forall s1 s2 v se1 se2,
   equiv_smt_expr se1 se2 ->
   equiv_smt_store (v !-> Some se1; s1) (v !-> Some se2; s2).
 Proof.
-Admitted.
+  intros s1 s2 v se1 se2 Hs He.
+  apply EquivSMTSTore.
+  intros x.
+  inversion Hs; subst.
+  specialize (H x).
+  destruct (raw_id_eqb v x) eqn:E.
+  {
+    rewrite raw_id_eqb_eq in E.
+    rewrite E.
+    rewrite update_map_eq, update_map_eq.
+    right.
+    exists se1, se2.
+    split; try reflexivity;
+    split; try reflexivity.
+    assumption.
+  }
+  {
+    rewrite raw_id_eqb_neq in E.
+    rewrite update_map_neq, update_map_neq; try assumption.
+  }
+Qed.
 
 Lemma equiv_sym_eval_exp : forall ls1 gs1 ls2 gs2 ot e se1,
   equiv_smt_store ls1 ls2 ->
@@ -65,9 +85,25 @@ Lemma equiv_sym_eval_phi_args : forall ls1 gs1 ls2 gs2 t args pbid se1,
   sym_eval_phi_args ls1 gs1 t args pbid = Some se1 ->
   (exists se2, sym_eval_phi_args ls2 gs2 t args pbid = Some se2 /\ equiv_smt_expr se1 se2).
 Proof.
-Admitted.
+  intros ls1 gs1 ls2 gs2 t args pbid se1 Heq1 Heq2 Heval.
+  induction args as [ | arg args_tail].
+  { discriminate Heval. }
+  {
+    simpl in *.
+    destruct arg as [bid e].
+    destruct (raw_id_eqb bid pbid) eqn:E.
+    {
+      rewrite raw_id_eqb_eq in E.
+      apply equiv_sym_eval_exp with (ls2 := ls2) (gs2 := gs2) in Heval; try assumption.
+    }
+    {
+      apply IHargs_tail.
+      assumption.
+    }
+  }
+Qed.
 
-Lemma equiv_fill_store : forall ls1 gs1 ls2 gs2 l ls1',
+Lemma equiv_fill_smt_store : forall ls1 gs1 ls2 gs2 l ls1',
   equiv_smt_store ls1 ls2 ->
   equiv_smt_store gs1 gs2 ->
   fill_smt_store ls1 gs1 l = Some ls1' ->
@@ -83,7 +119,12 @@ Lemma equiv_create_local_store : forall ls1 gs1 ls2 gs2 d args ls1',
   exists ls2',
     create_local_smt_store d ls2 gs2 args = Some ls2' /\ equiv_smt_store ls1' ls2'.
 Proof.
-Admitted.
+  intros ls1 gs1 ls2 gs2 d args ls1' Heq1 Heq2 Hc.
+  unfold create_local_smt_store in *.
+  destruct (ListUtil.merge_lists (df_args d) args) eqn:E.
+  { apply equiv_fill_smt_store with (ls2 := ls2) (gs2 := gs2) in Hc; try assumption.  }
+  { discriminate Hc. }
+Qed.
 
 Inductive equiv_sym_frame : sym_frame -> sym_frame -> Prop :=
   | EquivSymFrame : forall s1 s2 ic pbid v,
