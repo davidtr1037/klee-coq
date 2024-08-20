@@ -69,6 +69,53 @@ Proof.
   }
 Qed.
 
+Lemma equiv_smt_store_transitivity : forall s1 s2 s3,
+  equiv_smt_store s1 s2 -> equiv_smt_store s2 s3 -> equiv_smt_store s1 s3.
+Proof.
+  intros s1 s2 s3 Heq1 Heq2.
+  inversion Heq1; subst.
+  inversion Heq2; subst.
+  apply EquivSMTSTore.
+  intros x.
+  specialize (H x).
+  destruct H as [H | H].
+  {
+    destruct H as [H_1 H_2].
+    left.
+    specialize (H0 x).
+    destruct H0 as [H0 | H0].
+    {
+      destruct H0 as [H0_1 H0_2].
+      split; try assumption.
+    }
+    {
+      destruct H0 as [se1 [se2 [H0_1 [H0_2 H0_3]]]].
+      rewrite H_2 in H0_1.
+      discriminate H0_1.
+    }
+  }
+  {
+    destruct H as [se1 [se2 [H_1 [H_2 H_3]]]].
+    specialize (H0 x).
+    destruct H0 as [H0 | H0].
+    {
+      destruct H0 as [H0_1 H0_2].
+      rewrite H_2 in H0_1.
+      discriminate H0_1.
+    }
+    {
+      destruct H0 as [se2' [se3 [H0_1 [H0_2 H0_3]]]].
+      right.
+      rewrite H0_1 in H_2.
+      inversion H_2; subst.
+      exists se1, se3.
+      split; try assumption.
+      split; try assumption.
+      apply equiv_smt_expr_transitivity with (e2 := se2); assumption.
+    }
+  }
+Qed.
+
 Lemma equiv_empty_smt_store : equiv_smt_store empty_smt_store empty_smt_store.
 Proof.
   apply EquivSMTSTore.
@@ -234,6 +281,31 @@ Proof.
   }
 Qed.
 
+Lemma equiv_sym_stack_transivity : forall stk1 stk2 stk3,
+  equiv_sym_stack stk1 stk2 -> equiv_sym_stack stk2 stk3 -> equiv_sym_stack stk1 stk3.
+Proof.
+  intros stk1 stk2 stk3 Heq1 Heq2.
+  generalize dependent stk3.
+  induction Heq1; intros stk3 Heq2.
+  { assumption. }
+  {
+    inversion Heq2; subst.
+    rename stk4 into stk3.
+    apply EquivSymStack_NonEmpty.
+    {
+      apply IHHeq1.
+      assumption.
+    }
+    {
+      inversion H; subst.
+      inversion Heq2; subst.
+      inversion H8; subst.
+      apply EquivSymFrame.
+      apply equiv_smt_store_transitivity with (s2 := s2); assumption.
+    }
+  }
+Qed.
+
 (* TODO: handle syms *)
 Inductive equiv_sym_state : sym_state -> sym_state -> Prop :=
   | EquivSymState : forall ic c cs pbid ls1 stk1 gs1 pc1 ls2 stk2 gs2 pc2 syms mdl,
@@ -283,7 +355,15 @@ Qed.
 Lemma equiv_sym_state_transitivity: forall s1 s2 s3,
   equiv_sym_state s1 s2 -> equiv_sym_state s2 s3 -> equiv_sym_state s1 s3.
 Proof.
-Admitted.
+  intros s1 s2 s3 Heq1 Heq2.
+  inversion Heq1; subst.
+  inversion Heq2; subst.
+  apply EquivSymState.
+  { apply equiv_smt_store_transitivity with (s2 := ls2); assumption. }
+  { apply equiv_sym_stack_transivity with (stk2 := stk2); assumption. }
+  { apply equiv_smt_store_transitivity with (s2 := gs2); assumption. }
+  { apply equiv_smt_expr_transitivity with (e2 := pc2); assumption. }
+Qed.
 
 Lemma error_equiv_sym_state: forall s1 s2,
   equiv_sym_state s1 s2 -> ~ error_sym_state s1 -> ~ error_sym_state s2.
