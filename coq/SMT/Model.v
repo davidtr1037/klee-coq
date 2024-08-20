@@ -240,6 +240,11 @@ Lemma equiv_smt_expr_symmetry : forall e1 e2,
 Proof.
 Admitted.
 
+Lemma equiv_smt_expr_transitivity : forall e1 e2 e3,
+  equiv_smt_expr e1 e2 -> equiv_smt_expr e2 e3 -> equiv_smt_expr e1 e3.
+Proof.
+Admitted.
+
 Lemma equiv_smt_expr_unsat : forall e1 e2,
   equiv_smt_expr e1 e2 -> unsat e1 -> unsat e2.
 Proof.
