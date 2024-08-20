@@ -239,9 +239,16 @@ Definition subst_var (e : smt_expr) (x y : string) : smt_expr :=
   e
 .
 
-Inductive equiv_smt_expr_with_renaming : smt_expr -> smt_expr -> Prop :=
+Inductive eq_smt_expr_with_subst : smt_expr -> smt_expr -> Prop :=
+  | Eq_Subst : forall x y e1 e2,
+      ~ subexpr (SMT_Var y) e2 ->
+      e1 = (subst_var e2 x y) ->
+      eq_smt_expr_with_subst e1 e2
+.
+
+Inductive equiv_smt_expr_with_subst : smt_expr -> smt_expr -> Prop :=
   | Iso_Subst : forall x y e1 e2,
       ~ subexpr (SMT_Var y) e2 ->
       equiv_smt_expr e1 (subst_var e2 x y) ->
-      equiv_smt_expr_with_renaming e1 e2
+      equiv_smt_expr_with_subst e1 e2
 .
