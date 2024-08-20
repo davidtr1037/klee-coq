@@ -833,14 +833,12 @@ Proof.
     destruct L2 as [init_s' [s [L2_1 [L2_2 L2_3]]]].
     rewrite L2_1 in Hinit.
     inversion Hinit; subst.
-    (* TODO: rename L *)
     assert(L3 :
       safe_et_opt (t_leaf s) \/
       (exists so l', equiv_sym_state s so /\ safe_et_opt (t_subtree so l')) \/
       unsat_sym_state s
     ).
     { apply (safe_multi_step init_s s l); assumption. }
-    (* TODO: can use same names for lemmas *)
     destruct L3 as [L3 | [L3 | L3]].
     {
       assert(L4: ~ error_sym_state s).
