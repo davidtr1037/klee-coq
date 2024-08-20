@@ -44,6 +44,29 @@ Inductive equiv_smt_store : smt_store -> smt_store -> Prop :=
       ) -> equiv_smt_store s1 s2
 .
 
+Lemma equiv_smt_store_update : forall s1 s2 v se1 se2,
+  equiv_smt_store s1 s2 ->
+  equiv_smt_expr se1 se2 ->
+  equiv_smt_store (v !-> Some se1; s1) (v !-> Some se2; s2).
+Proof.
+Admitted.
+
+Lemma equiv_sym_eval_exp : forall ls1 gs1 ls2 gs2 ot e se1,
+  equiv_smt_store ls1 ls2 ->
+  equiv_smt_store gs1 gs2 ->
+  sym_eval_exp ls1 gs1 ot e = Some se1 ->
+  (exists se2, (sym_eval_exp ls2 gs2 ot e) = Some se2 /\ equiv_smt_expr se1 se2).
+Proof.
+Admitted.
+
+Lemma equiv_sym_eval_phi_args : forall ls1 gs1 ls2 gs2 t args pbid se1,
+  equiv_smt_store ls1 ls2 ->
+  equiv_smt_store gs1 gs2 ->
+  sym_eval_phi_args ls1 gs1 t args pbid = Some se1 ->
+  (exists se2, sym_eval_phi_args ls2 gs2 t args pbid = Some se2 /\ equiv_smt_expr se1 se2).
+Proof.
+Admitted.
+
 Inductive equiv_sym_frame : sym_frame -> sym_frame -> Prop :=
   | EquivSymFrame : forall s1 s2 ic pbid v,
       equiv_smt_store s1 s2 ->
@@ -210,6 +233,229 @@ Lemma equiv_sym_state_on_step: forall s1 s1' s2,
   sym_step s1 s1' ->
   (exists s2', sym_step s2 s2' /\ equiv_sym_state s1' s2').
 Proof.
+  intros s1 s1' s2 Heq Hs1.
+  inversion Hs1;
+  subst; rename ls into ls1, stk into stk1, gs into gs1, pc into pc1;
+  inversion Heq; subst.
+  {
+    rename se into se1.
+    apply equiv_sym_eval_exp with (ls2 := ls2) (gs2 := gs2) in H; try assumption.
+    destruct H as [se2 [H_1 H_2]].
+    exists (mk_sym_state
+      (next_inst_counter ic c)
+      c
+      cs
+      pbid
+      (v !-> Some se2; ls2)
+      stk2
+      gs2
+      syms
+      pc2
+      mdl
+    ).
+    split.
+    { apply Sym_Step_OP; assumption. }
+    {
+      apply Sym_State_Equiv; try assumption.
+      apply equiv_smt_store_update; assumption.
+    }
+  }
+  {
+    rename se into se1.
+    apply equiv_sym_eval_phi_args with (ls2 := ls2) (gs2 := gs2) in H; try assumption.
+    destruct H as [se2 [H_1 H_2]].
+    exists (mk_sym_state
+      (next_inst_counter ic c)
+      c
+      cs
+      (Some pbid)
+      (v !-> Some se2; ls2)
+      stk2
+      gs2
+      syms
+      pc2
+      mdl
+    ).
+    split.
+    { apply Sym_Step_Phi; assumption. }
+    {
+      apply Sym_State_Equiv; try assumption.
+      apply equiv_smt_store_update; assumption.
+    }
+  }
+  {
+    exists (mk_sym_state
+      (mk_inst_counter (ic_fid ic) tbid (get_cmd_id c))
+      c
+      cs
+      (Some (ic_bid ic))
+      ls2
+      stk2
+      gs2
+      syms
+      pc2
+      mdl
+    ).
+    split.
+    { apply Sym_Step_UnconditionalBr with (d := d) (b := b); assumption. }
+    { apply Sym_State_Equiv; try assumption. }
+  }
+  {
+    rename se into se1.
+    apply equiv_sym_eval_exp with (ls2 := ls2) (gs2 := gs2) in H; try assumption.
+    destruct H as [se2 [H_1 H_2]].
+    exists (mk_sym_state
+      (mk_inst_counter (ic_fid ic) bid1 (get_cmd_id c))
+      c
+      cs
+      (Some (ic_bid ic))
+      ls2
+      stk2
+      gs2
+      syms
+      (SMT_BinOp SMT_And pc2 se2)
+      mdl
+    ).
+    split.
+    { apply Sym_Step_Br_True with (d := d) (b := b); assumption. }
+    {
+      apply Sym_State_Equiv; try assumption.
+      apply equiv_smt_and; assumption.
+    }
+  }
+  {
+    rename se into se1.
+    apply equiv_sym_eval_exp with (ls2 := ls2) (gs2 := gs2) in H; try assumption.
+    destruct H as [se2 [H_1 H_2]].
+    exists (mk_sym_state
+      (mk_inst_counter (ic_fid ic) bid2 (get_cmd_id c))
+      c
+      cs
+      (Some (ic_bid ic))
+      ls2
+      stk2
+      gs2
+      syms
+      (SMT_BinOp SMT_And pc2 (SMT_Not se2))
+      mdl
+    ).
+    split.
+    { apply Sym_Step_Br_False with (d := d) (b := b); assumption. }
+    {
+      apply Sym_State_Equiv; try assumption.
+      apply equiv_smt_and; try assumption.
+      apply equiv_smt_not.
+      assumption.
+    }
+  }
+  {
+    rename ls' into ls1'.
+    assert(L :
+      exists ls2',
+        create_local_smt_store d ls2 gs2 args = Some ls2' /\ equiv_smt_store ls1' ls2'
+    ).
+    { admit. }
+    destruct L as [ls2' [L_1 L_2]].
+    exists (mk_sym_state
+      (mk_inst_counter (get_fid d) (blk_id b) (get_cmd_id c'))
+      c'
+      cs'
+      None
+      ls2'
+      ((Sym_Frame ls2 (next_inst_counter ic c) pbid None) :: stk2)
+      gs2
+      syms
+      pc2
+      mdl
+    ).
+    split.
+    { apply Sym_Step_VoidCall; assumption. }
+    {
+      apply Sym_State_Equiv; try assumption.
+      apply EquivSymStack_NonEmpty; try assumption.
+      apply EquivSymFrame.
+      assumption.
+    }
+  }
+  {
+    rename ls' into ls1'.
+    assert(L :
+      exists ls2',
+        create_local_smt_store d ls2 gs2 args = Some ls2' /\ equiv_smt_store ls1' ls2'
+    ).
+    { admit. }
+    destruct L as [ls2' [L_1 L_2]].
+    exists (mk_sym_state
+      (mk_inst_counter (get_fid d) (blk_id b) (get_cmd_id c'))
+      c'
+      cs'
+      None
+      ls2'
+      ((Sym_Frame ls2 (next_inst_counter ic c) pbid (Some v)) :: stk2)
+      gs2
+      syms
+      pc2
+      mdl
+    ).
+    split.
+    { apply Sym_Step_Call; assumption. }
+    {
+      apply Sym_State_Equiv; try assumption.
+      apply EquivSymStack_NonEmpty; try assumption.
+      apply EquivSymFrame.
+      assumption.
+    }
+  }
+  {
+    rename ls' into ls1'.
+    inversion H13; subst.
+    rename stk3 into stk2.
+    inversion H5; subst.
+    rename s2 into ls2'.
+    exists (mk_sym_state
+      ic'
+      c'
+      cs'
+      pbid'
+      ls2'
+      stk2
+      gs2
+      syms
+      pc2
+      mdl
+    ).
+    split.
+    { apply Sym_Step_RetVoid with (d := d); assumption. }
+    { apply Sym_State_Equiv; assumption. }
+  }
+  {
+    rename se into se1.
+    rename ls' into ls1'.
+    inversion H14; subst.
+    rename stk3 into stk2.
+    inversion H6; subst.
+    rename s2 into ls2'.
+    apply equiv_sym_eval_exp with (ls2 := ls2) (gs2 := gs2) in H; try assumption.
+    destruct H as [se2 [H_1 H_2]].
+    exists (mk_sym_state
+      ic'
+      c'
+      cs'
+      pbid'
+      (v !-> Some se2; ls2')
+      stk2
+      gs2
+      syms
+      pc2
+      mdl
+    ).
+    split.
+    { apply Sym_Step_Ret with (d := d); assumption. }
+    {
+      apply Sym_State_Equiv; try assumption.
+      apply equiv_smt_store_update; assumption.
+    }
+  }
 Admitted.
 
 Lemma safe_subtree_equiv: forall s1 s2 l,

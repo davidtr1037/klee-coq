@@ -245,6 +245,19 @@ Lemma equiv_smt_expr_unsat : forall e1 e2,
 Proof.
 Admitted.
 
+Lemma equiv_smt_not : forall e1 e2,
+  equiv_smt_expr e1 e2 ->
+  equiv_smt_expr (SMT_Not e1) (SMT_Not e2).
+Proof.
+Admitted.
+
+Lemma equiv_smt_and : forall e1 e2 e3 e4,
+  equiv_smt_expr e1 e2 ->
+  equiv_smt_expr e3 e4 ->
+  equiv_smt_expr (SMT_BinOp SMT_And e1 e3) (SMT_BinOp SMT_And e2 e4).
+Proof.
+Admitted.
+
 Definition subst_var (e : smt_expr) (x y : string) : smt_expr :=
   e
 .
