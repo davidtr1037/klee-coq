@@ -36,19 +36,19 @@ Arguments root {X}.
 
 Definition execution_tree := tree sym_state.
 
-Inductive sym_state_equiv : sym_state -> sym_state -> Prop :=
+Inductive equiv_sym_state : sym_state -> sym_state -> Prop :=
   | Sym_State_Equiv : forall s1 s2,
       s1 = s2 ->
-      sym_state_equiv s1 s2
+      equiv_sym_state s1 s2
 .
 
-Lemma sym_state_equiv_symmetry: forall s1 s2,
-  sym_state_equiv s1 s2 <-> sym_state_equiv s2 s1.
+Lemma equiv_sym_state_symmetry: forall s1 s2,
+  equiv_sym_state s1 s2 <-> equiv_sym_state s2 s1.
 Proof.
 Admitted.
 
-Lemma error_sym_state_equiv: forall s1 s2,
-  sym_state_equiv s1 s2 -> ~ error_sym_state s1 -> ~ error_sym_state s2.
+Lemma error_equiv_sym_state: forall s1 s2,
+  equiv_sym_state s1 s2 -> ~ error_sym_state s1 -> ~ error_sym_state s2.
 Proof.
 Admitted.
 
@@ -90,7 +90,7 @@ Inductive safe_et_opt : execution_tree -> Prop :=
       (forall s',
         sym_step s s' ->
         (
-          (exists t, (In t l /\ safe_et_opt t /\ sym_state_equiv s' (root t))) \/ 
+          (exists t, (In t l /\ safe_et_opt t /\ equiv_sym_state s' (root t))) \/ 
           (unsat_sym_state s')
         )
       ) -> safe_et_opt (t_subtree s l)
@@ -117,7 +117,7 @@ Lemma safe_single_step: forall s s' l,
   sym_step s s' ->
   (
     safe_et_opt (t_leaf s') \/
-    (exists so' l', sym_state_equiv s' so' /\ safe_et_opt (t_subtree so' l')) \/
+    (exists so' l', equiv_sym_state s' so' /\ safe_et_opt (t_subtree so' l')) \/
     unsat_sym_state s'
   ).
 Proof.
@@ -144,16 +144,16 @@ Proof.
 Admitted.
 
 Lemma safe_subtree_equiv: forall s1 s2 l,
-  sym_state_equiv s1 s2 ->
+  equiv_sym_state s1 s2 ->
   safe_et_opt (t_subtree s1 l) ->
   safe_et_opt (t_subtree s2 l).
 Proof.
 Admitted.
 
-Lemma sym_state_equiv_on_step: forall s1 s1' s2,
-  sym_state_equiv s1 s2 ->
+Lemma equiv_sym_state_on_step: forall s1 s1' s2,
+  equiv_sym_state s1 s2 ->
   sym_step s1 s1' ->
-  (exists s2', sym_step s2 s2' /\ sym_state_equiv s1' s2').
+  (exists s2', sym_step s2 s2' /\ equiv_sym_state s1' s2').
 Proof.
 Admitted.
 
@@ -162,7 +162,7 @@ Lemma safe_multi_step: forall s s' l,
   multi_sym_step s s' ->
   (
     safe_et_opt (t_leaf s') \/
-    (exists so' l', sym_state_equiv s' so' /\ safe_et_opt (t_subtree so' l')) \/
+    (exists so' l', equiv_sym_state s' so' /\ safe_et_opt (t_subtree so' l')) \/
     unsat_sym_state s'
   ).
 Proof.
@@ -178,7 +178,7 @@ Proof.
       apply safe_single_step with (s := s') (l := l').
       {
         apply safe_subtree_equiv with (s1 := so').
-        { apply sym_state_equiv_symmetry. assumption. }
+        { apply equiv_sym_state_symmetry. assumption. }
         { assumption. }
       }
       { assumption. }
@@ -218,7 +218,7 @@ Proof.
     (* TODO: rename L *)
     assert(L :
       safe_et_opt (t_leaf s) \/
-      (exists so l', sym_state_equiv s so /\ safe_et_opt (t_subtree so l')) \/
+      (exists so l', equiv_sym_state s so /\ safe_et_opt (t_subtree so l')) \/
       unsat_sym_state s
     ).
     { apply (safe_multi_step init_s s l); assumption. }
@@ -237,8 +237,8 @@ Proof.
       destruct L as [so [l' [L_1 L_2]]].
       assert(L3: ~ error_sym_state s).
       {
-        apply error_sym_state_equiv with (s1 := so) (s2 := s).
-        { apply sym_state_equiv_symmetry. assumption. }
+        apply error_equiv_sym_state with (s1 := so) (s2 := s).
+        { apply equiv_sym_state_symmetry. assumption. }
         { apply safe_subtree with (l := l'). assumption. }
       }
       intros Hes.

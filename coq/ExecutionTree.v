@@ -174,8 +174,10 @@ Proof.
     destruct L1 as [init_s' [s [L1_1 [L1_2 L1_3]]]].
     rewrite L1_1 in Hinit.
     inversion Hinit; subst.
+    (* TODO: rename L *)
     assert(L: safe_et (t_leaf s) \/ (exists l', safe_et (t_subtree s l')) \/ unsat_sym_state s).
     { apply (safe_multi_step init_s s l); assumption. }
+    (* TODO: can use same names for lemmas *)
     destruct L as [L | [L | L]].
     {
       assert(L2: ~ error_sym_state s).

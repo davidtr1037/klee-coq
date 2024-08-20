@@ -234,3 +234,14 @@ Inductive equiv_smt_expr : smt_expr -> smt_expr -> Prop :=
       (forall m, exists dv, smt_eval m e1 = Some dv /\ smt_eval m e2 = Some dv) ->
       equiv_smt_expr e1 e2
 .
+
+Definition subst_var (e : smt_expr) (x y : string) : smt_expr :=
+  e
+.
+
+Inductive equiv_smt_expr_with_renaming : smt_expr -> smt_expr -> Prop :=
+  | Iso_Subst : forall x y e1 e2,
+      ~ subexpr (SMT_Var y) e2 ->
+      equiv_smt_expr e1 (subst_var e2 x y) ->
+      equiv_smt_expr_with_renaming e1 e2
+.
