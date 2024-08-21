@@ -19,12 +19,6 @@ From SE.SMT Require Import Model.
 From SE.Utils Require Import ListUtil.
 From SE.Utils Require Import Util.
 
-(*
-  | WD_Expr : forall se syms,
-      (forall n, subexpr (SMT_Var n) se -> In n syms) ->
-      well_defined_smt_expr se syms
-*)
-
 Inductive well_defined_smt_expr : smt_expr -> list string -> Prop :=
   | WD_Expr : forall se syms,
       (forall n, contains_var se n -> In n syms) ->
@@ -70,19 +64,6 @@ Inductive well_defined : sym_state -> Prop :=
           mdl
         )
 .
-
-(* TODO: rename and move to Expr *)
-Lemma subexpr_var_not : forall x e,
-  contains_var (SMT_Not e) x -> contains_var e x.
-Proof.
-Admitted.
-
-(* TODO: rename and move to Expr *)
-Lemma subexpr_var_binop : forall x op e1 e2,
-  contains_var (SMT_BinOp op e1 e2) x ->
-  contains_var e1 x \/ contains_var e2 x.
-Proof.
-Admitted.
 
 (* TODO: rename *)
 Lemma subexpr_var_ibinop : forall x op e1 e2,
@@ -660,7 +641,7 @@ Proof.
         { assumption. }
         apply WD_Expr.
         intros n Hse.
-        apply subexpr_var_binop in Hse.
+        apply contains_var_binop in Hse.
         destruct Hse as [Hse | Hse].
         {
           inversion Hwd_pc; subst.
@@ -698,7 +679,7 @@ Proof.
         { assumption. }
         apply WD_Expr.
         intros n Hse.
-        apply subexpr_var_binop in Hse.
+        apply contains_var_binop in Hse.
         destruct Hse as [Hse | Hse].
         {
           inversion Hwd_pc; subst.
@@ -719,7 +700,7 @@ Proof.
           }
           inversion L; subst.
           apply H.
-          apply subexpr_var_not in Hse.
+          apply contains_var_not in Hse.
           assumption.
         }
       }
@@ -800,7 +781,7 @@ Proof.
         { assumption. }
         apply WD_Expr.
         intros n Hse.
-        apply subexpr_var_binop in Hse.
+        apply contains_var_binop in Hse.
         destruct Hse as [Hse | Hse].
         {
           inversion Hwd_pc; subst.

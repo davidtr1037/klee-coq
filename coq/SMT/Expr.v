@@ -136,3 +136,14 @@ Inductive contains_var : smt_expr -> string -> Prop :=
   | ContainsVar_I64 : forall x e,
       subexpr (SMT_Var_I64 x) e -> contains_var e x
 .
+
+Lemma contains_var_not : forall x e,
+  contains_var (SMT_Not e) x -> contains_var e x.
+Proof.
+Admitted.
+
+Lemma contains_var_binop : forall x op e1 e2,
+  contains_var (SMT_BinOp op e1 e2) x ->
+  contains_var e1 x \/ contains_var e2 x.
+Proof.
+Admitted.
