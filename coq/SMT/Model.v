@@ -341,13 +341,60 @@ Qed.
 Lemma equiv_smt_expr_unsat : forall e1 e2,
   equiv_smt_expr e1 e2 -> unsat e1 -> unsat e2.
 Proof.
-Admitted.
+  intros e1 e2 Heq Hu.
+  unfold unsat, sat in *.
+  intros Hsat.
+  destruct Hsat as [m Hsat].
+  apply Hu.
+  exists m.
+  inversion Heq; subst.
+  specialize (H m).
+  unfold sat_via in *.
+  destruct H as [H | H].
+  {
+    destruct H as [H_1 H_2].
+    rewrite Hsat in H_2.
+    discriminate H_2.
+  }
+  {
+    destruct H as [dv [H_1 H_2]].
+    rewrite Hsat in H_2.
+    rewrite <- H_2 in H_1.
+    assumption.
+  }
+Qed.
 
 Lemma equiv_smt_expr_not : forall e1 e2,
   equiv_smt_expr e1 e2 ->
   equiv_smt_expr (SMT_Not e1) (SMT_Not e2).
 Proof.
-Admitted.
+  intros e1 e2 Heq.
+  inversion Heq; subst.
+  apply EquivSMTExpr.
+  intros m.
+  specialize (H m).
+  destruct H as [[H_1 H_2] | [dv [H_1 H_2]]].
+  {
+    left.
+    simpl.
+    rewrite H_1, H_2.
+    split; reflexivity.
+  }
+  {
+    simpl.
+    rewrite H_1, H_2.
+    destruct (smt_eval_cmpop SMT_Eq dv di_false) as [di | ] eqn:E.
+    {
+      right.
+      exists di.
+      split; reflexivity.
+    }
+    {
+      left.
+      split; reflexivity.
+    }
+  }
+Qed.
 
 Lemma equiv_smt_expr_binop : forall op e1 e2 e3 e4,
   equiv_smt_expr e1 e2 ->
