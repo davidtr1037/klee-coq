@@ -71,13 +71,13 @@ Inductive well_defined : sym_state -> Prop :=
         )
 .
 
-(* TODO: rename *)
+(* TODO: rename and move to Expr *)
 Lemma subexpr_var_not : forall x e,
   contains_var (SMT_Not e) x -> contains_var e x.
 Proof.
 Admitted.
 
-(* TODO: rename *)
+(* TODO: rename and move to Expr *)
 Lemma subexpr_var_binop : forall x op e1 e2,
   contains_var (SMT_BinOp op e1 e2) x ->
   contains_var e1 x \/ contains_var e2 x.

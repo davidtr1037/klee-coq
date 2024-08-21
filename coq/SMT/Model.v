@@ -194,25 +194,29 @@ Qed.
 Lemma subexpr_non_interference : forall e x m n,
   (~ contains_var e x ) -> smt_eval m e = smt_eval (mk_smt_model (x !-> n; bv_model m)) e.
 Proof.
+  intros e x m n H.
+  induction e; simpl; try reflexivity; try (
+    destruct (x =? x0)%string eqn:E;
+    [
+      rewrite String.eqb_eq in E;
+      subst;
+      destruct H;
+      try (apply ContainsName_I1; apply SubExpr_Refl);
+      try (apply ContainsName_I8; apply SubExpr_Refl);
+      try (apply ContainsName_I16; apply SubExpr_Refl);
+      try (apply ContainsName_I32; apply SubExpr_Refl);
+      try (apply ContainsName_I64; apply SubExpr_Refl);
+      apply SubExpr_Refl |
+      rewrite String.eqb_neq in E;
+      rewrite update_map_neq;
+      [
+        reflexivity |
+        assumption
+      ]
+    ]
+  ).
 Admitted.
 (*
-  intros e x m n H.
-  induction e; simpl; try reflexivity.
-  {
-    destruct (x =? x0)%string eqn:E.
-    {
-      rewrite String.eqb_eq in E.
-      subst.
-      destruct H.
-      apply SubExpr_Refl.
-    }
-    {
-      rewrite String.eqb_neq in E.
-      rewrite update_map_neq.
-      { reflexivity. }
-      { assumption. }
-    }
-  }
   { (* SMT_BinOp *)
     assert(L1 : ~ subexpr (SMT_Var x) e1).
     { intros Hse. apply H. apply SubExpr_BinOp_L. assumption. }

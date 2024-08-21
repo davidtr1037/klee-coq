@@ -124,6 +124,7 @@ Inductive subexpr : smt_expr -> smt_expr -> Prop :=
       subexpr e e1 -> subexpr e (SMT_Extract e1 i w)
 .
 
+(* TODO: rename ContainsName to ContainsVar *)
 Inductive contains_var : smt_expr -> string -> Prop :=
   | ContainsName_I1 : forall x e,
       subexpr (SMT_Var_I1 x) e -> contains_var e x
