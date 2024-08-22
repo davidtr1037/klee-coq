@@ -6,6 +6,7 @@ Import ListNotations.
 
 From SE Require Import BitVectors.
 From SE Require Import CFG.
+From SE Require Import ChoiceAxiom.
 From SE Require Import Concrete.
 From SE Require Import DynamicValue.
 From SE Require Import IDMap.
@@ -522,11 +523,10 @@ Inductive sym_step : sym_state -> sym_state -> Prop :=
           (SMT_BinOp SMT_And pc se)
           mdl
         )
-  | Sym_Step_MakeSymbolicInt32 : forall ic cid v c cs pbid ls stk gs syms pc mdl d name,
+  | Sym_Step_MakeSymbolicInt32 : forall ic cid v c cs pbid ls stk gs syms pc mdl d,
       (find_function mdl klee_make_symbolic_int32_id) = None ->
       (find_declaration mdl klee_make_symbolic_int32_id) = Some d ->
       (dc_type d) = klee_make_symbolic_int32_type ->
-      (~ In name syms) ->
       sym_step
         (mk_sym_state
           ic
@@ -545,10 +545,10 @@ Inductive sym_step : sym_state -> sym_state -> Prop :=
           c
           cs
           pbid
-          (v !-> Some (SMT_Var_I32 name); ls)
+          (v !-> Some (SMT_Var_I32 (fresh_name syms)); ls)
           stk
           gs
-          (name :: syms)
+          (extend_names syms)
           pc
           mdl
         )

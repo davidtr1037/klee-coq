@@ -871,18 +871,15 @@ Proof.
     inversion H; subst.
     inversion Hwd; subst.
     destruct H1 as [H1_1 [H1_2 [H1_3 H1_4]]].
-    assert(L1: exists name, ~ In name s_syms).
-    { apply choice_axiom. }
-    destruct L1 as [name L1].
     exists (mk_sym_state
       (next_inst_counter c_ic c)
       c
       cs
       c_pbid
-      (v !-> Some (SMT_Var_I32 name); s_ls)
+      (v !-> Some (SMT_Var_I32 (fresh_name s_syms)); s_ls)
       s_stk
       s_gs
-      (name :: s_syms)
+      (extend_names s_syms)
       s_pc
       c_mdl
     ).
@@ -890,7 +887,10 @@ Proof.
     { apply Sym_Step_MakeSymbolicInt32 with (d := d); assumption. }
     {
       apply OA_State.
-      exists (mk_smt_model (StringMap.update_map (bv_model m) name (DI_I32 (repr n)))).
+      exists (
+        mk_smt_model
+          (StringMap.update_map (bv_model m) (fresh_name s_syms) (DI_I32 (repr n)))
+      ).
       apply OAV_State.
       {
         apply store_update_correspondence.
@@ -901,20 +901,27 @@ Proof.
           reflexivity.
         }
         {
-          apply over_approx_store_non_interference with (syms := s_syms); assumption.
+          apply over_approx_store_non_interference with (syms := s_syms); try assumption.
+          apply fresh_name_lemma.
         }
       }
-      { apply over_approx_stack_non_interference with (syms := s_syms); assumption. }
-      { apply over_approx_store_non_interference with (syms := s_syms); assumption. }
+      {
+        apply over_approx_stack_non_interference with (syms := s_syms); try assumption.
+        apply fresh_name_lemma.
+      }
+      {
+        apply over_approx_store_non_interference with (syms := s_syms); try assumption.
+        apply fresh_name_lemma.
+      }
       {
         rewrite <- H25.
         symmetry.
         apply subexpr_non_interference.
         inversion H1_4; subst.
-        specialize (H0 name).
+        specialize (H0 (fresh_name s_syms)).
         intros Hse.
         apply H0 in Hse.
-        apply L1 in Hse.
+        apply fresh_name_lemma in Hse.
         assumption.
       }
     }

@@ -6,6 +6,7 @@ Import ListNotations.
 
 From SE Require Import BitVectors.
 From SE Require Import CFG.
+From SE Require Import ChoiceAxiom.
 From SE Require Import Concrete.
 From SE Require Import DynamicValue.
 From SE Require Import IDMap.
@@ -792,6 +793,7 @@ Proof.
     }
   }
   {
+    rewrite extend_names_lemma.
     apply WD_State.
     split.
     {

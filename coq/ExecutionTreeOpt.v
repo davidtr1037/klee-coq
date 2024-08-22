@@ -4,6 +4,7 @@ Import ListNotations.
 
 From SE Require Import BitVectors.
 From SE Require Import CFG.
+From SE Require Import ChoiceAxiom.
 From SE Require Import Completeness.
 From SE Require Import Concrete.
 From SE Require Import DynamicValue.
@@ -860,8 +861,28 @@ Proof.
       assumption.
     }
   }
-  { admit. }
-Admitted.
+  {
+    exists (mk_sym_state
+      (next_inst_counter ic c)
+      c
+      cs
+      pbid
+      (v !-> Some (SMT_Var_I32 (fresh_name syms)); ls2)
+      stk2
+      gs2
+      (extend_names syms)
+      pc2
+      mdl
+    ).
+    split.
+    { apply Sym_Step_MakeSymbolicInt32 with (d := d); assumption. }
+    {
+      apply EquivSymState; try assumption.
+      apply equiv_smt_store_update; try assumption.
+      apply equiv_smt_expr_refl.
+    }
+  }
+Qed.
 
 Lemma safe_subtree_equiv: forall s1 s2 l,
   equiv_sym_state s1 s2 ->
