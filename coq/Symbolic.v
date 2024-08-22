@@ -9,13 +9,13 @@ From SE Require Import CFG.
 From SE Require Import ChoiceAxiom.
 From SE Require Import Concrete.
 From SE Require Import DynamicValue.
-From SE Require Import IDMap.
 From SE Require Import LLVMAst.
 From SE Require Import Relation.
 
 From SE.SMT Require Import Expr.
 From SE.SMT Require Import Model.
 
+From SE.Utils Require Import IDMap.
 From SE.Utils Require Import ListUtil.
 From SE.Utils Require Import Util.
 

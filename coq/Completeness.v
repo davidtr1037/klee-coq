@@ -9,7 +9,6 @@ From SE Require Import CFG.
 From SE Require Import ChoiceAxiom.
 From SE Require Import Concrete.
 From SE Require Import DynamicValue.
-From SE Require Import IDMap.
 From SE Require Import LLVMAst.
 From SE Require Import ModuleAssumptions.
 From SE Require Import Symbolic.
@@ -20,6 +19,7 @@ From SE.SMT Require Import Expr.
 From SE.SMT Require Import Model.
 
 (* TODO: fix namespace issues *)
+From SE.Utils Require Import IDMap.
 From SE.Utils Require StringMap.
 From SE.Utils Require ListUtil.
 

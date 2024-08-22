@@ -8,7 +8,6 @@ From SE Require Import ChoiceAxiom.
 From SE Require Import Completeness.
 From SE Require Import Concrete.
 From SE Require Import DynamicValue.
-From SE Require Import IDMap.
 From SE Require Import LLVMAst.
 From SE Require Import ModuleAssumptions.
 From SE Require Import Symbolic.
@@ -17,6 +16,8 @@ From SE Require Import WellDefinedness.
 
 From SE.SMT Require Import Expr.
 From SE.SMT Require Import Model.
+
+From SE.Utils Require Import IDMap.
 
 Inductive tree (X : Type) : Type :=
   | t_leaf (x : X)

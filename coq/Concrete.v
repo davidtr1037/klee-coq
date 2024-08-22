@@ -8,10 +8,10 @@ Import ListNotations.
 From SE Require Import BitVectors.
 From SE Require Import CFG.
 From SE Require Import DynamicValue.
-From SE Require Import IDMap.
 From SE Require Import LLVMAst.
 From SE Require Import Relation.
 
+From SE.Utils Require Import IDMap.
 From SE.Utils Require Import ListUtil.
 
 Record inst_counter := mk_inst_counter {
