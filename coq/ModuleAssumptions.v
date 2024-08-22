@@ -87,6 +87,7 @@ Inductive is_supported_module : llvm_module -> Prop :=
       is_supported_module mdl
 .
 
+(* TODO: add is_supported_module *)
 Inductive is_supported_state : state -> Prop :=
   | IS_State : forall ic c cs pbid ls stk gs mdl,
       is_supported_cmd c ->
@@ -317,6 +318,7 @@ Proof.
   }
 Qed.
 
+(* TODO: add is_supported_module *)
 Inductive is_supported_sym_state : sym_state -> Prop :=
   | IS_SymState : forall ic c cs pbid ls stk gs syms pc mdl,
       is_supported_cmd c ->
