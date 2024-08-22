@@ -3,10 +3,7 @@ From Coq Require Import String.
 
 Import ListNotations.
 
-(* TODO: remove? *)
-Lemma choice_axiom : forall (syms : list string), exists sym, ~ In sym syms.
-Proof.
-Admitted.
+(* TODO: use a more readable: fresh_name (n : nat) / extend_names (n : nat) *)
 
 Definition fresh_name (l : list string) : string.
 Admitted.
