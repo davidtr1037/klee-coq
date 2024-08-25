@@ -3,6 +3,7 @@
 
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Function.h"
+#include "llvm/IR/Instructions.h"
 
 #include "klee/Coq/CoqLanguage.h"
 
@@ -40,13 +41,29 @@ public:
 
     ref<CoqExpr> translateBinaryOperator(llvm::Instruction &inst);
 
-    ref<CoqExpr> createInstOp(ref<CoqExpr> target,
-                              ref<CoqExpr> ibinop,
-                              ref<CoqExpr> arg_type,
-                              ref<CoqExpr> arg1,
-                              ref<CoqExpr> arg2);
+    ref<CoqExpr> createBinOp(ref<CoqExpr> target,
+                             ref<CoqExpr> ibinop,
+                             ref<CoqExpr> arg_type,
+                             ref<CoqExpr> arg1,
+                             ref<CoqExpr> arg2);
+
+    ref<CoqExpr> translateCmpInst(llvm::CmpInst *inst);
+
+    ref<CoqExpr> createCmpOp(ref<CoqExpr> target,
+                             ref<CoqExpr> icmp,
+                             ref<CoqExpr> arg_type,
+                             ref<CoqExpr> arg1,
+                             ref<CoqExpr> arg2);
+
+    ref<CoqExpr> translateBranchInst(llvm::BranchInst *inst);
+
+    ref<CoqExpr> translatePHINode(llvm::PHINode *inst);
 
     ref<CoqExpr> createCMDInst(unsigned id, ref<CoqExpr> e);
+
+    ref<CoqExpr> createCMDTerm(unsigned id, ref<CoqExpr> e);
+
+    ref<CoqExpr> createCMDPhi(unsigned id, ref<CoqExpr> e);
 
     ref<CoqExpr> translateValue(llvm::Value *v);
 
