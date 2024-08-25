@@ -24,7 +24,7 @@ ref<CoqExpr> ModuleTranslator::translateModule() {
   for (Function &f : m) {
     /* TODO: add predicate */
     if (!f.isIntrinsic()) {
-      ref<CoqExpr> coq_f = translateFunction(f);
+      ref<CoqExpr> coq_f = translateFunctionCached(f);
       coq_defs.push_back(coq_f);
     }
   }
@@ -43,6 +43,25 @@ ref<CoqExpr> ModuleTranslator::translateModule() {
   );
 
   return coq_module;
+}
+
+ref<CoqExpr> ModuleTranslator::translateFunctionCached(Function &f) {
+  auto i = functionCache.find(&f);
+  if (i != functionCache.end()) {
+    return i->second;
+  }
+
+  uint64_t varId = functionCache.size();
+  std::string varName = "def_" + std::to_string(varId);
+
+  ref<CoqExpr> expr = translateFunction(f);
+  ref<CoqExpr> alias = new CoqVariable(varName);
+
+  functionCache.insert(std::make_pair(&f, alias));
+  ref<CoqExpr> def = new CoqDefinition(varName, "llvm_definition", expr);
+  functionDefs.push_back(def);
+
+  return alias;
 }
 
 ref<CoqExpr> ModuleTranslator::translateFunction(Function &f) {
@@ -124,7 +143,7 @@ ref<CoqExpr> ModuleTranslator::createCFG(Function &f) {
   BasicBlock &entry = f.getEntryBlock();
 
   for (BasicBlock &bb : f) {
-    coq_bbs.push_back(translateBasicBlock(bb));
+    coq_bbs.push_back(translateBasicBlockCached(bb));
   }
 
   return new CoqApplication(
@@ -136,11 +155,30 @@ ref<CoqExpr> ModuleTranslator::createCFG(Function &f) {
   );
 }
 
+ref<CoqExpr> ModuleTranslator::translateBasicBlockCached(BasicBlock &bb) {
+  auto i = bbCache.find(&bb);
+  if (i != bbCache.end()) {
+    return i->second;
+  }
+
+  uint64_t varId = bbCache.size();
+  std::string varName = "bb_" + std::to_string(varId);
+
+  ref<CoqExpr> expr = translateBasicBlock(bb);
+  ref<CoqExpr> alias = new CoqVariable(varName);
+
+  bbCache.insert(std::make_pair(&bb, alias));
+  ref<CoqExpr> def = new CoqDefinition(varName, "llvm_block", expr);
+  bbDefs.push_back(def);
+
+  return alias;
+}
+
 ref<CoqExpr> ModuleTranslator::translateBasicBlock(BasicBlock &bb) {
   std::vector<ref<CoqExpr>> coq_insts;
 
   for (Instruction &inst : bb) {
-    ref<CoqExpr> coq_inst = translateInst(inst);
+    ref<CoqExpr> coq_inst = translateInstCached(inst);
     /* TODO: add ignore predicate? */
     if (!coq_inst.isNull()) {
       coq_insts.push_back(coq_inst);
@@ -156,6 +194,30 @@ ref<CoqExpr> ModuleTranslator::translateBasicBlock(BasicBlock &bb) {
         new CoqVariable("None"),
       }
   );
+}
+
+ref<CoqExpr> ModuleTranslator::translateInstCached(Instruction &inst) {
+  auto i = instCache.find(&inst);
+  if (i != instCache.end()) {
+    return i->second;
+  }
+
+  uint64_t varId = instCache.size();
+  std::string varName = "inst_" + std::to_string(varId);
+
+  ref<CoqExpr> expr = translateInst(inst);
+  if (expr.isNull()) {
+    /* TODO: ... */
+    return nullptr;
+  }
+
+  ref<CoqExpr> alias = new CoqVariable(varName);
+
+  instCache.insert(std::make_pair(&inst, alias));
+  ref<CoqExpr> def = new CoqDefinition(varName, "llvm_cmd", expr);
+  instDefs.push_back(def);
+
+  return alias;
 }
 
 ref<CoqExpr> ModuleTranslator::translateInst(Instruction &inst) {

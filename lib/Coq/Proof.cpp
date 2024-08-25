@@ -20,13 +20,27 @@ string ProofGenerator::generate() {
   }
 
   ModuleTranslator t(m);
-  ref<CoqExpr> m_def = new CoqDefinition(
+  ref<CoqExpr> coqModule = t.translateModule();
+
+  for (ref<CoqExpr> def : t.instDefs) {
+    output << def->dump() << "\n";
+  }
+
+  for (ref<CoqExpr> def : t.bbDefs) {
+    output << def->dump() << "\n";
+  }
+
+  for (ref<CoqExpr> def : t.functionDefs) {
+    output << def->dump() << "\n";
+  }
+
+  ref<CoqExpr> moduleDef = new CoqDefinition(
     "mdl",
     "llvm_module",
-    t.translateModule()
+     coqModule
   );
 
-  output << m_def->dump() << "\n";
+  output << moduleDef->dump() << "\n";
 
   return output.str();
 }

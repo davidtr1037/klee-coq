@@ -7,81 +7,103 @@
 
 #include "klee/Coq/CoqLanguage.h"
 
+#include <map>
+
 namespace klee {
 
 class ModuleTranslator {
+
+private:
 
   unsigned cmdId = 0;
 
 public:
 
-    llvm::Module &m;
+  llvm::Module &m;
 
-    ModuleTranslator(llvm::Module &m);
+  std::map<llvm::Instruction*, ref<CoqExpr>> instCache;
 
-    ref<CoqExpr> translateModule();
+  std::vector<ref<CoqExpr>> instDefs;
 
-    ref<CoqExpr> translateFunction(llvm::Function &f);
+  std::map<llvm::BasicBlock*, ref<CoqExpr>> bbCache;
 
-    ref<CoqExpr> translateDecl(llvm::Function &f);
+  std::vector<ref<CoqExpr>> bbDefs;
 
-    ref<CoqExpr> createFunctionType(llvm::Function &f);
+  std::map<llvm::Function*, ref<CoqExpr>> functionCache;
 
-    ref<CoqExpr> createParamAttrs(llvm::Function &f);
+  std::vector<ref<CoqExpr>> functionDefs;
 
-    ref<CoqExpr> createAttrs(llvm::Function &f);
+  ModuleTranslator(llvm::Module &m);
 
-    ref<CoqExpr> createAnnotations(llvm::Function &f);
+  ref<CoqExpr> translateModule();
 
-    ref<CoqExpr> createArgs(llvm::Function &f);
+  ref<CoqExpr> translateFunctionCached(llvm::Function &f);
 
-    ref<CoqExpr> createCFG(llvm::Function &f);
+  ref<CoqExpr> translateFunction(llvm::Function &f);
 
-    ref<CoqExpr> translateBasicBlock(llvm::BasicBlock &bb);
+  ref<CoqExpr> translateDecl(llvm::Function &f);
 
-    ref<CoqExpr> translateInst(llvm::Instruction &inst);
+  ref<CoqExpr> createFunctionType(llvm::Function &f);
 
-    ref<CoqExpr> translateBinaryOperator(llvm::Instruction &inst);
+  ref<CoqExpr> createParamAttrs(llvm::Function &f);
 
-    ref<CoqExpr> createBinOp(ref<CoqExpr> target,
-                             ref<CoqExpr> ibinop,
-                             ref<CoqExpr> arg_type,
-                             ref<CoqExpr> arg1,
-                             ref<CoqExpr> arg2);
+  ref<CoqExpr> createAttrs(llvm::Function &f);
 
-    ref<CoqExpr> translateCmpInst(llvm::CmpInst *inst);
+  ref<CoqExpr> createAnnotations(llvm::Function &f);
 
-    ref<CoqExpr> createCmpOp(ref<CoqExpr> target,
-                             ref<CoqExpr> icmp,
-                             ref<CoqExpr> arg_type,
-                             ref<CoqExpr> arg1,
-                             ref<CoqExpr> arg2);
+  ref<CoqExpr> createArgs(llvm::Function &f);
 
-    ref<CoqExpr> translateBranchInst(llvm::BranchInst *inst);
+  ref<CoqExpr> createCFG(llvm::Function &f);
 
-    ref<CoqExpr> translatePHINode(llvm::PHINode *inst);
+  ref<CoqExpr> translateBasicBlockCached(llvm::BasicBlock &bb);
 
-    ref<CoqExpr> translateCallInst(llvm::CallInst *inst);
+  ref<CoqExpr> translateBasicBlock(llvm::BasicBlock &bb);
 
-    ref<CoqExpr> translateReturnInst(llvm::ReturnInst *inst);
+  ref<CoqExpr> translateInstCached(llvm::Instruction &inst);
 
-    ref<CoqExpr> createCMDInst(unsigned id, ref<CoqExpr> e);
+  ref<CoqExpr> translateInst(llvm::Instruction &inst);
 
-    ref<CoqExpr> createCMDTerm(unsigned id, ref<CoqExpr> e);
+  ref<CoqExpr> translateBinaryOperator(llvm::Instruction &inst);
 
-    ref<CoqExpr> createCMDPhi(unsigned id, ref<CoqExpr> e);
+  ref<CoqExpr> createBinOp(ref<CoqExpr> target,
+                           ref<CoqExpr> ibinop,
+                           ref<CoqExpr> arg_type,
+                           ref<CoqExpr> arg1,
+                           ref<CoqExpr> arg2);
 
-    ref<CoqExpr> translateValue(llvm::Value *v);
+  ref<CoqExpr> translateCmpInst(llvm::CmpInst *inst);
 
-    ref<CoqExpr> translateType(llvm::Type *t);
+  ref<CoqExpr> createCmpOp(ref<CoqExpr> target,
+                           ref<CoqExpr> icmp,
+                           ref<CoqExpr> arg_type,
+                           ref<CoqExpr> arg1,
+                           ref<CoqExpr> arg2);
 
-    ref<CoqExpr> createLocalID(const std::string &name);
+  ref<CoqExpr> translateBranchInst(llvm::BranchInst *inst);
 
-    ref<CoqExpr> createGlobalID(const std::string &name);
+  ref<CoqExpr> translatePHINode(llvm::PHINode *inst);
 
-    ref<CoqExpr> createName(const std::string &name);
+  ref<CoqExpr> translateCallInst(llvm::CallInst *inst);
 
-    ~ModuleTranslator();
+  ref<CoqExpr> translateReturnInst(llvm::ReturnInst *inst);
+
+  ref<CoqExpr> createCMDInst(unsigned id, ref<CoqExpr> e);
+
+  ref<CoqExpr> createCMDTerm(unsigned id, ref<CoqExpr> e);
+
+  ref<CoqExpr> createCMDPhi(unsigned id, ref<CoqExpr> e);
+
+  ref<CoqExpr> translateValue(llvm::Value *v);
+
+  ref<CoqExpr> translateType(llvm::Type *t);
+
+  ref<CoqExpr> createLocalID(const std::string &name);
+
+  ref<CoqExpr> createGlobalID(const std::string &name);
+
+  ref<CoqExpr> createName(const std::string &name);
+
+  ~ModuleTranslator();
 };
 
 }
