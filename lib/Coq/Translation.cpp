@@ -190,6 +190,9 @@ ref<CoqExpr> ModuleTranslator::translateBinaryOperator(Instruction &inst) {
   Value *v1 = inst.getOperand(0);
   Value *v2 = inst.getOperand(1);
 
+  assert(v1->getType() == v2->getType());
+  Type *operandType = v1->getType();
+
   if (inst.getOpcode() == Instruction::Add) {
     return createCMDInst(
       cmdId,
@@ -199,8 +202,7 @@ ref<CoqExpr> ModuleTranslator::translateBinaryOperator(Instruction &inst) {
           new CoqVariable("LLVMAst.Add"),
           {new CoqVariable("false"), new CoqVariable("false"), }
         ),
-        /* TODO: should be the type of the operands */
-        translateType(inst.getType()),
+        translateType(operandType),
         translateValue(v1),
         translateValue(v2)
       )
@@ -236,6 +238,9 @@ ref<CoqExpr> ModuleTranslator::translateCmpInst(CmpInst *inst) {
   Value *v1 = inst->getOperand(0);
   Value *v2 = inst->getOperand(1);
 
+  assert(v1->getType() == v2->getType());
+  Type *operandType = v1->getType();
+
   switch (inst->getPredicate()) {
   case ICmpInst::ICMP_SGT:
     return createCMDInst(
@@ -243,8 +248,7 @@ ref<CoqExpr> ModuleTranslator::translateCmpInst(CmpInst *inst) {
       createCmpOp(
         createName(inst->getName().str()),
         new CoqVariable("Sgt"),
-        /* TODO: should be the type of the operands */
-        translateType(inst->getType()),
+        translateType(operandType),
         translateValue(v1),
         translateValue(v2)
       )
