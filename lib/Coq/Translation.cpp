@@ -137,7 +137,10 @@ ref<CoqExpr> ModuleTranslator::translateBasicBlock(BasicBlock &bb) {
 
   for (Instruction &inst : bb) {
     ref<CoqExpr> coq_inst = translateInst(inst);
-    coq_insts.push_back(coq_inst);
+    /* TODO: add ignore predicate? */
+    if (!coq_inst.isNull()) {
+      coq_insts.push_back(coq_inst);
+    }
   }
 
   return new CoqApplication(
@@ -166,7 +169,15 @@ ref<CoqExpr> ModuleTranslator::translateInst(Instruction &inst) {
     return translatePHINode(dyn_cast<PHINode>(&inst));
   }
 
-  return new CoqVariable("None");
+  if (isa<CallInst>(&inst)) {
+    return translateCallInst(dyn_cast<CallInst>(&inst));
+  }
+
+  if (isa<ReturnInst>(&inst)) {
+    return translateReturnInst(dyn_cast<ReturnInst>(&inst));
+  }
+
+  assert(false);
 }
 
 ref<CoqExpr> ModuleTranslator::translateBinaryOperator(Instruction &inst) {
@@ -277,27 +288,32 @@ ref<CoqExpr> ModuleTranslator::translateBranchInst(BranchInst *inst) {
     );
   }
 
-  assert(inst->getNumSuccessors() == 2);
-  std::vector<ref<CoqExpr>> bb_ids;
-  for (unsigned i = 0; i < inst->getNumSuccessors(); i++) {
-    BasicBlock *bb = inst->getSuccessor(i);
-    bb_ids.push_back(createName(bb->getName().str()));
+  if (inst->isConditional()) {
+    assert(inst->getNumSuccessors() == 2);
+    std::vector<ref<CoqExpr>> bb_ids;
+    for (unsigned i = 0; i < inst->getNumSuccessors(); i++) {
+      BasicBlock *bb = inst->getSuccessor(i);
+      bb_ids.push_back(createName(bb->getName().str()));
+    }
+
+    return createCMDTerm(
+      0,
+      new CoqApplication(
+        new CoqVariable("TERM_Br"),
+        {
+          new CoqPair(
+            translateType(inst->getCondition()->getType()),
+            translateValue(inst->getCondition())
+          ),
+          bb_ids[0],
+          bb_ids[1],
+        }
+      )
+    );
   }
 
-  return createCMDTerm(
-    0,
-    new CoqApplication(
-      new CoqVariable("TERM_Br"),
-      {
-        new CoqPair(
-          translateType(inst->getCondition()->getType()),
-          translateValue(inst->getCondition())
-        ),
-        bb_ids[0],
-        bb_ids[1],
-      }
-    )
-  );
+  assert(false);
+  return nullptr;
 }
 
 ref<CoqExpr> ModuleTranslator::translatePHINode(PHINode *inst) {
@@ -327,6 +343,89 @@ ref<CoqExpr> ModuleTranslator::translatePHINode(PHINode *inst) {
       }
     )
   );
+}
+
+ref<CoqExpr> ModuleTranslator::translateCallInst(CallInst *inst) {
+  Function *f = dyn_cast<Function>(inst->getCalledOperand());
+  assert(f);
+
+  if (f->isIntrinsic()) {
+    /* ignore intrinsi function calls */
+    return nullptr;
+  }
+
+  FunctionType *ft = f->getFunctionType();
+  Type *returnType = ft->getReturnType();
+
+  std::vector<ref<CoqExpr>> coq_args;
+  for (unsigned i = 0; i < inst->getNumArgOperands(); i++) {
+    Value *arg = inst->getArgOperand(i);
+    ref<CoqExpr> coq_arg = new CoqPair(
+      new CoqPair(
+        translateType(arg->getType()),
+        translateValue(arg)
+      ),
+      new CoqList({})
+    );
+    coq_args.push_back(coq_arg);
+  }
+
+  if (returnType->isVoidTy()) {
+    return createCMDInst(
+      0,
+      new CoqApplication(
+        new CoqVariable("INSTR_VoidCall"),
+        {
+          new CoqPair(
+            translateType(returnType),
+            createGlobalID(f->getName().str())
+          ),
+          new CoqList(coq_args),
+          new CoqList({}),
+        }
+      )
+    );
+  } else {
+    return createCMDInst(
+      0,
+      new CoqApplication(
+        new CoqVariable("INSTR_Call"),
+        {
+          createName(inst->getName().str()),
+          new CoqPair(
+            translateType(inst->getType()),
+            createGlobalID(f->getName().str())
+          ),
+          new CoqList(coq_args),
+          new CoqList({}),
+        }
+      )
+    );
+  }
+}
+
+ref<CoqExpr> ModuleTranslator::translateReturnInst(ReturnInst *inst) {
+  Value *v = inst->getReturnValue();
+  if (v) {
+    Type *returnType = v->getType();
+    return createCMDTerm(
+      0,
+      new CoqApplication(
+        new CoqVariable("TERM_Ret"),
+        {
+          new CoqPair(
+            translateType(returnType),
+            translateValue(v)
+          )
+        }
+      )
+    );
+  } else {
+    return createCMDTerm(
+      0,
+      new CoqVariable("TERM_RetVoid")
+    );
+  }
 }
 
 /* TODO: manage command id's */
@@ -406,6 +505,18 @@ ref<CoqExpr> ModuleTranslator::createLocalID(const std::string &name) {
     {
       new CoqApplication(
         new CoqVariable("ID_Local"),
+        { createName(name), }
+      ),
+    }
+  );
+}
+
+ref<CoqExpr> ModuleTranslator::createGlobalID(const std::string &name) {
+  return new CoqApplication(
+    new CoqVariable("EXP_Ident"),
+    {
+      new CoqApplication(
+        new CoqVariable("ID_Global"),
         { createName(name), }
       ),
     }

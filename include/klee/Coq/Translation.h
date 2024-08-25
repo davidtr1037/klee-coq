@@ -59,6 +59,10 @@ public:
 
     ref<CoqExpr> translatePHINode(llvm::PHINode *inst);
 
+    ref<CoqExpr> translateCallInst(llvm::CallInst *inst);
+
+    ref<CoqExpr> translateReturnInst(llvm::ReturnInst *inst);
+
     ref<CoqExpr> createCMDInst(unsigned id, ref<CoqExpr> e);
 
     ref<CoqExpr> createCMDTerm(unsigned id, ref<CoqExpr> e);
@@ -70,6 +74,8 @@ public:
     ref<CoqExpr> translateType(llvm::Type *t);
 
     ref<CoqExpr> createLocalID(const std::string &name);
+
+    ref<CoqExpr> createGlobalID(const std::string &name);
 
     ref<CoqExpr> createName(const std::string &name);
 
