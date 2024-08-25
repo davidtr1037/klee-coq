@@ -92,3 +92,9 @@ string CoqList::dump() const {
 
   return os.str();
 }
+
+klee::ref<CoqExpr> klee::createZ(uint64_t n) {
+  std::ostringstream os;
+  os << "(" << n << ")" << "%Z";
+  return new CoqVariable(os.str());
+}

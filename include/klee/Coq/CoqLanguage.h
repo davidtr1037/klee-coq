@@ -5,6 +5,7 @@
 
 #include <string>
 #include <vector>
+#include <cstdint>
 
 namespace klee {
 
@@ -83,6 +84,8 @@ public:
     std::string dump() const;
 
 };
+
+ref<CoqExpr> createZ(uint64_t n);
 
 }
 

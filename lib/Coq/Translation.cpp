@@ -1,5 +1,8 @@
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Function.h"
+#include "llvm/IR/Instructions.h"
+#include "llvm/IR/Operator.h"
+#include "llvm/IR/Constants.h"
 
 #include "klee/Coq/CoqLanguage.h"
 #include "klee/Coq/Translation.h"
@@ -147,7 +150,85 @@ ref<CoqExpr> ModuleTranslator::translateBasicBlock(BasicBlock &bb) {
 }
 
 ref<CoqExpr> ModuleTranslator::translateInst(Instruction &inst) {
+  if (inst.isBinaryOp()) {
+    return translateBinaryOperator(inst);
+  }
+
   return new CoqVariable("None");
+}
+
+ref<CoqExpr> ModuleTranslator::translateBinaryOperator(Instruction &inst) {
+  Value *v1 = inst.getOperand(0);
+  Value *v2 = inst.getOperand(1);
+
+  if (inst.getOpcode() == Instruction::Add) {
+    return createInstOp(
+      createName(inst.getName().str()),
+      new CoqApplication(
+        new CoqVariable("LLVMAst.Add"),
+        {new CoqVariable("false"), new CoqVariable("false"), }
+      ),
+      translateType(inst.getType()),
+      translateValue(v1),
+      translateValue(v2)
+    );
+  }
+
+  return new CoqVariable("None");
+}
+
+ref<CoqExpr> ModuleTranslator::createInstOp(ref<CoqExpr> target,
+                                            ref<CoqExpr> ibinop,
+                                            ref<CoqExpr> arg_type,
+                                            ref<CoqExpr> arg1,
+                                            ref<CoqExpr> arg2) {
+  return new CoqApplication(
+    new CoqVariable("INSTR_Op"),
+    {
+      target,
+      new CoqApplication(
+        new CoqVariable("OP_IBinop"),
+        {
+          ibinop,
+          arg_type,
+          arg1,
+          arg2,
+        }
+      ),
+    }
+  );
+}
+
+ref<CoqExpr> ModuleTranslator::createCMDInst(unsigned id, ref<CoqExpr> e) {
+  return new CoqApplication(
+    new CoqVariable("CMD_Inst"),
+    {
+      new CoqVariable(std::to_string(id)),
+      e,
+    }
+  );
+}
+
+ref<CoqExpr> ModuleTranslator::translateValue(Value *value) {
+  if (isa<llvm::Argument>(value)) {
+    return createLocalID(value->getName().str());
+  } else if (isa<llvm::User>(value)) {
+    if (isa<llvm::Constant>(value)) {
+      if (isa<llvm::ConstantInt>(value)) {
+        return new CoqApplication(
+          new CoqVariable("EXP_Integer"),
+          { createZ(cast<ConstantInt>(value)->getZExtValue()), }
+        );
+      } else if (isa<llvm::UndefValue>(value)) {
+        return new CoqVariable("EXP_Undef");
+      }
+    } else if (isa<llvm::Instruction>(value)) {
+      return createLocalID(value->getName().str());
+    }
+  }
+
+  assert(false);
+  return nullptr;
 }
 
 ref<CoqExpr> ModuleTranslator::translateType(Type *t) {
@@ -165,6 +246,18 @@ ref<CoqExpr> ModuleTranslator::translateType(Type *t) {
 
   assert(false);
   return nullptr;
+}
+
+ref<CoqExpr> ModuleTranslator::createLocalID(const std::string &name) {
+  return new CoqApplication(
+    new CoqVariable("EXP_Ident"),
+    {
+      new CoqApplication(
+        new CoqVariable("ID_Local"),
+        { createName(name), }
+      ),
+    }
+  );
 }
 
 ref<CoqExpr> ModuleTranslator::createName(const std::string &name) {

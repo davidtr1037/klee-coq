@@ -38,7 +38,21 @@ public:
 
     ref<CoqExpr> translateInst(llvm::Instruction &inst);
 
+    ref<CoqExpr> translateBinaryOperator(llvm::Instruction &inst);
+
+    ref<CoqExpr> createInstOp(ref<CoqExpr> target,
+                              ref<CoqExpr> ibinop,
+                              ref<CoqExpr> arg_type,
+                              ref<CoqExpr> arg1,
+                              ref<CoqExpr> arg2);
+
+    ref<CoqExpr> createCMDInst(unsigned id, ref<CoqExpr> e);
+
+    ref<CoqExpr> translateValue(llvm::Value *v);
+
     ref<CoqExpr> translateType(llvm::Type *t);
+
+    ref<CoqExpr> createLocalID(const std::string &name);
 
     ref<CoqExpr> createName(const std::string &name);
 
