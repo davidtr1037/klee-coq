@@ -11,6 +11,8 @@ namespace klee {
 
 class ModuleTranslator {
 
+  unsigned cmdId = 0;
+
 public:
 
     llvm::Module &m;

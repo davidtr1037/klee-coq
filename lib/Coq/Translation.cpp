@@ -144,6 +144,7 @@ ref<CoqExpr> ModuleTranslator::translateBasicBlock(BasicBlock &bb) {
     /* TODO: add ignore predicate? */
     if (!coq_inst.isNull()) {
       coq_insts.push_back(coq_inst);
+      cmdId++;
     }
   }
 
@@ -191,7 +192,7 @@ ref<CoqExpr> ModuleTranslator::translateBinaryOperator(Instruction &inst) {
 
   if (inst.getOpcode() == Instruction::Add) {
     return createCMDInst(
-      0,
+      cmdId,
       createBinOp(
         createName(inst.getName().str()),
         new CoqApplication(
@@ -238,7 +239,7 @@ ref<CoqExpr> ModuleTranslator::translateCmpInst(CmpInst *inst) {
   switch (inst->getPredicate()) {
   case ICmpInst::ICMP_SGT:
     return createCMDInst(
-      0,
+      cmdId,
       createCmpOp(
         createName(inst->getName().str()),
         new CoqVariable("Sgt"),
@@ -283,7 +284,7 @@ ref<CoqExpr> ModuleTranslator::translateBranchInst(BranchInst *inst) {
   if (inst->isUnconditional()) {
     BasicBlock *bb = inst->getSuccessor(0);
     return createCMDTerm(
-      0,
+      cmdId,
       new CoqApplication(
         new CoqVariable("TERM_UnconditionalBr"),
         { createName(bb->getName().str()), }
@@ -300,7 +301,7 @@ ref<CoqExpr> ModuleTranslator::translateBranchInst(BranchInst *inst) {
     }
 
     return createCMDTerm(
-      0,
+      cmdId,
       new CoqApplication(
         new CoqVariable("TERM_Br"),
         {
@@ -335,7 +336,7 @@ ref<CoqExpr> ModuleTranslator::translatePHINode(PHINode *inst) {
   }
 
   return createCMDPhi(
-    0,
+    cmdId,
     new CoqApplication(
       new CoqVariable("Phi"),
       {
@@ -374,7 +375,7 @@ ref<CoqExpr> ModuleTranslator::translateCallInst(CallInst *inst) {
 
   if (returnType->isVoidTy()) {
     return createCMDInst(
-      0,
+      cmdId,
       new CoqApplication(
         new CoqVariable("INSTR_VoidCall"),
         {
@@ -389,7 +390,7 @@ ref<CoqExpr> ModuleTranslator::translateCallInst(CallInst *inst) {
     );
   } else {
     return createCMDInst(
-      0,
+      cmdId,
       new CoqApplication(
         new CoqVariable("INSTR_Call"),
         {
@@ -411,7 +412,7 @@ ref<CoqExpr> ModuleTranslator::translateReturnInst(ReturnInst *inst) {
   if (v) {
     Type *returnType = v->getType();
     return createCMDTerm(
-      0,
+      cmdId,
       new CoqApplication(
         new CoqVariable("TERM_Ret"),
         {
@@ -424,7 +425,7 @@ ref<CoqExpr> ModuleTranslator::translateReturnInst(ReturnInst *inst) {
     );
   } else {
     return createCMDTerm(
-      0,
+      cmdId,
       new CoqVariable("TERM_RetVoid")
     );
   }

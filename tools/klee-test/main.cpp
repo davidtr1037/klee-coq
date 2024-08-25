@@ -27,17 +27,9 @@ int main(int argc, char *argv[]) {
     char *path = argv[1];
     std::unique_ptr<Module> m = parseIRFile(path, err, context);
 
-    //for (Function &f : *m) {
-    //    for (BasicBlock &bb : f) {
-    //        for (Instruction &i : bb) {
-    //            errs() << i << "\n";
-    //        }
-    //    }
-    //}
-
-    ModuleTranslator t(*m);
-    klee::ref<CoqExpr> e = t.translate();
-    cout << e->dump() << "\n";
+    ProofGenerator p(*m);
+    string proof = p.generate();
+    errs() << proof << "\n";
 
     return 0;
 }
