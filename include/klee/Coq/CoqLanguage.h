@@ -107,7 +107,21 @@ public:
     std::string module_name;
     bool use_import;
 
-    CoqRequire(const std::string &path, const std::string &module_name, bool use_import);
+    CoqRequire(const std::string &path, const std::string &module_name, bool use_import = true);
+
+    std::string dump(int indent = 0) const;
+
+};
+
+class CoqDefinition : public CoqExpr {
+
+public:
+
+    std::string name;
+    std::string type;
+    ref<CoqExpr> body;
+
+    CoqDefinition(const std::string &name, const std::string &type, const ref<CoqExpr> &body);
 
     std::string dump(int indent = 0) const;
 

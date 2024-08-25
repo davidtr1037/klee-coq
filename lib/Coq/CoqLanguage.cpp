@@ -127,3 +127,17 @@ string CoqRequire::dump(int indent) const {
   os << "From " << path << " Require " << (use_import ? " Import " : "") << module_name << ".";
   return os.str();
 }
+
+CoqDefinition::CoqDefinition(const std::string &name,
+                             const std::string &type,
+                             const ref<CoqExpr> &body) :
+  name(name), type(type), body(body) {
+
+}
+
+string CoqDefinition::dump(int indent) const {
+  std::ostringstream os;
+  os << "Definition " << name << " : " << type << " :=\n";
+  os << body->dump(indent + 1) << ".\n";
+  return os.str();
+}

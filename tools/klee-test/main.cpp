@@ -1,5 +1,6 @@
 #include "klee/Coq/CoqLanguage.h"
 #include "klee/Coq/Translation.h"
+#include "klee/Coq/Proof.h"
 
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
@@ -19,7 +20,7 @@ int main(int argc, char *argv[]) {
     LLVMContext context;
     SMDiagnostic err;
 
-    if (argc != 2) {
+    if (argc < 2) {
         return 0;
     }
 

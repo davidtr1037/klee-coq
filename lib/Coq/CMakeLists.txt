@@ -8,6 +8,7 @@
 #===------------------------------------------------------------------------===#
 add_library(kleeCoq
     CoqLanguage.cpp
+    Proof.cpp
     Translation.cpp
 )
 

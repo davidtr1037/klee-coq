@@ -13,6 +13,8 @@
 using namespace llvm;
 using namespace klee;
 
+/* TODO: handle constants: true, false, null */
+
 ModuleTranslator::ModuleTranslator(Module &m) : m(m) {
 
 }
@@ -84,6 +86,7 @@ ref<CoqExpr> ModuleTranslator::createFunctionType(Function &f) {
     {
       translateType(ft->getReturnType()),
       new CoqList(arg_types),
+      new CoqVariable("false"),
     }
   );
 }
@@ -149,6 +152,7 @@ ref<CoqExpr> ModuleTranslator::translateBasicBlock(BasicBlock &bb) {
       {
         createName(bb.getName().str()),
         new CoqList(coq_insts),
+        new CoqVariable("None"),
       }
   );
 }
@@ -233,7 +237,7 @@ ref<CoqExpr> ModuleTranslator::translateCmpInst(CmpInst *inst) {
 
   switch (inst->getPredicate()) {
   case ICmpInst::ICMP_SGT:
-    return createCMDTerm(
+    return createCMDInst(
       0,
       createCmpOp(
         createName(inst->getName().str()),
