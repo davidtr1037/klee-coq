@@ -22,11 +22,9 @@ Section CFG.
 
   Variable (T:Set).
 
-  (* TODO: rename to mk_cfg *)
-  Record cfg := mkCFG {
+  Record cfg := mk_cfg {
     init : block_id;
     blks : list (block T);
-    args : list raw_id;
   }.
 
   Record module {Body : Set} : Set := mk_module {
@@ -41,10 +39,9 @@ Section CFG.
 
 End CFG.
 
-Arguments mkCFG {_}.
+Arguments mk_cfg {_}.
 Arguments init {_}.
 Arguments blks {_}.
-Arguments args {_}.
 Arguments module {_} _.
 Arguments mk_module {_ _}.
 Arguments m_name {_ _}.

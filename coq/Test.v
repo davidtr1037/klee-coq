@@ -87,7 +87,7 @@ Definition f_block_4 := mk_block
 .
 
 Definition f_entry := (Name "entry").
-Definition f_cfg : llvm_cfg := mkCFG
+Definition f_cfg : llvm_cfg := mk_cfg
   f_entry
   [f_block_1; f_block_2; f_block_3; f_block_4]
   [(Name "x"); (Name "y")]
@@ -135,7 +135,7 @@ Definition main_block_1 : llvm_block := mk_block
   None
 .
 
-Definition main_cfg : llvm_cfg := mkCFG
+Definition main_cfg : llvm_cfg := mk_cfg
   main_block_1_id
   [main_block_1]
   []
