@@ -10,6 +10,7 @@ From SE Require  Import ExecutionTreeOpt.
 From SE Require  Import IDMap.
 From SE Require  Import LLVMAst.
 From SE Require  Import Symbolic.
+From SE Require  Import ProofGeneration.
 
 From SE.SMT Require Import Expr.
 From SE.SMT Require Import Model.
@@ -209,6 +210,47 @@ Qed.
 
 Lemma L_1 : safe_et_opt t_1.
 Proof.
+{
+  apply Safe_Subtree.
+  {
+    apply LAUX_not_error_instr_op.
+  }
+  {
+    intros s Hse.
+    {
+      left.
+      exists (t_2).
+      split.
+      {
+        simpl.
+        left.
+        reflexivity.
+      }
+      {
+        split.
+        {
+          apply L_2.
+        }
+        {
+          simpl.
+          inversion Hse; subst.
+          apply EquivSymState.
+          {
+            simpl in H13.
+            apply LAUX_1 with
+              (se1 := (SMT_BinOp SMT_Add (SMT_Const_I32 (Int32.repr 3)) (SMT_Const_I32 (Int32.repr 7))))
+              (se2 := se).
+            { assumption. }
+            { admit. } (* simplify lemma *)
+          }
+          { apply equiv_sym_stack_refl. }
+          { apply equiv_smt_store_refl. }
+          { apply equiv_smt_expr_refl. }
+        }
+      }
+    }
+  }
+}
 Admitted.
 
 Lemma L_0 : safe_et_opt t_0.
@@ -216,7 +258,7 @@ Proof.
 {
   apply Safe_Subtree.
   {
-    admit.
+    apply LAUX_not_error_instr_op.
   }
   {
     intros s Hse.
@@ -239,26 +281,14 @@ Proof.
           inversion Hse; subst.
           apply EquivSymState.
           {
-            apply EquivSMTStore.
-            intros x.
-            destruct (raw_id_eqb x (Name "add")) eqn:E.
-            {
-              right.
-              apply raw_id_eqb_eq in E.
-              rewrite E.
-              exists (SMT_Const_I32 (Int32.repr 3)), se.
-              split.
-              {
-                rewrite update_map_eq.
-                rewrite <- H13.
-                simpl.
-                admit. (* simplify lemma *)
-              }
-              { admit. }
-            }
+            apply LAUX_1 with
+              (se1 := (SMT_BinOp SMT_Add (SMT_Const_I32 (Int32.repr 1)) (SMT_Const_I32 (Int32.repr 2))))
+              (se2 := se).
+            { assumption. }
+            { admit. } (* simplify lemma *)
           }
-          { apply EquivSymStack_Empty. }
-          { admit. }
+          { apply equiv_sym_stack_refl. }
+          { apply equiv_smt_store_refl. }
           { apply equiv_smt_expr_refl. }
         }
       }
