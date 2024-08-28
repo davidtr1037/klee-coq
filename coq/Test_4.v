@@ -670,6 +670,7 @@ Proof.
           simpl.
           inversion Hse; subst.
           (* find_function_by_exp does not return None *)
+          (* TODO: avoid *)
           { inversion H16. }
           (* find_function_by_exp returns None *)
           {
