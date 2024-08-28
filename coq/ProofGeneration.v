@@ -100,6 +100,46 @@ Proof.
   inversion H.
 Qed.
 
+Lemma LAUX_not_error_call : forall ic cid v f args anns cs pbid ls stk gs syms pc mdl,
+  ~ error_sym_state
+    (mk_sym_state
+      ic
+      (CMD_Inst cid (INSTR_Call v f args anns))
+      cs
+      pbid
+      ls
+      stk
+      gs
+      syms
+      pc
+      mdl
+    ).
+Proof.
+  intros ic cid v f args anns cs pbid ls stk gs syms pc mdl.
+  intros H.
+  inversion H.
+Qed.
+
+Lemma LAUX_not_error_ret : forall ic cid e cs pbid ls stk gs syms pc mdl,
+  ~ error_sym_state
+    (mk_sym_state
+      ic
+      (CMD_Term cid (TERM_Ret e))
+      cs
+      pbid
+      ls
+      stk
+      gs
+      syms
+      pc
+      mdl
+    ).
+Proof.
+  intros ic cid e cs pbid ls stk gs syms pc mdl.
+  intros H.
+  inversion H.
+Qed.
+
 Lemma LAUX_1 : forall s v se1 se2 se3,
   Some se1 = Some se2 ->
   equiv_smt_expr se1 se3 ->
