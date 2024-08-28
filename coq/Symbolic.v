@@ -65,6 +65,20 @@ Inductive error_sym_state : sym_state -> Prop :=
           pc
           mdl
        )
+  | ESS_Unreachable : forall ic cid cs pbid ls stk gs syms pc mdl,
+      error_sym_state
+        (mk_sym_state
+          ic
+          (CMD_Term cid TERM_Unreachable)
+          cs
+          pbid
+          ls
+          stk
+          gs
+          syms
+          pc
+          mdl
+       )
 .
 
 Inductive sat_sym_state : smt_model -> sym_state -> Prop :=
@@ -702,11 +716,13 @@ Proof.
   split; (inversion Hoa; destruct H as [m H]; inversion H; subst; intros He).
   {
     inversion He; subst.
-    apply ES_Assert with (d := d); assumption.
+    { apply ES_Assert with (d := d); assumption. }
+    { apply ES_Unreachable. }
   }
   {
     inversion He; subst.
-    apply ESS_Assert with (d := d); assumption.
+    { apply ESS_Assert with (d := d); assumption. }
+    { apply ESS_Unreachable. }
   }
 Qed.
 

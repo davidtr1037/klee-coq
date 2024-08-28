@@ -515,7 +515,8 @@ Proof.
   intros Hes2.
   apply Hes1.
   inversion Hes2; subst.
-  apply ESS_Assert with (d := d); assumption.
+  { apply ESS_Assert with (d := d); assumption. }
+  { apply ESS_Unreachable. }
 Qed.
 
 Inductive safe_et_opt : execution_tree -> Prop :=
