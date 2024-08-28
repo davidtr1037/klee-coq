@@ -85,7 +85,13 @@ public:
 
   ref<CoqExpr> translateCallInst(llvm::CallInst *inst);
 
+  bool shouldIgnoreCall(llvm::CallInst *inst);
+
+  std::vector<ref<CoqExpr>> translateArgs(llvm::CallInst *inst);
+
   ref<CoqExpr> translateReturnInst(llvm::ReturnInst *inst);
+
+  ref<CoqExpr> translateUnreachableInst();
 
   ref<CoqExpr> createCMDInst(unsigned id, ref<CoqExpr> e);
 

@@ -8,6 +8,7 @@
 #include "klee/Coq/Translation.h"
 
 #include <string>
+#include <set>
 #include <vector>
 
 using namespace llvm;
@@ -245,6 +246,10 @@ ref<CoqExpr> ModuleTranslator::translateInst(Instruction &inst) {
     return translateReturnInst(dyn_cast<ReturnInst>(&inst));
   }
 
+  if (isa<UnreachableInst>(&inst)) {
+    return translateUnreachableInst();
+  }
+
   assert(false);
 }
 
@@ -415,29 +420,17 @@ ref<CoqExpr> ModuleTranslator::translatePHINode(PHINode *inst) {
 }
 
 ref<CoqExpr> ModuleTranslator::translateCallInst(CallInst *inst) {
-  Function *f = dyn_cast<Function>(inst->getCalledOperand());
-  assert(f);
-
-  if (f->isIntrinsic()) {
-    /* ignore intrinsi function calls */
+  if (shouldIgnoreCall(inst)) {
     return nullptr;
   }
+
+  Function *f = dyn_cast<Function>(inst->getCalledOperand());
+  assert(f);
 
   FunctionType *ft = f->getFunctionType();
   Type *returnType = ft->getReturnType();
 
-  std::vector<ref<CoqExpr>> coq_args;
-  for (unsigned i = 0; i < inst->getNumArgOperands(); i++) {
-    Value *arg = inst->getArgOperand(i);
-    ref<CoqExpr> coq_arg = new CoqPair(
-      new CoqPair(
-        translateType(arg->getType()),
-        translateValue(arg)
-      ),
-      new CoqList({})
-    );
-    coq_args.push_back(coq_arg);
-  }
+  std::vector<ref<CoqExpr>> coq_args = translateArgs(inst);
 
   if (returnType->isVoidTy()) {
     return createCMDInst(
@@ -473,6 +466,42 @@ ref<CoqExpr> ModuleTranslator::translateCallInst(CallInst *inst) {
   }
 }
 
+static std::set<std::string> functions_to_ignore = {
+    "__assert_fail",
+};
+
+bool ModuleTranslator::shouldIgnoreCall(CallInst *inst) {
+  Function *f = dyn_cast<Function>(inst->getCalledOperand());
+  assert(f);
+
+  if (f->isIntrinsic()) {
+    return true;
+  }
+
+  if (functions_to_ignore.find(f->getName().str()) != functions_to_ignore.end()) {
+    return true;
+  }
+
+  return false;
+}
+
+std::vector<ref<CoqExpr>> ModuleTranslator::translateArgs(CallInst *inst) {
+  std::vector<ref<CoqExpr>> coq_args;
+  for (unsigned i = 0; i < inst->getNumArgOperands(); i++) {
+    Value *arg = inst->getArgOperand(i);
+    ref<CoqExpr> coq_arg = new CoqPair(
+      new CoqPair(
+        translateType(arg->getType()),
+        translateValue(arg)
+      ),
+      new CoqList({})
+    );
+    coq_args.push_back(coq_arg);
+  }
+
+  return coq_args;
+}
+
 ref<CoqExpr> ModuleTranslator::translateReturnInst(ReturnInst *inst) {
   Value *v = inst->getReturnValue();
   if (v) {
@@ -495,6 +524,13 @@ ref<CoqExpr> ModuleTranslator::translateReturnInst(ReturnInst *inst) {
       new CoqVariable("TERM_RetVoid")
     );
   }
+}
+
+ref<CoqExpr> ModuleTranslator::translateUnreachableInst() {
+  return createCMDTerm(
+    cmdId,
+    new CoqVariable("TERM_Unreachable")
+  );
 }
 
 /* TODO: manage command id's */
