@@ -38,3 +38,5 @@ autom4te.cache/
 *.aux
 *.swp
 *.swo
+*.v#
+.lia.cache
