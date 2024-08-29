@@ -674,6 +674,15 @@ bool ModuleTranslator::isSupportedFunction(Function *f) {
   return true;
 }
 
+/* TODO: use in this module */
+bool ModuleTranslator::isSupportedInst(Instruction &inst) {
+  if (isa<CallInst>(&inst)) {
+    return !shouldIgnoreCall(dyn_cast<CallInst>(&inst));
+  }
+
+  return true;
+}
+
 bool ModuleTranslator::isSupportedType(Type *t) {
   return (t->isIntegerTy() || t->isVoidTy());
 }

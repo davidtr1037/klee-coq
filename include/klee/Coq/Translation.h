@@ -117,6 +117,8 @@ public:
 
   bool isSupportedFunction(llvm::Function *f);
 
+  bool isSupportedInst(llvm::Instruction &inst);
+
   bool isSupportedType(llvm::Type *t);
 
   ~ModuleTranslator();
