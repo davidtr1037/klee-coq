@@ -35,6 +35,18 @@ public:
 
 };
 
+class CoqInteger : public CoqExpr {
+
+public:
+
+    uint64_t n;
+
+    CoqInteger(uint64_t n);
+
+    std::string dump(int indent = 0) const;
+
+};
+
 class CoqString : public CoqExpr {
 
 public:
