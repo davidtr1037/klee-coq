@@ -212,7 +212,7 @@ Definition klee_make_symbolic_int32_exp : exp typ :=
   EXP_Ident (ID_Global klee_make_symbolic_int32_id).
 Definition klee_make_symbolic_int32_type := TYPE_Function (TYPE_I 32) [] false.
 
-Definition klee_assume_id := (Name "klee_assume").
+Definition klee_assume_id := (Name "klee_assume_bool").
 Definition klee_assume_exp : exp typ := EXP_Ident (ID_Global klee_assume_id).
 Definition klee_assume_type := TYPE_Function TYPE_Void [(TYPE_I 1)] false.
 
