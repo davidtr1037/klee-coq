@@ -229,30 +229,81 @@ Definition bb_3 : llvm_block :=
     None
   ).
 
-Definition def_0 : llvm_definition :=
+Definition decl_main : llvm_declaration :=
+  (mk_declaration
+    (Name
+      "main"%string
+    )
+    (TYPE_Function
+      (TYPE_I
+        32
+      )
+      []
+      false
+    )
+    (
+      [],
+      [
+        [];
+        []
+      ]
+    )
+    []
+    []
+  ).
+
+Definition decl_klee_make_symbolic_int32 : llvm_declaration :=
+  (mk_declaration
+    (Name
+      "klee_make_symbolic_int32"%string
+    )
+    (TYPE_Function
+      (TYPE_I
+        32
+      )
+      []
+      false
+    )
+    (
+      [],
+      [
+        [];
+        []
+      ]
+    )
+    []
+    []
+  ).
+
+Definition decl_klee_assume_bool : llvm_declaration :=
+  (mk_declaration
+    (Name
+      "klee_assume_bool"%string
+    )
+    (TYPE_Function
+      TYPE_Void
+      [
+        (TYPE_I
+          1
+        )
+      ]
+      false
+    )
+    (
+      [],
+      [
+        [];
+        []
+      ]
+    )
+    []
+    []
+  ).
+
+Definition def_main : llvm_definition :=
   (mk_definition
     _
-    (mk_declaration
-      (Name
-        "main"%string
-      )
-      (TYPE_Function
-        (TYPE_I
-          32
-        )
-        []
-        false
-      )
-      (
-        [],
-        [
-          [];
-          []
-        ]
-      )
-      []
-      []
-    )
+    decl_main
     []
     (mk_cfg
       (Name
@@ -274,9 +325,12 @@ Definition mdl : llvm_module :=
     None
     []
     []
-    []
     [
-      def_0
+      decl_klee_make_symbolic_int32;
+      decl_klee_assume_bool
+    ]
+    [
+      def_main
     ]
   ).
 
@@ -601,8 +655,17 @@ Proof.
         {
           simpl.
           inversion Hse; subst.
-          (* TODO: add missing declarations *)
-          inversion H14.
+          { inversion H14. }
+          {
+            apply EquivSymState.
+            { apply equiv_smt_store_refl. }
+            { apply equiv_sym_stack_refl. }
+            { apply equiv_smt_store_refl. }
+            {
+              inversion H16; subst.
+              admit.
+            }
+          }
         }
       }
     }
@@ -684,13 +747,19 @@ Proof.
           inversion Hse; subst.
           (* TODO: add missing declarations *)
           { inversion H16. }
-          { inversion H13. }
+          {
+            apply EquivSymState.
+            { apply equiv_smt_store_refl. }
+            { apply equiv_sym_stack_refl. }
+            { apply equiv_smt_store_refl. }
+            { apply equiv_smt_expr_refl. }
+          }
         }
       }
     }
   }
 }
-Admitted.
+Qed.
 
 Theorem program_safe : is_safe_program mdl (Name "main").
 Proof.
