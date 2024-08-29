@@ -185,30 +185,56 @@ Definition bb_2 : llvm_block :=
     None
   ).
 
-Definition def_0 : llvm_definition :=
+Definition decl_main : llvm_declaration :=
+  (mk_declaration
+    (Name
+      "main"%string
+    )
+    (TYPE_Function
+      (TYPE_I
+        32
+      )
+      []
+      false
+    )
+    (
+      [],
+      [
+        [];
+        []
+      ]
+    )
+    []
+    []
+  ).
+
+Definition decl_klee_make_symbolic_int32 : llvm_declaration :=
+  (mk_declaration
+    (Name
+      "klee_make_symbolic_int32"%string
+    )
+    (TYPE_Function
+      (TYPE_I
+        32
+      )
+      []
+      false
+    )
+    (
+      [],
+      [
+        [];
+        []
+      ]
+    )
+    []
+    []
+  ).
+
+Definition def_main : llvm_definition :=
   (mk_definition
     _
-    (mk_declaration
-      (Name
-        "main"%string
-      )
-      (TYPE_Function
-        (TYPE_I
-          32
-        )
-        []
-        false
-      )
-      (
-        [],
-        [
-          [];
-          []
-        ]
-      )
-      []
-      []
-    )
+    decl_main
     []
     (mk_cfg
       (Name
@@ -229,9 +255,11 @@ Definition mdl : llvm_module :=
     None
     []
     []
-    []
     [
-      def_0
+      decl_klee_make_symbolic_int32
+    ]
+    [
+      def_main
     ]
   ).
 
@@ -669,10 +697,7 @@ Proof.
         {
           simpl.
           inversion Hse; subst.
-          (* find_function_by_exp does not return None *)
-          (* TODO: avoid *)
           { inversion H16. }
-          (* find_function_by_exp returns None *)
           {
             apply EquivSymState.
             { apply equiv_smt_store_refl. }
