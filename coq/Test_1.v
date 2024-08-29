@@ -256,6 +256,7 @@ Admitted.
 Lemma L_0 : safe_et_opt t_0.
 Proof.
 {
+  Print s_0. Print inst_0.
   apply Safe_Subtree.
   {
     apply LAUX_not_error_instr_op.
@@ -281,11 +282,9 @@ Proof.
           inversion Hse; subst.
           apply EquivSymState.
           {
-            apply LAUX_1 with
-              (se1 := (SMT_BinOp SMT_Add (SMT_Const_I32 (Int32.repr 1)) (SMT_Const_I32 (Int32.repr 2))))
-              (se2 := se).
-            { assumption. }
-            { admit. } (* simplify lemma *)
+            simpl in H13.
+            apply (LAUX_1 _ _ _ _ _ H13).
+            admit. (* simplify lemma *)
           }
           { apply equiv_sym_stack_refl. }
           { apply equiv_smt_store_refl. }
