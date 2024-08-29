@@ -7,7 +7,6 @@ From SE Require Import Concrete.
 From SE Require Import LLVMAst.
 From SE Require Import Symbolic.
 
-(* TODO: use later *)
 Inductive is_supported_ibinop : ibinop -> Prop :=
   | IS_Add : is_supported_ibinop (Add false false)
 .
@@ -17,10 +16,11 @@ Inductive is_supported_exp : (exp typ) -> Prop :=
       is_supported_exp (EXP_Ident id)
   | IS_EXP_Integer : forall x,
       is_supported_exp (EXP_Integer x)
-  | IS_OP_IBinop : forall  t e1 e2,
+  | IS_OP_IBinop : forall  op t e1 e2,
       is_supported_exp e1 ->
       is_supported_exp e2 ->
-      is_supported_exp (OP_IBinop (Add false false) t e1 e2)
+      is_supported_ibinop op ->
+      is_supported_exp (OP_IBinop op t e1 e2)
   | IS_OP_ICmp : forall op t e1 e2,
       is_supported_exp e1 ->
       is_supported_exp e2 ->

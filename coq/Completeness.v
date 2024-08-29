@@ -55,39 +55,40 @@ Proof.
     { apply EVM_None. }
   }
   {
-    apply IHe1 with (ot := (Some t)) in H1.
+    apply IHe1 with (ot := (Some t)) in H2.
     apply IHe2 with (ot := (Some t)) in H4.
+    inversion H5; subst.
     destruct (eval_exp c_ls c_gs (Some t) e1) as [dv1 | ] eqn:E1.
     {
       destruct (eval_exp c_ls c_gs (Some t) e2) as [dv2 | ] eqn:E2.
       {
-        inversion H1; subst.
+        inversion H2; subst.
         inversion H4; subst.
         rename se into se1, di into di1, se0 into se2, di0 into di2.
         destruct di1 as [n1 | n1 | n1 | n1 | n1], di2 as [n2 | n2 | n2 | n2 | n2]; try (
           simpl;
           apply EVM_NoneViaModel;
           simpl;
-          rewrite H2, H5;
+          rewrite H1, H6;
           simpl;
           reflexivity
         ); (
           simpl;
           apply EVM_Some;
           simpl;
-          rewrite H2, H5;
+          rewrite H1, H6;
           simpl;
           reflexivity
         ).
       }
       {
-        inversion H1; subst.
+        inversion H2; subst.
         inversion H4; subst.
         { apply EVM_None. }
         {
           apply EVM_NoneViaModel.
           simpl.
-          rewrite H2, H3.
+          rewrite H1, H3.
           reflexivity.
         }
       }
@@ -95,7 +96,7 @@ Proof.
     {
       destruct (eval_exp c_ls c_gs (Some t) e2) as [dv2 | ] eqn:E2.
       {
-        inversion H1; subst.
+        inversion H2; subst.
         { apply EVM_None. }
         {
           inversion H4; subst.
@@ -106,7 +107,7 @@ Proof.
         }
       }
       {
-        inversion H1; subst.
+        inversion H2; subst.
         { apply EVM_None. }
         {
           rename se into se1.
