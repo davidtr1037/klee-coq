@@ -24,6 +24,7 @@ add_library(kleeCore
   Searcher.cpp
   SeedInfo.cpp
   SpecialFunctionHandler.cpp
+  StateTranslation.cpp
   StatsTracker.cpp
   TimingSolver.cpp
   UserSearcher.cpp
@@ -35,6 +36,7 @@ target_link_libraries(kleeCore PRIVATE
   kleaverSolver
   kleaverExpr
   kleeSupport
+  kleeCoq
 )
 
 llvm_config(kleeCore "${USE_LLVM_SHARED}" core executionengine mcjit native support)
