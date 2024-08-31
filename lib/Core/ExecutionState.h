@@ -23,6 +23,7 @@
 #include "klee/Solver/Solver.h"
 #include "klee/System/Time.h"
 
+#include <list>
 #include <map>
 #include <memory>
 #include <set>
@@ -39,6 +40,15 @@ class MemoryObject;
 struct InstructionInfo;
 
 llvm::raw_ostream &operator<<(llvm::raw_ostream &os, const MemoryMap &mm);
+
+/* TODO: add copy constructor? */
+struct RegisterUpdate {
+  std::string name;
+  ref<Expr> value;
+
+  RegisterUpdate(const std::string &name, const ref<Expr> &value) :
+    name(name), value(value) {}
+};
 
 struct StackFrame {
   KInstIterator caller;
@@ -61,6 +71,8 @@ struct StackFrame {
   // does not pass vaarg through as expected). VACopy is lowered inside
   // of intrinsic lowering.
   MemoryObject *varargs;
+
+  std::list<RegisterUpdate> updates;
 
   StackFrame(KInstIterator caller, KFunction *kf);
   StackFrame(const StackFrame &s);
@@ -289,6 +301,8 @@ public:
   std::uint32_t getID() const { return id; };
   void setID() { id = nextID++; };
   static std::uint32_t getLastID() { return nextID - 1; };
+
+  void addRegisterUpdate(const std::string &name, const ref<Expr> &value);
 };
 
 struct ExecutionStateIDCompare {

@@ -17,6 +17,8 @@ namespace klee {
 
   struct Cell {
     ref<Expr> value;
+
+    Cell() : value(nullptr) {}
   };
 }
 

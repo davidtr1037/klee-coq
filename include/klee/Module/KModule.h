@@ -54,6 +54,8 @@ namespace klee {
     /// "coverable" for statistics and search heuristics.
     bool trackCoverage;
 
+    std::map<unsigned, llvm::Instruction *> invertedRegisterMap;
+
     explicit KFunction(llvm::Function*, KModule*);
     KFunction(const KFunction &) = delete;
     KFunction &operator=(const KFunction &) = delete;
@@ -73,6 +75,9 @@ namespace klee {
     static bool classof(const KCallable *callable) {
       return callable->getKind() == CK_Function;
     }
+
+    /* TODO: remove? */
+    llvm::Instruction *getInstruction(unsigned operandNum);
   };
 
 

@@ -362,6 +362,7 @@ KFunction::KFunction(llvm::Function *_function,
       Instruction *inst = &*it;
       ki->inst = inst;
       ki->dest = registerMap[inst];
+      invertedRegisterMap[ki->dest] = inst;
 
       if (isa<CallInst>(it) || isa<InvokeInst>(it)) {
         const CallBase &cb = cast<CallBase>(*inst);
@@ -385,6 +386,12 @@ KFunction::KFunction(llvm::Function *_function,
       instructions[i++] = ki;
     }
   }
+}
+
+Instruction *KFunction::getInstruction(unsigned operandNum) {
+  auto i = invertedRegisterMap.find(operandNum);
+  assert(i != invertedRegisterMap.end());
+  return i->second;
 }
 
 KFunction::~KFunction() {

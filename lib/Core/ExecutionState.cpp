@@ -62,7 +62,8 @@ StackFrame::StackFrame(const StackFrame &s)
     callPathNode(s.callPathNode),
     allocas(s.allocas),
     minDistToUncoveredOnReturn(s.minDistToUncoveredOnReturn),
-    varargs(s.varargs) {
+    varargs(s.varargs),
+    updates(s.updates) {
   locals = new Cell[s.kf->numRegisters];
   for (unsigned i=0; i<s.kf->numRegisters; i++)
     locals[i] = s.locals[i];
@@ -395,4 +396,17 @@ void ExecutionState::addConstraint(ref<Expr> e) {
 
 void ExecutionState::addCexPreference(const ref<Expr> &cond) {
   cexPreferences = cexPreferences.insert(cond);
+}
+
+void ExecutionState::addRegisterUpdate(const std::string &name, const ref<Expr> &value) {
+  /* TODO: optimize */
+  std::list<RegisterUpdate> &updates = stack.back().updates;
+  for (auto i = updates.begin(); i != updates.end(); ++i) {
+    if (i->name == name) {
+      updates.erase(i);
+      break;
+    }
+  }
+
+  updates.push_back(RegisterUpdate(name, value));
 }
