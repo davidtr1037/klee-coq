@@ -1305,7 +1305,7 @@ void Executor::bindLocal(KInstruction *target, ExecutionState &state,
 void Executor::bindArgument(KFunction *kf, unsigned index, 
                             ExecutionState &state, ref<Expr> value) {
   getArgumentCell(state, kf, index).value = value;
-  /* TODO: test and add docs */
+  /* TODO: add docs */
   Argument *arg = kf->function->getArg(index);
   state.addArgument(arg->getName().str(), value);
 }

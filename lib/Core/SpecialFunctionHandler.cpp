@@ -109,6 +109,7 @@ static constexpr std::array handlerInfo = {
 #endif
   add("klee_is_symbolic", handleIsSymbolic, true),
   add("klee_make_symbolic", handleMakeSymbolic, false),
+  add("klee_make_symbolic_int32", handleMakeSymbolicInt32, true),
   add("klee_mark_global", handleMarkGlobal, false),
   add("klee_open_merge", handleOpenMerge, false),
   add("klee_close_merge", handleCloseMerge, false),
@@ -823,6 +824,24 @@ void SpecialFunctionHandler::handleMakeSymbolic(ExecutionState &state,
       executor.terminateStateOnUserError(*s, "Wrong size given to klee_make_symbolic");
     }
   }
+}
+
+void SpecialFunctionHandler::handleMakeSymbolicInt32(ExecutionState &state,
+                                                     KInstruction *target,
+                                                     std::vector<ref<Expr> > &arguments) {
+   static uint64_t nextId = 0;
+   klee_message("executing klee_make_symbolic_int32");
+   MemoryObject *mo = executor.memory->allocate(4,
+                                                false,
+                                                false,
+                                                &state,
+                                                nullptr,
+                                                8);
+   std::string name = "n_" + std::to_string(nextId++);
+   executor.executeMakeSymbolic(state, mo, name);
+   const ObjectState *os = state.addressSpace.findObject(mo);
+   ref<Expr> e = os->read(0, Expr::Int32);
+   executor.bindLocal(target, state, e);
 }
 
 void SpecialFunctionHandler::handleMarkGlobal(ExecutionState &state,
