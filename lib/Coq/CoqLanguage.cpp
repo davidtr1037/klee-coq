@@ -18,7 +18,7 @@ static string space(int indent) {
   return os.str();
 }
 
-string CoqExpr::dump(int indent) const {
+string CoqExpr::dump() const {
   assert(false);
 }
 
@@ -26,7 +26,11 @@ CoqVariable::CoqVariable(const string &name) : name(name) {
 
 }
 
-string CoqVariable::dump(int indent) const {
+string CoqVariable::dump() const {
+  return name;
+}
+
+string CoqVariable::pretty_dump(int indent) const {
   std::ostringstream os;
   os << space(indent) << name;
   return os.str();
@@ -36,7 +40,13 @@ CoqString::CoqString(const string &s) : s(s) {
 
 }
 
-string CoqString::dump(int indent) const {
+string CoqString::dump() const {
+  std::ostringstream os;
+  os << "\"" << s << "\"" << "\%string";
+  return os.str();
+}
+
+string CoqString::pretty_dump(int indent) const {
   std::ostringstream os;
   os << space(indent) << "\"" << s << "\"" << "\%string";
   return os.str();
@@ -46,7 +56,11 @@ CoqInteger::CoqInteger(uint64_t n) : n(n) {
 
 }
 
-string CoqInteger::dump(int indent) const {
+string CoqInteger::dump() const {
+  return std::to_string(n);
+}
+
+string CoqInteger::pretty_dump(int indent) const {
   std::ostringstream os;
   os << space(indent) << std::to_string(n);
   return os.str();
@@ -58,12 +72,24 @@ CoqApplication::CoqApplication(const ref<CoqExpr> &function,
 
 }
 
-string CoqApplication::dump(int indent) const {
+string CoqApplication::dump() const {
   std::ostringstream os;
 
-  os << space(indent) << "(" << function->dump(0) << "\n";
+  os << "(" << function->dump();
   for (size_t i = 0; i < args.size(); i++) {
-    os << args[i]->dump(indent + 1) << "\n";
+    os << " " << args[i]->dump();
+  }
+  os << ")";
+
+  return os.str();
+}
+
+string CoqApplication::pretty_dump(int indent) const {
+  std::ostringstream os;
+
+  os << space(indent) << "(" << function->pretty_dump(0) << "\n";
+  for (size_t i = 0; i < args.size(); i++) {
+    os << args[i]->pretty_dump(indent + 1) << "\n";
   }
   os << space(indent) << ")";
 
@@ -75,12 +101,18 @@ CoqPair::CoqPair(const ref<CoqExpr> &left, const ref<CoqExpr> &right) :
 
 }
 
-string CoqPair::dump(int indent) const {
+string CoqPair::dump() const {
+  std::ostringstream os;
+  os << "(\n" << left->dump() << ", " << right->dump() << ")";
+  return os.str();
+}
+
+string CoqPair::pretty_dump(int indent) const {
   std::ostringstream os;
 
   os << space(indent) << "(\n";
-  os << left->dump(indent + 1) << ",\n";
-  os << right->dump(indent + 1) << "\n";
+  os << left->pretty_dump(indent + 1) << ",\n";
+  os << right->pretty_dump(indent + 1) << "\n";
   os << space(indent) << ")";
 
   return os.str();
@@ -91,7 +123,22 @@ CoqList::CoqList(const std::vector<ref<CoqExpr>> &args) :
 
 }
 
-string CoqList::dump(int indent) const {
+string CoqList::dump() const {
+  std::ostringstream os;
+
+  os << "[";
+  for (size_t i = 0; i < args.size(); i++) {
+    os << args[i]->dump();
+    if (i != args.size() - 1) {
+      os << "; ";
+    }
+  }
+  os << "]";
+
+  return os.str();
+}
+
+string CoqList::pretty_dump(int indent) const {
   std::ostringstream os;
 
   if (args.size() == 0) {
@@ -99,7 +146,7 @@ string CoqList::dump(int indent) const {
   } else {
     os << space(indent) << "[\n";
     for (size_t i = 0; i < args.size(); i++) {
-      os << args[i]->dump(indent + 1);
+      os << args[i]->pretty_dump(indent + 1);
       if (i != args.size() - 1) {
         os << ";";
       }
@@ -121,7 +168,7 @@ CoqImport::CoqImport(const string &module_name) : module_name(module_name) {
 
 }
 
-string CoqImport::dump(int indent) const {
+string CoqImport::dump() const {
   std::ostringstream os;
   os << "Import " << module_name << ".";
   return os.str();
@@ -132,7 +179,7 @@ CoqRequire::CoqRequire(const string &path, const std::string &module_name, bool 
 
 }
 
-string CoqRequire::dump(int indent) const {
+string CoqRequire::dump() const {
   std::ostringstream os;
   os << "From " << path << " Require " << (use_import ? "Import " : "") << module_name << ".";
   return os.str();
@@ -145,10 +192,16 @@ CoqDefinition::CoqDefinition(const std::string &name,
 
 }
 
-string CoqDefinition::dump(int indent) const {
+string CoqDefinition::dump() const {
+  std::ostringstream os;
+  os << "Definition " << name << " : " << type << " := " << body->dump() << ".\n";
+  return os.str();
+}
+
+string CoqDefinition::pretty_dump(int indent) const {
   std::ostringstream os;
   os << "Definition " << name << " : " << type << " :=\n";
-  os << body->dump(indent + 1) << ".\n";
+  os << body->pretty_dump(indent + 1) << ".\n";
   return os.str();
 }
 

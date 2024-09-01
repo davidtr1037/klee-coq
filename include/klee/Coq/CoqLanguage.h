@@ -17,7 +17,11 @@ public:
 
   class ReferenceCounter _refCount;
   
-  virtual std::string dump(int indent = 0) const;
+  virtual std::string dump() const;
+
+  virtual std::string pretty_dump(int indent = 0) const {
+    return dump();
+  }
 
   virtual ~CoqExpr() { }
 
@@ -31,7 +35,9 @@ public:
 
     CoqVariable(const std::string &name);
 
-    std::string dump(int indent = 0) const;
+    std::string dump() const;
+
+    std::string pretty_dump(int indent = 0) const;
 
 };
 
@@ -43,7 +49,9 @@ public:
 
     CoqInteger(uint64_t n);
 
-    std::string dump(int indent = 0) const;
+    std::string dump() const;
+
+    std::string pretty_dump(int indent = 0) const;
 
 };
 
@@ -55,7 +63,9 @@ public:
 
     CoqString(const std::string &s);
 
-    std::string dump(int indent = 0) const;
+    std::string dump() const;
+
+    std::string pretty_dump(int indent = 0) const;
 
 };
 
@@ -68,7 +78,9 @@ public:
 
     CoqApplication(const ref<CoqExpr> &function, const std::vector<ref<CoqExpr>> &args);
 
-    std::string dump(int indent = 0) const;
+    std::string dump() const;
+
+    std::string pretty_dump(int indent = 0) const;
 
 };
 
@@ -81,7 +93,9 @@ public:
 
     CoqPair(const ref<CoqExpr> &left, const ref<CoqExpr> &right);
 
-    std::string dump(int indent = 0) const;
+    std::string dump() const;
+
+    std::string pretty_dump(int indent = 0) const;
 
 };
 
@@ -93,7 +107,9 @@ public:
 
     CoqList(const std::vector<ref<CoqExpr>> &args);
 
-    std::string dump(int indent = 0) const;
+    std::string dump() const;
+
+    std::string pretty_dump(int indent = 0) const;
 
 };
 
@@ -107,8 +123,7 @@ public:
 
     CoqImport(const std::string &module_name);
 
-    std::string dump(int indent = 0) const;
-
+    std::string dump() const;
 };
 
 class CoqRequire : public CoqExpr {
@@ -121,7 +136,7 @@ public:
 
     CoqRequire(const std::string &path, const std::string &module_name, bool use_import = true);
 
-    std::string dump(int indent = 0) const;
+    std::string dump() const;
 
 };
 
@@ -135,8 +150,9 @@ public:
 
     CoqDefinition(const std::string &name, const std::string &type, const ref<CoqExpr> &body);
 
-    std::string dump(int indent = 0) const;
+    std::string dump() const;
 
+    std::string pretty_dump(int indent = 0) const;
 };
 
 ref<CoqExpr> createNone();
