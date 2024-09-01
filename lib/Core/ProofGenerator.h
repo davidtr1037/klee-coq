@@ -37,7 +37,7 @@ public:
 
   void generate();
 
-  void translateModule();
+  void generateModule();
 
   ref<CoqExpr> translateState(ExecutionState &es);
 
@@ -63,7 +63,9 @@ public:
 
   ref<CoqExpr> createModule();
 
-  std::vector<ref<CoqExpr>> generateImports();
+  void generateImports();
+
+  std::vector<ref<CoqExpr>> getImports();
 
 };
 

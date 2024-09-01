@@ -22,15 +22,13 @@ ProofGenerator::ProofGenerator(Module &m, raw_ostream &output) : m(m), output(ou
   coqGlobalStoreAlias = new CoqVariable("gs");
 }
 
+/* TODO: rename */
 void ProofGenerator::generate() {
-  for (ref<CoqExpr> import : generateImports()) {
-    output << import->dump() << "\n";
-  }
-
-  translateModule();
+  generateImports();
+  generateModule();
 }
 
-void ProofGenerator::translateModule() {
+void ProofGenerator::generateModule() {
   vector<ref<CoqExpr>> requiredDefs;
 
   ref<CoqExpr> coqModule = moduleTranslator->translateModule();
@@ -175,7 +173,13 @@ klee::ref<CoqExpr> ProofGenerator::createModule() {
   return coqModuleAlias;
 }
 
-vector<klee::ref<CoqExpr>> ProofGenerator::generateImports() {
+void ProofGenerator::generateImports() {
+  for (ref<CoqExpr> import : getImports()) {
+    output << import->dump() << "\n";
+  }
+}
+
+vector<klee::ref<CoqExpr>> ProofGenerator::getImports() {
   return {
     new CoqRequire("Coq", "ZArith"),
     new CoqRequire("Coq", "Strings.String"),
