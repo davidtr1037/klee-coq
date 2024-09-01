@@ -104,7 +104,7 @@ void klee::optimiseAndPrepare(bool OptimiseKLEECall, bool Optimize,
   // going to be unresolved. We really need to handle the intrinsics
   // directly I think?
   legacy::PassManager pm3;
-  pm3.add(createCFGSimplificationPass());
+  //pm3.add(createCFGSimplificationPass());
   switch (SwitchType) {
   case SwitchImplType::eSwitchTypeInternal:
     break;
