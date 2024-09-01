@@ -241,6 +241,8 @@ klee::ref<CoqExpr> ProofGenerator::createSymbolics(ExecutionState &es) {
   }
 }
 
+/* TODO: rename to createSymbolicName */
+/* TODO: add an alias */
 klee::ref<CoqExpr> ProofGenerator::getSymbolicName(unsigned index) {
   ref<CoqExpr> arg;
   if (index == 0) {
@@ -254,6 +256,8 @@ klee::ref<CoqExpr> ProofGenerator::getSymbolicName(unsigned index) {
   );
 }
 
+/* TODO: rename to createSymbolicNames */
+/* TODO: add an alias */
 klee::ref<CoqExpr> ProofGenerator::getSymbolicNames(unsigned index) {
   ref<CoqExpr> arg;
   if (index == 0) {

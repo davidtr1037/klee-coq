@@ -92,6 +92,7 @@ static constexpr std::array handlerInfo = {
   add("calloc", handleCalloc, true),
   add("free", handleFree, false),
   add("klee_assume", handleAssume, false),
+  add("klee_assume_bool", handleAssumeBool, false),
   add("klee_check_memory_access", handleCheckMemoryAccess, false),
   add("klee_get_valuef", handleGetValue, true),
   add("klee_get_valued", handleGetValue, true),
@@ -485,6 +486,31 @@ void SpecialFunctionHandler::handleAssume(ExecutionState &state,
   if (res) {
     executor.terminateStateOnUserError(
         state, "invalid klee_assume call (provably false)", !SilentKleeAssume);
+  } else {
+    executor.addConstraint(state, e);
+  }
+}
+
+void SpecialFunctionHandler::handleAssumeBool(ExecutionState &state,
+                                              KInstruction *target,
+                                              std::vector<ref<Expr> > &arguments) {
+  assert(arguments.size() == 1 && "invalid number of arguments to klee_assume");
+  ref<Expr> e = arguments[0];
+  
+  if (e->getWidth() != Expr::Bool) {
+    klee_error("invalid expression passed to klee_assume_bool");
+  }
+
+  bool mustBeFalse;
+  bool success = executor.solver->mustBeFalse(state.constraints,
+                                              e,
+                                              mustBeFalse,
+                                              state.queryMetaData);
+  assert(success);
+  if (mustBeFalse) {
+    executor.terminateStateOnUserError(state,
+                                       "invalid klee_assume_bool call (provably false)",
+                                       !SilentKleeAssume);
   } else {
     executor.addConstraint(state, e);
   }
