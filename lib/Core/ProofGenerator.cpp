@@ -117,7 +117,10 @@ klee::ref<CoqExpr> ProofGenerator::translateState(ExecutionState &es) {
 }
 
 klee::ref<CoqExpr> ProofGenerator::createInstCounter(ExecutionState &es) {
-  Instruction *inst = es.prevPC->inst;
+  return createInstCounter(es.prevPC->inst);
+}
+
+klee::ref<CoqExpr> ProofGenerator::createInstCounter(Instruction *inst) {
   BasicBlock *bb = inst->getParent();
   Function *f = bb->getParent();
 
@@ -156,7 +159,10 @@ klee::ref<CoqExpr> ProofGenerator::createTrailingCommands(ExecutionState &es) {
 }
 
 klee::ref<CoqExpr> ProofGenerator::createPrevBID(ExecutionState &es) {
-  StackFrame &sf = es.stack.back();
+  return createPrevBID(es.stack.back());
+}
+
+klee::ref<CoqExpr> ProofGenerator::createPrevBID(StackFrame &sf) {
   if (sf.incomingBB) {
     return createSome(moduleTranslator->createName(sf.incomingBB->getName().str()));
   } else {
@@ -193,13 +199,29 @@ klee::ref<CoqExpr> ProofGenerator::createStack(ExecutionState &es) {
 
   for (unsigned i = 0; i < es.stack.size() - 1; i++) {
     StackFrame &sf = es.stack[i];
+    StackFrame &next_sf = es.stack[i + 1];
+
+    KInstruction *ki = next_sf.caller;
+    assert(ki);
+    CallInst *callInst = dyn_cast<CallInst>(ki->inst);
+    assert(callInst);
+    ref<CoqExpr> v;
+    if (callInst->getFunctionType()->getReturnType()->isVoidTy()) {
+      v = createNone();
+    } else {
+      v = createSome(moduleTranslator->createName(callInst->getName().str()));
+    }
+
+    Instruction *next = callInst->getNextNode();
+    assert(next);
+
     ref<CoqExpr> e = new CoqApplication(
       new CoqVariable("Sym_Frame"),
       {
         translateRegisterUpdates(sf.updates),
-        createInstCounter(es), /* TODO: fix */
-        createNone(), /* TODO: fix */
-        createNone(), /* TODO: fix */
+        createInstCounter(next),
+        createPrevBID(sf),
+        v,
       }
     );
     frames.push_back(e);

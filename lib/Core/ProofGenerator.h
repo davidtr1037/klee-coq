@@ -47,11 +47,15 @@ public:
 
   ref<CoqExpr> createInstCounter(ExecutionState &es);
 
+  ref<CoqExpr> createInstCounter(llvm::Instruction *inst);
+
   ref<CoqExpr> createCommand(ExecutionState &es);
 
   ref<CoqExpr> createTrailingCommands(ExecutionState &es);
 
   ref<CoqExpr> createPrevBID(ExecutionState &es);
+
+  ref<CoqExpr> createPrevBID(StackFrame &sf);
 
   ref<CoqExpr> createLocalStore(ExecutionState &es);
 
