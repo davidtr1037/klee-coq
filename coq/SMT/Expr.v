@@ -164,7 +164,14 @@ Qed.
 Lemma contains_var_binop_l : forall x op e1 e2,
   contains_var e1 x -> contains_var (SMT_BinOp op e1 e2) x.
 Proof.
-Admitted.
+  intros x op e1 e2 Hc.
+  inversion Hc; subst.
+  { apply ContainsVar_I1. apply SubExpr_BinOp_L. assumption. }
+  { apply ContainsVar_I8. apply SubExpr_BinOp_L. assumption. }
+  { apply ContainsVar_I16. apply SubExpr_BinOp_L. assumption. }
+  { apply ContainsVar_I32. apply SubExpr_BinOp_L. assumption. }
+  { apply ContainsVar_I64. apply SubExpr_BinOp_L. assumption. }
+Qed.
 
 Lemma contains_var_binop_r : forall x op e1 e2,
   contains_var e2 x -> contains_var (SMT_BinOp op e1 e2) x.
