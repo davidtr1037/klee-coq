@@ -36,6 +36,8 @@ using namespace llvm;
 
 namespace klee {
 
+#define ERASE_DEBUG_INFO_INTRINSICS (true)
+
 char IntrinsicCleanerPass::ID;
 
 bool IntrinsicCleanerPass::runOnModule(Module &M) {
@@ -61,8 +63,13 @@ bool IntrinsicCleanerPass::runOnBasicBlock(BasicBlock &b, Module &M) {
     // increment now since deletion of instructions makes iterator invalid.
     ++i;
     if (ii) {
-      if (isa<DbgInfoIntrinsic>(ii))
+      if (isa<DbgInfoIntrinsic>(ii)) {
+        if (ERASE_DEBUG_INFO_INTRINSICS) {
+          ii->eraseFromParent();
+          dirty = true;
+        }
         continue;
+      }
 
       switch (ii->getIntrinsicID()) {
       case Intrinsic::vastart:
