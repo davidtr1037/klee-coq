@@ -161,6 +161,16 @@ Proof.
   ).
 Qed.
 
+Lemma contains_var_binop_l : forall x op e1 e2,
+  contains_var e1 x -> contains_var (SMT_BinOp op e1 e2) x.
+Proof.
+Admitted.
+
+Lemma contains_var_binop_r : forall x op e1 e2,
+  contains_var e2 x -> contains_var (SMT_BinOp op e1 e2) x.
+Proof.
+Admitted.
+
 Lemma contains_var_cmpop : forall x op e1 e2,
   contains_var (SMT_CmpOp op e1 e2) x ->
   contains_var e1 x \/ contains_var e2 x.
@@ -185,6 +195,16 @@ Proof.
   ).
 Qed.
 
+Lemma contains_var_cmpop_l : forall x op e1 e2,
+  contains_var e1 x -> contains_var (SMT_CmpOp op e1 e2) x.
+Proof.
+Admitted.
+
+Lemma contains_var_cmpop_r : forall x op e1 e2,
+  contains_var e2 x -> contains_var (SMT_CmpOp op e1 e2) x.
+Proof.
+Admitted.
+
 Lemma contains_var_not : forall x e,
   contains_var (SMT_Not e) x -> contains_var e x.
 Proof.
@@ -198,6 +218,11 @@ Proof.
     try (apply ContainsVar_I64; assumption)
   ).
 Qed.
+
+Lemma contains_var_not_inverse : forall x e,
+  contains_var e x -> contains_var (SMT_Not e) x.
+Proof.
+Admitted.
 
 Lemma contains_var_extract : forall x e i w,
   contains_var (SMT_Extract e i w) x -> contains_var e x.
@@ -240,3 +265,18 @@ Proof.
     try (apply ContainsVar_I64; assumption)
   ).
 Qed.
+
+Lemma contains_var_ite_cond : forall x cond e1 e2,
+  contains_var cond x -> contains_var (SMT_ITE cond e1 e2) x.
+Proof.
+Admitted.
+
+Lemma contains_var_ite_l : forall x cond e1 e2,
+  contains_var e1 x -> contains_var (SMT_ITE cond e1 e2) x.
+Proof.
+Admitted.
+
+Lemma contains_var_ite_r : forall x cond e1 e2,
+  contains_var e2 x -> contains_var (SMT_ITE cond e1 e2) x.
+Proof.
+Admitted.

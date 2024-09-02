@@ -215,35 +215,33 @@ Proof.
       ]
     ]
   ).
-Admitted.
-(*
-  { (* SMT_BinOp *)
-    assert(L1 : ~ subexpr (SMT_Var x) e1).
-    { intros Hse. apply H. apply SubExpr_BinOp_L. assumption. }
-    assert(L2 : ~ subexpr (SMT_Var x) e2).
-    { intros Hse. apply H. apply SubExpr_BinOp_R. assumption. }
-    apply IHe1 in L1.
-    apply IHe2 in L2.
-    rewrite L1, L2.
-    reflexivity.
-  }
-  { (* SMT_CmpOp *)
-    assert(L1 : ~ subexpr (SMT_Var x) e1).
-    { intros Hse. apply H. apply SubExpr_CmpOp_L. assumption. }
-    assert(L2 : ~ subexpr (SMT_Var x) e2).
-    { intros Hse. apply H. apply SubExpr_CmpOp_R. assumption. }
+  {
+    assert(L1 : ~ contains_var e1 x).
+    { intros Hse. apply H. apply contains_var_binop_l. assumption. }
+    assert(L2 : ~ contains_var e2 x).
+    { intros Hse. apply H. apply contains_var_binop_r. assumption. }
     apply IHe1 in L1.
     apply IHe2 in L2.
     rewrite L1, L2.
     reflexivity.
   }
   {
-    assert(L1 : ~ subexpr (SMT_Var x) e1).
-    { intros Hse. apply H. apply SubExpr_ITE_Cond. assumption. }
-    assert(L2 : ~ subexpr (SMT_Var x) e2).
-    { intros Hse. apply H. apply SubExpr_ITE_L. assumption. }
-    assert(L3 : ~ subexpr (SMT_Var x) e3).
-    { intros Hse. apply H. apply SubExpr_ITE_R. assumption. }
+    assert(L1 : ~ contains_var e1 x).
+    { intros Hse. apply H. apply contains_var_cmpop_l. assumption. }
+    assert(L2 : ~ contains_var e2 x).
+    { intros Hse. apply H. apply contains_var_cmpop_r. assumption. }
+    apply IHe1 in L1.
+    apply IHe2 in L2.
+    rewrite L1, L2.
+    reflexivity.
+  }
+  {
+    assert(L1 : ~ contains_var e1 x).
+    { intros Hse. apply H. apply contains_var_ite_cond. assumption. }
+    assert(L2 : ~ contains_var e2 x).
+    { intros Hse. apply H. apply contains_var_ite_l. assumption. }
+    assert(L3 : ~ contains_var e3 x).
+    { intros Hse. apply H. apply contains_var_ite_r. assumption. }
     apply IHe1 in L1.
     apply IHe2 in L2.
     apply IHe3 in L3.
@@ -251,14 +249,13 @@ Admitted.
     reflexivity.
   }
   {
-    assert(L : ~ subexpr (SMT_Var x) e).
-    { intros Hse. apply H. apply SubExpr_Not. assumption. }
+    assert(L : ~ contains_var e x).
+    { intros Hse. apply H. apply contains_var_not_inverse. assumption. }
     apply IHe in L.
     rewrite L.
     reflexivity.
   }
 Qed.
-*)
 
 Inductive equiv_smt_expr : smt_expr -> smt_expr -> Prop :=
   | EquivSMTExpr : forall e1 e2,

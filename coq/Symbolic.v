@@ -726,12 +726,6 @@ Proof.
   }
 Qed.
 
-(* needed for soundness? *)
-Lemma pc_sat_lemma : forall s s' m,
-  sym_step s s' -> sat_sym_state m s' -> sat_sym_state m s.
-Proof.
-Admitted.
-
 Lemma pc_unsat_lemma : forall s s',
   sym_step s s' -> unsat_sym_state s -> unsat_sym_state s'.
 Proof.
