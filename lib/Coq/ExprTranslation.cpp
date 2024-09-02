@@ -91,12 +91,22 @@ ref<CoqExpr> ExprTranslator::createSMTBinOp(std::string op,
                                             ref<Expr> left,
                                             ref<Expr> right,
                                             ArrayTranslation *m) {
+  ref<CoqExpr> coqLeft = translate(left, m);
+  if (!coqLeft) {
+    return nullptr;
+  }
+
+  ref<CoqExpr> coqRight = translate(right, m);
+  if (!coqRight) {
+    return nullptr;
+  }
+
   return new CoqApplication(
     new CoqVariable("SMT_BinOp"),
     {
       new CoqVariable(op),
-      translate(left, m),
-      translate(right, m),
+      coqLeft,
+      coqRight,
     }
   );
 }
@@ -150,12 +160,22 @@ ref<CoqExpr> ExprTranslator::translateCmpExpr(ref<CmpExpr> e,
     return nullptr;
   }
 
+  ref<CoqExpr> coqLeft = translate(e->left, m);
+  if (coqLeft.isNull()) {
+    return nullptr;
+  }
+
+  ref<CoqExpr> coqRight = translate(e->right, m);
+  if (coqRight.isNull()) {
+    return nullptr;
+  }
+
   return new CoqApplication(
     new CoqVariable("SMT_CmpOp"),
     {
       new CoqVariable(op),
-      translate(e->left, m),
-      translate(e->right, m),
+      coqLeft,
+      coqRight,
     }
   );
 }
