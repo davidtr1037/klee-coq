@@ -367,7 +367,13 @@ klee::ref<CoqTactic> ProofGenerator::getTacticSingle(StateInfo &si,
 }
 
 klee::ref<CoqTactic> ProofGenerator::getTacticForSafety(StateInfo &si) {
-  return new Admit();
+  if (isa<BinaryOperator>(si.inst)) {
+    return new Block(
+      {Apply("LAUX_not_error_instr_op")}
+    );
+  }
+
+  assert(false);
 }
 
 klee::ref<CoqTactic> ProofGenerator::getTacticForStep(StateInfo &si,
@@ -386,7 +392,9 @@ klee::ref<CoqTactic> ProofGenerator::getTacticForSubtree(ref<CoqTactic> safetyTa
   );
 }
 
-klee::ref<CoqExpr> ProofGenerator::createLemma(uint64_t stepID, ref<CoqTactic> tactic) {
+klee::ref<CoqExpr> ProofGenerator::createLemma(uint64_t stepID,
+                                               ref<CoqTactic> tactic,
+                                               bool isAdmitted) {
   return new CoqLemma(
     "L_" + to_string(stepID),
     new CoqApplication(
@@ -394,7 +402,7 @@ klee::ref<CoqExpr> ProofGenerator::createLemma(uint64_t stepID, ref<CoqTactic> t
       {new CoqVariable("t_" + to_string(stepID))}
     ),
     tactic,
-    false
+    isAdmitted
   );
   return nullptr;
 }

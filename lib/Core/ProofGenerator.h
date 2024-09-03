@@ -117,7 +117,7 @@ public:
   ref<CoqTactic> getTacticForSubtree(ref<CoqTactic> safetyTactic,
                                      ref<CoqTactic> stepTactic);
 
-  ref<CoqExpr> createLemma(uint64_t stepID, ref<CoqTactic> tactic);
+  ref<CoqExpr> createLemma(uint64_t stepID, ref<CoqTactic> tactic, bool isAdmitted = false);
 
   void generateTreeDefs();
 
