@@ -8,10 +8,8 @@
 using namespace std;
 using namespace klee;
 
-/* TODO: don't use std:: */
-
 static string space(int indent) {
-  std::ostringstream os;
+  ostringstream os;
   for (int i = 0; i < indent; i++) {
     os << "  ";
   }
@@ -31,7 +29,7 @@ string CoqVariable::dump() const {
 }
 
 string CoqVariable::pretty_dump(int indent) const {
-  std::ostringstream os;
+  ostringstream os;
   os << space(indent) << name;
   return os.str();
 }
@@ -41,13 +39,13 @@ CoqString::CoqString(const string &s) : s(s) {
 }
 
 string CoqString::dump() const {
-  std::ostringstream os;
+  ostringstream os;
   os << "\"" << s << "\"" << "\%string";
   return os.str();
 }
 
 string CoqString::pretty_dump(int indent) const {
-  std::ostringstream os;
+  ostringstream os;
   os << space(indent) << "\"" << s << "\"" << "\%string";
   return os.str();
 }
@@ -57,23 +55,23 @@ CoqInteger::CoqInteger(uint64_t n) : n(n) {
 }
 
 string CoqInteger::dump() const {
-  return std::to_string(n);
+  return to_string(n);
 }
 
 string CoqInteger::pretty_dump(int indent) const {
-  std::ostringstream os;
-  os << space(indent) << std::to_string(n);
+  ostringstream os;
+  os << space(indent) << to_string(n);
   return os.str();
 }
 
 CoqApplication::CoqApplication(const ref<CoqExpr> &function,
-                               const std::vector<ref<CoqExpr>> &args) :
+                               const vector<ref<CoqExpr>> &args) :
     function(function), args(args) {
 
 }
 
 string CoqApplication::dump() const {
-  std::ostringstream os;
+  ostringstream os;
 
   os << "(" << function->dump();
   for (size_t i = 0; i < args.size(); i++) {
@@ -85,7 +83,7 @@ string CoqApplication::dump() const {
 }
 
 string CoqApplication::pretty_dump(int indent) const {
-  std::ostringstream os;
+  ostringstream os;
 
   os << space(indent) << "(" << function->pretty_dump(0) << "\n";
   for (size_t i = 0; i < args.size(); i++) {
@@ -102,13 +100,13 @@ CoqPair::CoqPair(const ref<CoqExpr> &left, const ref<CoqExpr> &right) :
 }
 
 string CoqPair::dump() const {
-  std::ostringstream os;
+  ostringstream os;
   os << "(\n" << left->dump() << ", " << right->dump() << ")";
   return os.str();
 }
 
 string CoqPair::pretty_dump(int indent) const {
-  std::ostringstream os;
+  ostringstream os;
 
   os << space(indent) << "(\n";
   os << left->pretty_dump(indent + 1) << ",\n";
@@ -118,13 +116,13 @@ string CoqPair::pretty_dump(int indent) const {
   return os.str();
 }
 
-CoqList::CoqList(const std::vector<ref<CoqExpr>> &args) :
+CoqList::CoqList(const vector<ref<CoqExpr>> &args) :
     args(args) {
 
 }
 
 string CoqList::dump() const {
-  std::ostringstream os;
+  ostringstream os;
 
   os << "[";
   for (size_t i = 0; i < args.size(); i++) {
@@ -139,7 +137,7 @@ string CoqList::dump() const {
 }
 
 string CoqList::pretty_dump(int indent) const {
-  std::ostringstream os;
+  ostringstream os;
 
   if (args.size() == 0) {
     os << space(indent) << "[]";
@@ -159,7 +157,7 @@ string CoqList::pretty_dump(int indent) const {
 }
 
 klee::ref<CoqExpr> klee::createZ(uint64_t n) {
-  std::ostringstream os;
+  ostringstream os;
   os << "(" << n << ")" << "%Z";
   return new CoqVariable(os.str());
 }
@@ -169,37 +167,37 @@ CoqImport::CoqImport(const string &module_name) : module_name(module_name) {
 }
 
 string CoqImport::dump() const {
-  std::ostringstream os;
+  ostringstream os;
   os << "Import " << module_name << ".";
   return os.str();
 }
 
-CoqRequire::CoqRequire(const string &path, const std::string &module_name, bool use_import) :
+CoqRequire::CoqRequire(const string &path, const string &module_name, bool use_import) :
   path(path), module_name(module_name), use_import(use_import) {
 
 }
 
 string CoqRequire::dump() const {
-  std::ostringstream os;
+  ostringstream os;
   os << "From " << path << " Require " << (use_import ? "Import " : "") << module_name << ".";
   return os.str();
 }
 
-CoqDefinition::CoqDefinition(const std::string &name,
-                             const std::string &type,
+CoqDefinition::CoqDefinition(const string &name,
+                             const string &type,
                              const ref<CoqExpr> &body) :
   name(name), type(type), body(body) {
 
 }
 
 string CoqDefinition::dump() const {
-  std::ostringstream os;
+  ostringstream os;
   os << "Definition " << name << " : " << type << " := " << body->dump() << ".\n";
   return os.str();
 }
 
 string CoqDefinition::pretty_dump(int indent) const {
-  std::ostringstream os;
+  ostringstream os;
   os << "Definition " << name << " : " << type << " :=\n";
   os << body->pretty_dump(indent + 1) << ".\n";
   return os.str();
@@ -253,13 +251,13 @@ BasicTactic::BasicTactic(const string &name) : name(name) {
 
 }
 
-BasicTactic::BasicTactic(const string &name, const std::vector<ref<CoqExpr>> &args) :
+BasicTactic::BasicTactic(const string &name, const vector<ref<CoqExpr>> &args) :
   name(name), args(args) {
 
 }
 
 string BasicTactic::dump(int indent) const {
-  std::ostringstream os;
+  ostringstream os;
   os << space(indent) << name;
   for (ref<CoqExpr> e : args) {
     os << " " << e->dump();
@@ -268,13 +266,13 @@ string BasicTactic::dump(int indent) const {
   return os.str();
 }
 
-Block::Block(const std::vector<ref<CoqTactic>> &tactics) :
+Block::Block(const vector<ref<CoqTactic>> &tactics) :
   tactics(tactics) {
 
 }
 
 string Block::dump(int indent) const {
-  std::ostringstream os;
+  ostringstream os;
   os << space(indent) << "{\n";
   for (ref<CoqTactic> t : tactics) {
     os << t->dump(indent + 1) << "\n";
@@ -284,7 +282,7 @@ string Block::dump(int indent) const {
 }
 
 string Apply::dump(int indent) const {
-  std::ostringstream os;
+  ostringstream os;
   os << space(indent);
   if (args.empty()) {
     os << "apply " << name << ".";
@@ -310,13 +308,13 @@ Discriminate::Discriminate(const string &hypothesis) : hypothesis(hypothesis) {
 }
 
 string Discriminate::dump(int indent) const {
-  std::ostringstream os;
+  ostringstream os;
   os << space(indent) << "discriminate " << hypothesis << ".";
   return os.str();
 }
 
 string Destruct::dump(int indent) const {
-  std::ostringstream os;
+  ostringstream os;
   os << space(indent) << "destruct " << var << " as [";
   for (size_t i = 0; i < schemes.size(); i++) {
     for (size_t j = 0; j < schemes[i].size(); j++) {
@@ -339,17 +337,17 @@ Exists::Exists(ref<CoqExpr> e) : e(e) {
 }
 
 string Exists::dump(int indent) const {
-  std::ostringstream os;
+  ostringstream os;
   os << space(indent) << "exists (" << e->dump() << ").";
   return os.str();
 }
 
-Intros::Intros(const std::vector<string> &vars) : vars(vars) {
+Intros::Intros(const vector<string> &vars) : vars(vars) {
 
 }
 
 string Intros::dump(int indent) const {
-  std::ostringstream os;
+  ostringstream os;
   os << space(indent) << "intros";
   for (string v : vars) {
     os << " " << v;
@@ -358,12 +356,12 @@ string Intros::dump(int indent) const {
   return os.str();
 }
 
-Inversion::Inversion(const std::string &hypothesis) : hypothesis(hypothesis) {
+Inversion::Inversion(const string &hypothesis) : hypothesis(hypothesis) {
 
 }
 
 string Inversion::dump(int indent) const {
-  std::ostringstream os;
+  ostringstream os;
   os << space(indent) << "inversion " << hypothesis << ".";
   return os.str();
 }
@@ -374,25 +372,25 @@ Split::Split(ref<CoqTactic> t1, ref<CoqTactic> t2) :
 }
 
 string Split::dump(int indent) const {
-  std::ostringstream os;
+  ostringstream os;
   os << space(indent) << "split.\n";
   os << t1->dump(indent) << "\n";
   os << t2->dump(indent);
   return os.str();
 }
 
-Rewrite::Rewrite(const std::string &hypothesis, bool forward) :
+Rewrite::Rewrite(const string &hypothesis, bool forward) :
   hypothesis(hypothesis), forward(forward) {
 
 }
 
 string Rewrite::dump(int indent) const {
-  std::ostringstream os;
+  ostringstream os;
   os << space(indent) << "rewrite " << (forward ? "" : "<- ") << hypothesis << ".";
   return os.str();
 }
 
-CoqLemma::CoqLemma(const std::string &name,
+CoqLemma::CoqLemma(const string &name,
                    const ref<CoqExpr> &body,
                    const ref<CoqTactic> &proof,
                    bool isAdmitted) :
@@ -401,7 +399,7 @@ CoqLemma::CoqLemma(const std::string &name,
 }
 
 string CoqLemma::dump() const {
-  std::ostringstream os;
+  ostringstream os;
   os << "Lemma " << name << " : " << body->dump() << ".\n";
   os << "Proof.\n";
   os << proof->dump(0) << "\n";
