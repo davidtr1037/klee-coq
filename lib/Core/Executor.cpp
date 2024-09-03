@@ -3719,6 +3719,12 @@ void Executor::run(ExecutionState &initialState) {
   while (!states.empty() && !haltExecution) {
     ExecutionState &state = searcher->selectState();
     KInstruction *ki = state.pc;
+
+    /* TODO: add docs */
+    StateInfo si;
+    si.stepID = state.stepID;
+    si.inst = ki->inst;
+
     stepInstruction(state);
 
     if (isInProofMode()) {
@@ -3729,7 +3735,17 @@ void Executor::run(ExecutionState &initialState) {
     }
 
     executeInstruction(state, ki);
-    state.setStepID(allocateStepID());
+
+    /* TODO: add docs */
+    if (isInProofMode()) {
+      if (state.isTerminated) {
+        /* no step was executed */
+        proofGenerator->handleTerminatedState(state);
+      } else {
+        state.setStepID(allocateStepID());
+        proofGenerator->handleStep(si, state);
+      }
+    }
 
     timers.invoke();
     if (::dumpStates) dumpStates();
@@ -3742,6 +3758,10 @@ void Executor::run(ExecutionState &initialState) {
       // update searchers when states were terminated early due to memory pressure
       updateStates(nullptr);
     }
+  }
+
+  if (isInProofMode()) {
+    proofGenerator->generateTreeDefs();
   }
 
   delete searcher;
@@ -3809,6 +3829,7 @@ void Executor::terminateState(ExecutionState &state,
                       "replay did not consume all objects in test input.");
   }
 
+  state.markAsTerminated();
   interpreterHandler->incPathsExplored();
   executionTree->setTerminationType(state, reason);
 
@@ -4774,7 +4795,9 @@ void Executor::runFunctionAsMain(Function *f,
 
   ExecutionState *state =
       new ExecutionState(kmodule->functionMap[f], memory.get());
-  state->setStepID(allocateStepID());
+  if (isInProofMode()) {
+    state->setStepID(allocateStepID());
+  }
 
   if (pathWriter) 
     state->pathOS = pathWriter->open();
