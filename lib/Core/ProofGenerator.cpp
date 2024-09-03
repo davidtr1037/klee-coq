@@ -86,11 +86,9 @@ void ProofGenerator::generateModule() {
 }
 
 void ProofGenerator::generateState(ExecutionState &es) {
-  /* TODO: add a state id to ExecutionState */
-  static uint64_t sid = 0;
   ref<CoqExpr> coqState = translateState(es);
   ref<CoqExpr> coqStateDef = new CoqDefinition(
-    "s_" + to_string(sid++),
+    "s_" + to_string(es.stepID),
     "sym_state",
     coqState
   );
@@ -308,4 +306,8 @@ vector<klee::ref<CoqExpr>> ProofGenerator::getImports() {
     new CoqRequire("SE.SMT", "Expr"),
     new CoqRequire("SE.SMT", "Model"),
   };
+}
+
+void ProofGenerator::handleStep(StateInfo &si, ExecutionState &successor) {
+
 }

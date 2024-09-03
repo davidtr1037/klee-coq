@@ -15,6 +15,13 @@
 
 namespace klee {
 
+struct StateInfo {
+  llvm::Instruction *inst;
+
+  StateInfo(llvm::Instruction *inst) :
+    inst(inst) {}
+};
+
 class ProofGenerator {
 
 private:
@@ -79,6 +86,8 @@ public:
   void generateImports();
 
   std::vector<ref<CoqExpr>> getImports();
+
+  void handleStep(StateInfo &si, ExecutionState &successor);
 
 };
 

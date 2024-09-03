@@ -585,6 +585,10 @@ public:
 
   MergingSearcher *getMergingSearcher() const { return mergingSearcher; };
   void setMergingSearcher(MergingSearcher *ms) { mergingSearcher = ms; };
+
+  bool isInProofMode() const;
+
+  uint64_t allocateStepID();
 };
 
 } // namespace klee

@@ -478,6 +478,12 @@ cl::opt<bool> DebugCheckForImpliedValues(
     cl::desc("Debug the implied value optimization"),
     cl::cat(DebugCat));
 
+cl::opt<bool> GenerateProof(
+  "generate-proof",
+  cl::init(false),
+  cl::desc(""),
+  cl::cat(ProofGenerationCat));
+
 cl::opt<std::string> ProofOutputPath(
   "proof-output-path",
   cl::desc(""),
@@ -3623,14 +3629,17 @@ void Executor::doDumpStates() {
 void Executor::run(ExecutionState &initialState) {
   bindModuleConstants();
 
-  /* TODO: should be here? */
-  std::string error;
-  std::unique_ptr<raw_fd_ostream> os = klee_open_output_file(ProofOutputPath, error);
-  if (!os) {
-    klee_error("failed to open file '%s' error '%s'", ProofOutputPath.c_str(), error.c_str());
+  /* TODO: move os somewhere else */
+  std::unique_ptr<raw_fd_ostream> os;
+  if (GenerateProof) {
+    std::string error;
+    os = klee_open_output_file(ProofOutputPath, error);
+    if (!os) {
+      klee_error("failed to open file '%s' error '%s'", ProofOutputPath.c_str(), error.c_str());
+    }
+    proofGenerator = new ProofGenerator(*kmodule->module, *os);
+    proofGenerator->generate();
   }
-  proofGenerator = new ProofGenerator(*kmodule->module, *os);
-  proofGenerator->generate();
 
   // Delay init till now so that ticks don't accrue during optimization and such.
   timers.reset();
@@ -3712,13 +3721,16 @@ void Executor::run(ExecutionState &initialState) {
     KInstruction *ki = state.pc;
     stepInstruction(state);
 
-    errs() << "executing " << *ki->inst << "\n";
-    if (proofGenerator->moduleTranslator->isSupportedInst(*state.prevPC->inst)) {
-      errs() << "supported " << *state.prevPC->inst << "\n";
-      proofGenerator->generateState(state);
+    if (isInProofMode()) {
+      errs() << "executing " << *ki->inst << "\n";
+      if (proofGenerator->moduleTranslator->isSupportedInst(*state.prevPC->inst)) {
+        proofGenerator->generateState(state);
+      }
     }
 
     executeInstruction(state, ki);
+    state.setStepID(allocateStepID());
+
     timers.invoke();
     if (::dumpStates) dumpStates();
     if (::dumpExecutionTree)
@@ -4646,11 +4658,13 @@ void Executor::executeMakeSymbolic(ExecutionState &state,
     bindObjectInState(state, mo, false, array);
 
     /* TODO: must happen before calling addSymbolic */
-    unsigned index = state.symbolics.size();
-    ref<CoqExpr> coqName = proofGenerator->getSymbolicName(index);
-    ref<CoqExpr> coqSMTVar = \
-      proofGenerator->exprTranslator->createSMTVar(array->size * 8, coqName);
-    state.addArrayTranslation(array, coqSMTVar);
+    if (isInProofMode()) {
+      unsigned index = state.symbolics.size();
+      ref<CoqExpr> coqName = proofGenerator->getSymbolicName(index);
+      ref<CoqExpr> coqSMTVar = \
+        proofGenerator->exprTranslator->createSMTVar(array->size * 8, coqName);
+      state.addArrayTranslation(array, coqSMTVar);
+    }
 
     state.addSymbolic(mo, array);
 
@@ -4760,6 +4774,7 @@ void Executor::runFunctionAsMain(Function *f,
 
   ExecutionState *state =
       new ExecutionState(kmodule->functionMap[f], memory.get());
+  state->setStepID(allocateStepID());
 
   if (pathWriter) 
     state->pathOS = pathWriter->open();
@@ -5096,6 +5111,16 @@ void Executor::dumpStates() {
   }
 
   ::dumpStates = 0;
+}
+
+bool Executor::isInProofMode() const {
+  return GenerateProof;
+}
+
+static uint64_t globalStepID = 0;
+
+uint64_t Executor::allocateStepID() {
+  return globalStepID++;
 }
 
 ///
