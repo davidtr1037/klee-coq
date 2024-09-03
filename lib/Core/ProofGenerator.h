@@ -128,6 +128,11 @@ public:
   void generateTreeDefs();
 
   void generateLemmaDefs();
+
+  void generateTheorem();
+
+  ref<CoqExpr> getTheorem();
+
 };
 
 }

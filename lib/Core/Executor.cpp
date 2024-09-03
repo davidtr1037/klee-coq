@@ -3763,6 +3763,7 @@ void Executor::run(ExecutionState &initialState) {
   if (isInProofMode()) {
     proofGenerator->generateTreeDefs();
     proofGenerator->generateLemmaDefs();
+    proofGenerator->generateTheorem();
   }
 
   delete searcher;

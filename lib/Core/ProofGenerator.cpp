@@ -461,3 +461,27 @@ void ProofGenerator::generateLemmaDefs() {
     output << def->dump() << "\n";
   }
 }
+
+void ProofGenerator::generateTheorem() {
+  output << getTheorem()->dump() << "\n";
+}
+
+klee::ref<CoqExpr> ProofGenerator::getTheorem() {
+  ref<CoqTactic> tactic = new Block(
+    {
+      new Admit(),
+    }
+  );
+
+  return new CoqLemma(
+    "program_safety",
+    new CoqApplication(
+      new CoqVariable("is_safe_program"),
+      {
+        coqModuleAlias,
+        moduleTranslator->createName("main"),
+      }
+    ),
+    tactic
+  );
+}
