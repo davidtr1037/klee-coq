@@ -294,6 +294,42 @@ string Apply::dump(int indent) const {
   return os.str();
 }
 
+Destruct::Destruct(const string &var,
+                   const vector<vector<string>> &schemes,
+                   const string &eqn) :
+  var(var), schemes(schemes), eqn(eqn) {
+
+}
+
+Discriminate::Discriminate(const string &hypothesis) : hypothesis(hypothesis) {
+
+}
+
+string Discriminate::dump(int indent) const {
+  std::ostringstream os;
+  os << space(indent) << "discriminate " << hypothesis << ".";
+  return os.str();
+}
+
+string Destruct::dump(int indent) const {
+  std::ostringstream os;
+  os << space(indent) << "destruct " << var << " as [";
+  for (size_t i = 0; i < schemes.size(); i++) {
+    for (size_t j = 0; j < schemes[i].size(); j++) {
+      os << schemes[i][j];
+      if (j != schemes[i].size() - 1) {
+        os << " ";
+      }
+    }
+    if (i != schemes.size() - 1) {
+      os << " | ";
+    }
+  }
+  os << "]";
+  os << " eqn:" << eqn << ".";
+  return os.str();
+}
+
 Exists::Exists(ref<CoqExpr> e) : e(e) {
 
 }
@@ -338,6 +374,17 @@ string Split::dump(int indent) const {
   os << space(indent) << "split.\n";
   os << t1->dump(indent) << "\n";
   os << t2->dump(indent);
+  return os.str();
+}
+
+Rewrite::Rewrite(const std::string &hypothesis, bool forward) :
+  hypothesis(hypothesis), forward(forward) {
+
+}
+
+string Rewrite::dump(int indent) const {
+  std::ostringstream os;
+  os << space(indent) << "rewrite " << (forward ? "" : "<- ") << hypothesis << ".";
   return os.str();
 }
 

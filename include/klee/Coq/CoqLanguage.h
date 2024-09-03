@@ -206,6 +206,36 @@ public:
 
 };
 
+class Destruct : public CoqTactic {
+
+public:
+
+  std::string var;
+
+  std::vector<std::vector<std::string>> schemes;
+
+  std::string eqn;
+
+  Destruct(const std::string &var,
+           const std::vector<std::vector<std::string>> &schemes,
+           const std::string &eqn);
+
+  std::string dump(int indent) const;
+
+};
+
+class Discriminate : public CoqTactic {
+
+public:
+
+  std::string hypothesis;
+
+  Discriminate(const std::string &hypothesis);
+
+  std::string dump(int indent) const;
+
+};
+
 class Exists : public CoqTactic {
 
 public:
@@ -286,6 +316,19 @@ public:
 
 };
 
+class Rewrite : public CoqTactic {
+
+public:
+
+  std::string hypothesis;
+
+  bool forward;
+
+  Rewrite(const std::string &hypothesis, bool forward = true);
+
+  std::string dump(int indent) const;
+
+};
 
 class Apply : public CoqTactic {
 
