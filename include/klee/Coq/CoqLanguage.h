@@ -270,6 +270,14 @@ public:
 
 };
 
+class Subst : public BasicTactic {
+
+public:
+
+  Subst() : BasicTactic("subst", {}) {}
+
+};
+
 class Reflexivity : public BasicTactic {
 
 public:
