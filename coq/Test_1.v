@@ -217,6 +217,7 @@ Proof.
   }
   {
     intros s Hse.
+    inversion Hse; subst.
     {
       left.
       exists (t_2).
@@ -233,7 +234,6 @@ Proof.
         }
         {
           simpl.
-          inversion Hse; subst.
           apply EquivSymState.
           {
             simpl in H13.
