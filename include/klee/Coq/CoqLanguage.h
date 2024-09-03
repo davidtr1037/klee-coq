@@ -206,6 +206,79 @@ public:
 
 };
 
+class Exists : public CoqTactic {
+
+public:
+
+  ref<CoqExpr> e;
+
+  Exists(ref<CoqExpr> e);
+
+  std::string dump(int indent) const;
+
+};
+
+class Intros : public CoqTactic {
+
+public:
+
+  std::vector<std::string> vars;
+
+  Intros(const std::vector<std::string> &vars);
+
+  std::string dump(int indent) const;
+
+};
+
+class Inversion : public CoqTactic {
+
+public:
+
+  std::string hypothesis;
+
+  Inversion(const std::string &hypothesis);
+
+  std::string dump(int indent) const;
+
+};
+
+class Left : public BasicTactic {
+
+public:
+
+  Left() : BasicTactic("left", {}) {}
+
+};
+
+class Simpl : public BasicTactic {
+
+public:
+
+  Simpl() : BasicTactic("simpl", {}) {}
+
+};
+
+class Split : public CoqTactic {
+
+public:
+
+  ref<CoqTactic> t1, t2;
+
+  Split(ref<CoqTactic> t1, ref<CoqTactic> t2);
+
+  std::string dump(int indent) const;
+
+};
+
+class Reflexivity : public BasicTactic {
+
+public:
+
+  Reflexivity() : BasicTactic("reflexivity", {}) {}
+
+};
+
+
 class Apply : public CoqTactic {
 
 public:

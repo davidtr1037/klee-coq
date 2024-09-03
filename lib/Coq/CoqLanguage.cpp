@@ -294,6 +294,53 @@ string Apply::dump(int indent) const {
   return os.str();
 }
 
+Exists::Exists(ref<CoqExpr> e) : e(e) {
+
+}
+
+string Exists::dump(int indent) const {
+  std::ostringstream os;
+  os << space(indent) << "exists (" << e->dump() << ").";
+  return os.str();
+}
+
+Intros::Intros(const std::vector<string> &vars) : vars(vars) {
+
+}
+
+string Intros::dump(int indent) const {
+  std::ostringstream os;
+  os << space(indent) << "intros";
+  for (string v : vars) {
+    os << " " << v;
+  }
+  os << ".";
+  return os.str();
+}
+
+Inversion::Inversion(const std::string &hypothesis) : hypothesis(hypothesis) {
+
+}
+
+string Inversion::dump(int indent) const {
+  std::ostringstream os;
+  os << space(indent) << "inversion " << hypothesis << ".";
+  return os.str();
+}
+
+Split::Split(ref<CoqTactic> t1, ref<CoqTactic> t2) :
+  t1(t1), t2(t2) {
+
+}
+
+string Split::dump(int indent) const {
+  std::ostringstream os;
+  os << space(indent) << "split.\n";
+  os << t1->dump(indent) << "\n";
+  os << t2->dump(indent);
+  return os.str();
+}
+
 CoqLemma::CoqLemma(const std::string &name,
                    const ref<CoqExpr> &body,
                    const ref<CoqTactic> &proof,
