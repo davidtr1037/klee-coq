@@ -350,6 +350,7 @@ public:
     name(name), args(args) {}
 
   std::string dump(int indent) const;
+
 };
 
 class CoqLemma : public CoqExpr {
@@ -370,6 +371,7 @@ public:
            bool isAdmitted = false);
 
   std::string dump() const;
+
 };
 
 }
