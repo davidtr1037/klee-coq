@@ -301,7 +301,7 @@ Proof.
     discriminate E.
   }
   {
-    apply completeness_via_et with (init_s := s_0) (l := l).
+    apply (completeness_via_et mdl (Name "main") s_0 l).
     { admit. }
     { reflexivity. }
     {
