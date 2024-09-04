@@ -412,7 +412,8 @@ void ExecutionState::addArgument(const std::string &name, const ref<Expr> &value
   updates.push_front(RegisterUpdate(name, value));
 }
 
-void ExecutionState::addRegisterUpdate(const std::string &name, const ref<Expr> &value) {
+void ExecutionState::addRegisterUpdate(const std::string &name,
+                                       const ref<Expr> &value) {
   /* TODO: optimize */
   std::list<RegisterUpdate> &updates = stack.back().updates;
   for (auto i = updates.begin(); i != updates.end(); ++i) {
@@ -423,6 +424,17 @@ void ExecutionState::addRegisterUpdate(const std::string &name, const ref<Expr> 
   }
 
   updates.push_back(RegisterUpdate(name, value));
+}
+
+bool ExecutionState::hasRegisterUpdate(const std::string &name) {
+  std::list<RegisterUpdate> &updates = stack.back().updates;
+  for (auto i = updates.begin(); i != updates.end(); ++i) {
+    if (i->name == name) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 void ExecutionState::setStepID(uint64_t id) {
