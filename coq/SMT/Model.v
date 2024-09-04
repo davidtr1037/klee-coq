@@ -498,6 +498,7 @@ Definition smt_cmpop_to_comparison (op : smt_cmpop) : comparison :=
   end
 .
 
+(* TODO: refactor *)
 Fixpoint simplify (e : smt_expr) : smt_expr :=
   match e with
   | SMT_BinOp op e1 e2 =>
@@ -509,6 +510,15 @@ Fixpoint simplify (e : smt_expr) : smt_expr :=
       | SMT_Const_I16 n1, SMT_Const_I16 n2 => SMT_Const_I16 (add n1 n2)
       | SMT_Const_I32 n1, SMT_Const_I32 n2 => SMT_Const_I32 (add n1 n2)
       | SMT_Const_I64 n1, SMT_Const_I64 n2 => SMT_Const_I64 (add n1 n2)
+      | _, _ => e
+      end
+    | SMT_And =>
+      match (simplify e1), (simplify e2) with
+      | SMT_Const_I1 n1, SMT_Const_I1 n2 => SMT_Const_I1 (and n1 n2)
+      | SMT_Const_I8 n1, SMT_Const_I8 n2 => SMT_Const_I8 (and n1 n2)
+      | SMT_Const_I16 n1, SMT_Const_I16 n2 => SMT_Const_I16 (and n1 n2)
+      | SMT_Const_I32 n1, SMT_Const_I32 n2 => SMT_Const_I32 (and n1 n2)
+      | SMT_Const_I64 n1, SMT_Const_I64 n2 => SMT_Const_I64 (and n1 n2)
       | _, _ => e
       end
     | _ => e

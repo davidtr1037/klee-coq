@@ -2106,8 +2106,9 @@ void Executor::transferToBasicBlock(BasicBlock *dst, BasicBlock *src,
   if (state.pc->inst->getOpcode() == Instruction::PHI) {
     PHINode *first = static_cast<PHINode*>(state.pc->inst);
     state.incomingBBIndex = first->getBasicBlockIndex(src);
-    state.stack.back().incomingBB = src;
   }
+  /* always set the incoming basic block */
+  state.stack.back().incomingBB = src;
 }
 
 /// Compute the true target of a function call, resolving LLVM aliases

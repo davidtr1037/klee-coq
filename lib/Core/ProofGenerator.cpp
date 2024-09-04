@@ -499,7 +499,26 @@ klee::ref<CoqTactic> ProofGenerator::getEquivTactic(StateInfo &si,
   if (isa<BranchInst>(si.inst)) {
     BranchInst *bi = cast<BranchInst>(si.inst);
     if (bi->isConditional()) {
-      return new Block({new Admit()});
+      return new Block(
+        {
+          new Inversion("H13"),
+          new Subst(),
+          new Inversion("H14"),
+          new Subst(),
+          new Inversion("H15"),
+          new Subst(),
+          new Apply("EquivSymState"),
+          new Block({new Apply("equiv_smt_store_refl")}),
+          new Block({new Apply("equiv_sym_stack_refl")}),
+          new Block({new Apply("equiv_smt_store_refl")}),
+          new Block(
+            {
+              new Inversion("H12"),
+              new Apply("equiv_smt_expr_simplify"),
+            }
+          ),
+        }
+      );
     } else {
       return new Block(
         {
@@ -567,13 +586,13 @@ klee::ref<CoqTactic> ProofGenerator::getTacticForStep(StateInfo &si,
   if (successor1) {
     tactic1 = getTacticForSat(si, *successor1);
   } else {
-    tactic1 = new Admit();
+    tactic1 = new Block({new Admit()});
   }
 
   if (successor2) {
     tactic2 = getTacticForSat(si, *successor2);
   } else {
-    tactic2 = new Admit();
+    tactic2 = new Block({new Admit()});
   }
 
   return new Block(
