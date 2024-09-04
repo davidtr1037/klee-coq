@@ -420,8 +420,6 @@ klee::ref<CoqTactic> ProofGenerator::getTacticForSat(StateInfo &si,
 klee::ref<CoqTactic> ProofGenerator::getEquivTactic(StateInfo &si,
                                                     ExecutionState &successor) {
   if (isa<BinaryOperator>(si.inst)) {
-    errs() << "getEquivTactic\n";
-    errs() << si.wasRegisterUpdated << "\n";
     ref<CoqTactic> t;
     if (si.wasRegisterUpdated) {
       t = new Admit();
@@ -439,14 +437,14 @@ klee::ref<CoqTactic> ProofGenerator::getEquivTactic(StateInfo &si,
               new CoqVariable("H13"),
             }
           ),
-          new Admit(),
+          new Apply("equiv_smt_expr_simplify"),
         }
       );
     }
     return new Block(
       {
         new Apply("EquivSymState"),
-        new Block({t}),
+        t,
         new Block({new Apply("equiv_sym_stack_refl")}),
         new Block({new Apply("equiv_smt_store_refl")}),
         new Block({new Apply("equiv_smt_expr_refl")}),
