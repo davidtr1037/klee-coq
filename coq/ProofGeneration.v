@@ -20,6 +20,8 @@ From SE.SMT Require Import Model.
 
 From SE.Utils Require Import IDMap.
 
+(* TODO: rename lemmas *)
+
 Lemma LAUX_not_error_instr_op : forall ic cid v e cs pbid ls stk gs syms pc mdl,
   ~ error_sym_state
     (mk_sym_state
@@ -173,4 +175,48 @@ Proof.
   apply equiv_smt_store_update.
   { apply equiv_smt_store_refl. }
   { assumption. }
+Qed.
+
+Lemma LAUX_2: forall m x se1 se2 se3 l,
+  equiv_smt_expr se2 se3 ->
+  equiv_smt_store
+    (x !-> Some se2; (multi_update_map (x !-> Some se1; m) l))
+    (x !-> Some se3; (multi_update_map m l)).
+Proof.
+  intros m x se1 se2 se3 l Heq.
+  apply EquivSMTStore.
+  intros y.
+  destruct (raw_id_eqb x y) eqn:E.
+  {
+    apply raw_id_eqb_eq in E.
+    rewrite E.
+    rewrite update_map_eq, update_map_eq.
+    right.
+    exists se2, se3.
+    split; try reflexivity.
+    split; try reflexivity.
+    assumption.
+  }
+  {
+    apply raw_id_eqb_neq in E.
+    rewrite update_map_neq, update_map_neq; try (assumption).
+    assert(L: (multi_update_map (x !-> Some se1; m) l y) = (multi_update_map m l y)).
+    {
+      apply lemma_multi_update_map_2.
+      assumption.
+    }
+    rewrite L.
+    destruct (multi_update_map m l y) as [se | ] eqn:Ey.
+    {
+      right.
+      exists se, se.
+      split; try reflexivity.
+      split; try reflexivity.
+      apply equiv_smt_expr_refl.
+    }
+    {
+      left.
+      split; reflexivity.
+    }
+  }
 Qed.
