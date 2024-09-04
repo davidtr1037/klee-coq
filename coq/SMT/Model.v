@@ -554,6 +554,11 @@ Fixpoint simplify (e : smt_expr) : smt_expr :=
       | _, _ => e
       end
     end
+  | SMT_Not e =>
+    match (simplify e) with
+    | SMT_Const_I1 n => make_smt_bool (eq n zero)
+    | _ => e
+    end
   | _ => e
   end
 .
