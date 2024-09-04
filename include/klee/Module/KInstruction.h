@@ -45,7 +45,8 @@ namespace klee {
   public:
     virtual ~KInstruction();
     std::string getSourceLocation() const;
-
+    /* TODO: relevent only for assignments */
+    std::string getDestName() const;
   };
 
   struct KGEPInstruction : KInstruction {

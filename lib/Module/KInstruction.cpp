@@ -8,6 +8,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "klee/Module/KInstruction.h"
+
+#include "llvm/IR/Instruction.h"
+
 #include <string>
 
 using namespace llvm;
@@ -24,4 +27,8 @@ std::string KInstruction::getSourceLocation() const {
     return info->file + ":" + std::to_string(info->line) + " " +
            std::to_string(info->column);
   else return "[no debug info]";
+}
+
+std::string KInstruction::getDestName() const {
+  return inst->getName().str();
 }
