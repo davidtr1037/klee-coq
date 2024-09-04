@@ -233,6 +233,15 @@ klee::ref<CoqExpr> klee::createSome(ref<CoqExpr> e) {
   return new CoqApplication(coqSomeConstructor, {e});
 }
 
+static klee::ref<CoqExpr> coqPlaceHolder = nullptr;
+
+klee::ref<CoqExpr> klee::createPlaceHolder() {
+  if (coqPlaceHolder.isNull()) {
+    coqPlaceHolder = new CoqVariable("_");
+  }
+  return coqPlaceHolder;
+}
+
 /* Tactics */
 
 string CoqTactic::dump() const {

@@ -161,6 +161,8 @@ ref<CoqExpr> createNone();
 
 ref<CoqExpr> createSome(ref<CoqExpr> e);
 
+ref<CoqExpr> createPlaceHolder();
+
 class CoqTactic : public CoqExpr {
 
 public:
