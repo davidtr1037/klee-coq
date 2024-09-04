@@ -141,21 +141,21 @@ klee::ref<CoqExpr> ProofGenerator::createCommand(ExecutionState &es) {
 klee::ref<CoqExpr> ProofGenerator::createTrailingCommands(ExecutionState &es) {
   BasicBlock *bb = es.prevPC->inst->getParent();
 
-  vector<ref<CoqExpr>> coq_insts;
+  vector<ref<CoqExpr>> coqInsts;
 
   /* TODO: use the pc/prevPC iterators */
   bool found = false;
   for (Instruction &inst : *bb) {
     if (found && moduleTranslator->isSupportedInst(inst)) {
       ref<CoqExpr> e = moduleTranslator->translateInstCached(inst);
-      coq_insts.push_back(e);
+      coqInsts.push_back(e);
     }
     if (&inst == es.prevPC->inst) {
       found = true;
     }
   }
 
-  return new CoqList(coq_insts);
+  return new CoqList(coqInsts);
 }
 
 klee::ref<CoqExpr> ProofGenerator::createPrevBID(ExecutionState &es) {
@@ -371,12 +371,25 @@ klee::ref<CoqTactic> ProofGenerator::getTacticSingle(StateInfo &si,
 }
 
 klee::ref<CoqTactic> ProofGenerator::getTacticForSafety(StateInfo &si) {
-  if (isa<BinaryOperator>(si.inst)) {
+  if (isa<BinaryOperator>(si.inst) || isa<CmpInst>(si.inst)) {
     return new Block(
       {new Apply("LAUX_not_error_instr_op")}
     );
   }
+  if (isa<BranchInst>(si.inst)) {
+    BranchInst *bi = cast<BranchInst>(si.inst);
+    if (bi->isConditional()) {
+      return new Block(
+        {new Apply("LAUX_not_error_br")}
+      );
+    } else {
+      return new Block(
+        {new Apply("LAUX_not_error_unconditional_br")}
+      );
+    }
+  }
 
+  si.inst->dump();
   assert(false);
 }
 
@@ -423,7 +436,7 @@ klee::ref<CoqTactic> ProofGenerator::getTacticForSat(StateInfo &si,
 
 klee::ref<CoqTactic> ProofGenerator::getEquivTactic(StateInfo &si,
                                                     ExecutionState &successor) {
-  if (isa<BinaryOperator>(si.inst)) {
+  if (isa<BinaryOperator>(si.inst) || isa<CmpInst>(si.inst)) {
     ref<CoqTactic> t;
     if (si.wasRegisterUpdated) {
       t = new Admit();
