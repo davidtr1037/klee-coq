@@ -469,6 +469,8 @@ klee::ref<CoqTactic> ProofGenerator::getEquivTactic(StateInfo &si,
     }
     return new Block(
       {
+        new Inversion("Hstep"),
+        new Subst(),
         new Apply("EquivSymState"),
         t,
         new Block({new Apply("equiv_sym_stack_refl")}),
@@ -494,6 +496,8 @@ klee::ref<CoqTactic> ProofGenerator::getEquivTactic(StateInfo &si,
     }
     return new Block(
       {
+        new Inversion("Hstep"),
+        new Subst(),
         new Apply("EquivSymState"),
         t,
         new Block({new Apply("equiv_sym_stack_refl")}),
@@ -529,6 +533,8 @@ klee::ref<CoqTactic> ProofGenerator::getEquivTactic(StateInfo &si,
     } else {
       return new Block(
         {
+          new Inversion("Hstep"),
+          new Subst(),
           new Inversion("H10"),
           new Subst(),
           new Inversion("H11"),
