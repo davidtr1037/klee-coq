@@ -358,16 +358,10 @@ void ProofGenerator::handleStep(StateInfo &si, ExecutionState &successor) {
 
 klee::ref<CoqExpr> ProofGenerator::createLemmaForSubtree(StateInfo &si,
                                                          ExecutionState &successor) {
-  ref<CoqTactic> tactic = getTacticSingle(si, successor);
-  return createLemma(si.stepID, tactic);
-}
-
-/* TODO: remove? */
-klee::ref<CoqTactic> ProofGenerator::getTacticSingle(StateInfo &si,
-                                                     ExecutionState &successor) {
   ref<CoqTactic> safetyTactic = getTacticForSafety(si);
   ref<CoqTactic> stepTactic = getTacticForStep(si, successor);
-  return getTacticForSubtree(safetyTactic, stepTactic);
+  ref<CoqTactic> tactic = getTacticForSubtree(safetyTactic, stepTactic);
+  return createLemma(si.stepID, tactic);
 }
 
 klee::ref<CoqTactic> ProofGenerator::getTacticForSafety(StateInfo &si) {

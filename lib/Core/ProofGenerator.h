@@ -111,9 +111,6 @@ public:
   ref<CoqExpr> createLemmaForSubtree(StateInfo &si,
                                      ExecutionState &successor);
 
-  ref<CoqTactic> getTacticSingle(StateInfo &si,
-                                 ExecutionState &successor);
-
   ref<CoqTactic> getTacticForSafety(StateInfo &si);
 
   ref<CoqTactic> getTacticForStep(StateInfo &si,
