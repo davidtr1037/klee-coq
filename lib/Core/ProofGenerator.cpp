@@ -404,14 +404,27 @@ klee::ref<CoqTactic> ProofGenerator::getTacticForSafety(StateInfo &si) {
 klee::ref<CoqTactic> ProofGenerator::getTacticForStep(StateInfo &si,
                                                       ExecutionState &successor) {
   ref<CoqTactic> tactic = getTacticForSat(si, successor);
-  return new Block(
-    {
-      new Intros({"s", "Hstep"}),
-      new Inversion("Hstep"),
-      new Subst(),
-      tactic,
-    }
-  );
+  if (isMakeSymbolicInt32(si.inst)) {
+    return new Block(
+      {
+        new Intros({"s", "Hstep"}),
+        new Inversion("Hstep"),
+        new Block(
+          {
+            new Inversion("H16"),
+          }
+        ),
+        tactic,
+      }
+    );
+  } else {
+    return new Block(
+      {
+        new Intros({"s", "Hstep"}),
+        tactic,
+      }
+    );
+  }
 }
 
 klee::ref<CoqTactic> ProofGenerator::getTacticForSat(StateInfo &si,
