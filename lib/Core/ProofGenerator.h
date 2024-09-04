@@ -172,6 +172,9 @@ public:
 
   ref<CoqExpr> getTheorem();
 
+  /* TODO: move from here */
+  bool isMakeSymbolicInt32(llvm::Instruction *inst);
+
 };
 
 }

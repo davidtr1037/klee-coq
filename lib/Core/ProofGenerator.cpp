@@ -757,3 +757,15 @@ klee::ref<CoqExpr> ProofGenerator::getTheorem() {
     tactic
   );
 }
+
+bool ProofGenerator::isMakeSymbolicInt32(Instruction *inst) {
+  if (isa<CallInst>(inst)) {
+    CallInst *callInst = dyn_cast<CallInst>(inst);
+    Function *f = dyn_cast<Function>(callInst->getCalledOperand());
+    if (f && f->isDeclaration()) {
+      return f->getName().equals("klee_make_symbolic_int32");
+    }
+  }
+
+  return false;
+}
