@@ -403,7 +403,7 @@ klee::ref<CoqTactic> ProofGenerator::getTacticForSafety(StateInfo &si) {
 
 klee::ref<CoqTactic> ProofGenerator::getTacticForStep(StateInfo &si,
                                                       ExecutionState &successor) {
-  ref<CoqTactic> tactic = getTacticForSat(si, successor);
+  ref<CoqTactic> tactic = getTacticForSat(si, successor, 0);
   if (isMakeSymbolicInt32(si.inst)) {
     return new Block(
       {
@@ -428,20 +428,15 @@ klee::ref<CoqTactic> ProofGenerator::getTacticForStep(StateInfo &si,
 }
 
 klee::ref<CoqTactic> ProofGenerator::getTacticForSat(StateInfo &si,
-                                                     ExecutionState &successor) {
+                                                     ExecutionState &successor,
+                                                     unsigned index) {
   ref<CoqTactic> eqTactic = getEquivTactic(si, successor);
   return new Block(
     {
       new Left(),
       new Exists(new CoqVariable("t_" + to_string(successor.stepID))),
       new Split(
-        new Block(
-          {
-            new Simpl(),
-            new Left(),
-            new Reflexivity(),
-          }
-        ),
+        getTacticForList(si, index),
         new Block(
           {
             new Split(
@@ -564,6 +559,20 @@ klee::ref<CoqTactic> ProofGenerator::getEquivTactic(StateInfo &si,
     }
   }
 
+  if (isa<CallInst>(si.inst)) {
+    if (isMakeSymbolicInt32(si.inst)) {
+      return new Block(
+        {
+          new Apply("EquivSymState"),
+          new Block({new Apply("equiv_smt_store_refl")}),
+          new Block({new Apply("equiv_sym_stack_refl")}),
+          new Block({new Apply("equiv_smt_store_refl")}),
+          new Block({new Apply("equiv_smt_expr_refl")}),
+        }
+      );
+    }
+  }
+
   si.inst->dump();
   assert(false);
 }
@@ -610,7 +619,7 @@ klee::ref<CoqTactic> ProofGenerator::getTacticForStep(StateInfo &stateInfo,
                                                       SuccessorInfo &si2) {
   ref<CoqTactic> tactic1, tactic2;
   if (si1.isSat) {
-    tactic1 = getTacticForSat(stateInfo, *si1.state);
+    tactic1 = getTacticForSat(stateInfo, *si1.state, 0);
   } else {
     assert(si2.isSat);
     ref<CoqExpr> e = exprTranslator->translate(si1.unsatPC, &si2.state->arrayTranslation);
@@ -618,7 +627,8 @@ klee::ref<CoqTactic> ProofGenerator::getTacticForStep(StateInfo &stateInfo,
   }
 
   if (si2.isSat) {
-    tactic2 = getTacticForSat(stateInfo, *si2.state);
+    unsigned index = si1.isSat ? 1 : 0;
+    tactic2 = getTacticForSat(stateInfo, *si2.state, index);
   } else {
     assert(si1.isSat);
     ref<CoqExpr> e = exprTranslator->translate(si2.unsatPC, &si1.state->arrayTranslation);
@@ -704,6 +714,18 @@ klee::ref<CoqExpr> ProofGenerator::createLemma(uint64_t stepID,
     isAdmitted
   );
   return nullptr;
+}
+
+klee::ref<CoqTactic> ProofGenerator::getTacticForList(StateInfo &si,
+                                                      unsigned index) {
+  vector<ref<CoqTactic>> tactics;
+  tactics.push_back(new Simpl());
+  for (unsigned i = 0; i < index; i++) {
+    tactics.push_back(new Right());
+  }
+  tactics.push_back(new Left());
+  tactics.push_back(new Reflexivity());
+  return new Block(tactics);
 }
 
 uint64_t ProofGenerator::allocateAxiomID() {

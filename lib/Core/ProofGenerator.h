@@ -134,7 +134,8 @@ public:
                                   ExecutionState &successor);
 
   ref<CoqTactic> getTacticForSat(StateInfo &si,
-                                 ExecutionState &successor);
+                                 ExecutionState &successor,
+                                 unsigned index);
 
   ref<CoqTactic> getEquivTactic(StateInfo &si,
                                 ExecutionState &successor);
@@ -159,6 +160,8 @@ public:
                                      ref<CoqTactic> stepTactic);
 
   ref<CoqExpr> createLemma(uint64_t stepID, ref<CoqTactic> tactic, bool isAdmitted = false);
+
+  ref<CoqTactic> getTacticForList(StateInfo &si, unsigned index);
 
   uint64_t allocateAxiomID();
 
