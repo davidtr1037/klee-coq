@@ -483,6 +483,21 @@ Inductive iso_smt_expr : smt_expr -> smt_expr -> Prop :=
 .
 *)
 
+Definition smt_cmpop_to_comparison (op : smt_cmpop) : comparison :=
+  match op with
+  | SMT_Eq => Ceq
+  | SMT_Ne => Cne
+  | SMT_Ult => Clt
+  | SMT_Ule => Cle
+  | SMT_Ugt => Cgt
+  | SMT_Uge => Cge
+  | SMT_Slt => Clt
+  | SMT_Sle => Cle
+  | SMT_Sgt => Cgt
+  | SMT_Sge => Cge
+  end
+.
+
 Fixpoint simplify (e : smt_expr) : smt_expr :=
   match e with
   | SMT_BinOp op e1 e2 =>
@@ -497,6 +512,37 @@ Fixpoint simplify (e : smt_expr) : smt_expr :=
       | _, _ => e
       end
     | _ => e
+    end
+  | SMT_CmpOp op e1 e2 =>
+    match op with
+    | SMT_Eq
+    | SMT_Ne
+    | SMT_Slt
+    | SMT_Sle
+    | SMT_Sgt
+    | SMT_Sge =>
+      match (simplify e1), (simplify e2) with
+      | SMT_Const_I1 n1, SMT_Const_I1 n2
+      | SMT_Const_I8 n1, SMT_Const_I8 n2
+      | SMT_Const_I16 n1, SMT_Const_I16 n2
+      | SMT_Const_I32 n1, SMT_Const_I32 n2
+      | SMT_Const_I64 n1, SMT_Const_I64 n2 =>
+          make_smt_bool (cmp (smt_cmpop_to_comparison op) n1 n2)
+      | _, _ => e
+      end
+    | SMT_Ult
+    | SMT_Ule
+    | SMT_Ugt
+    | SMT_Uge =>
+      match (simplify e1), (simplify e2) with
+      | SMT_Const_I1 n1, SMT_Const_I1 n2
+      | SMT_Const_I8 n1, SMT_Const_I8 n2
+      | SMT_Const_I16 n1, SMT_Const_I16 n2
+      | SMT_Const_I32 n1, SMT_Const_I32 n2
+      | SMT_Const_I64 n1, SMT_Const_I64 n2 =>
+          make_smt_bool (cmpu (smt_cmpop_to_comparison op) n1 n2)
+      | _, _ => e
+      end
     end
   | _ => e
   end
