@@ -103,6 +103,7 @@ Fixpoint multi_update_map {A : Type} (m : total_map A) (l : list (prod raw_id A)
   end
 .
 
+(* TODO: rename *)
 Lemma lemma_multi_update_map_1: forall (A : Type) (m1 m2 : total_map A) x l,
   m1 x = m2 x ->
   (multi_update_map m1 l) x = (multi_update_map m2 l) x.
@@ -134,6 +135,7 @@ Proof.
   }
 Qed.
 
+(* TODO: rename *)
 Lemma lemma_multi_update_map_2: forall (A : Type) (m : total_map A) x y v l,
   x <> y ->
   (multi_update_map (x !-> v; m) l) y = (multi_update_map m l) y.
