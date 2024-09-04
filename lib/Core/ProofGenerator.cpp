@@ -501,7 +501,21 @@ klee::ref<CoqTactic> ProofGenerator::getEquivTactic(StateInfo &si,
     if (bi->isConditional()) {
       return new Block({new Admit()});
     } else {
-      return new Block({new Admit()});
+      return new Block(
+        {
+          new Inversion("H10"),
+          new Subst(),
+          new Inversion("H11"),
+          new Subst(),
+          new Inversion("H12"),
+          new Subst(),
+          new Apply("EquivSymState"),
+          new Block({new Apply("equiv_smt_store_refl")}),
+          new Block({new Apply("equiv_sym_stack_refl")}),
+          new Block({new Apply("equiv_smt_store_refl")}),
+          new Block({new Apply("equiv_smt_expr_refl")}),
+        }
+      );
     }
   }
 
