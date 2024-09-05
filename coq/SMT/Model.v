@@ -515,10 +515,8 @@ Fixpoint simplify (e : smt_expr) : smt_expr :=
     | SMT_And =>
       match (simplify e1), (simplify e2) with
       | SMT_Const_I1 n1, SMT_Const_I1 n2 => SMT_Const_I1 (and n1 n2)
-      | SMT_Const_I8 n1, SMT_Const_I8 n2 => SMT_Const_I8 (and n1 n2)
-      | SMT_Const_I16 n1, SMT_Const_I16 n2 => SMT_Const_I16 (and n1 n2)
-      | SMT_Const_I32 n1, SMT_Const_I32 n2 => SMT_Const_I32 (and n1 n2)
-      | SMT_Const_I64 n1, SMT_Const_I64 n2 => SMT_Const_I64 (and n1 n2)
+      | SMT_Const_I1 n1, e2 => if eq n1 zero then SMT_False else e2
+      | e1, SMT_Const_I1 n2 => if eq n2 zero then SMT_False else e1
       | _, _ => e
       end
     | _ => e
@@ -528,9 +526,7 @@ Fixpoint simplify (e : smt_expr) : smt_expr :=
     | SMT_Eq
     | SMT_Ne
     | SMT_Slt
-    | SMT_Sle
-    | SMT_Sgt
-    | SMT_Sge =>
+    | SMT_Sle =>
       match (simplify e1), (simplify e2) with
       | SMT_Const_I1 n1, SMT_Const_I1 n2
       | SMT_Const_I8 n1, SMT_Const_I8 n2
@@ -540,10 +536,10 @@ Fixpoint simplify (e : smt_expr) : smt_expr :=
           make_smt_bool (cmp (smt_cmpop_to_comparison op) n1 n2)
       | _, _ => e
       end
+    | SMT_Sge => SMT_CmpOp SMT_Sle e2 e1
+    | SMT_Sgt => SMT_CmpOp SMT_Slt e2 e1
     | SMT_Ult
-    | SMT_Ule
-    | SMT_Ugt
-    | SMT_Uge =>
+    | SMT_Ule =>
       match (simplify e1), (simplify e2) with
       | SMT_Const_I1 n1, SMT_Const_I1 n2
       | SMT_Const_I8 n1, SMT_Const_I8 n2
@@ -553,12 +549,11 @@ Fixpoint simplify (e : smt_expr) : smt_expr :=
           make_smt_bool (cmpu (smt_cmpop_to_comparison op) n1 n2)
       | _, _ => e
       end
+    | SMT_Ugt => SMT_CmpOp SMT_Ult e2 e1
+    | SMT_Uge => SMT_CmpOp SMT_Ule e2 e1
     end
-  | SMT_Not e =>
-    match (simplify e) with
-    | SMT_Const_I1 n => make_smt_bool (eq n zero)
-    | _ => e
-    end
+  (* TODO: is there a better solution? *)
+  | SMT_Not e1 => (SMT_CmpOp SMT_Eq SMT_False e1)
   | _ => e
   end
 .
