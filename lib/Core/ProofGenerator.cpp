@@ -392,15 +392,33 @@ klee::ref<CoqTactic> ProofGenerator::getTacticForSafety(StateInfo &si) {
   }
 
   if (isa<CallInst>(si.inst)) {
-    return new Block(
-      {new Apply("LAUX_not_error_call")}
-    );
+    CallInst *callInst = dyn_cast<CallInst>(si.inst);
+    if (callInst->getFunctionType()->getReturnType()->isVoidTy()) {
+      return new Block(
+        {
+          new Apply("LAUX_not_error_void_call"),
+          new Intros({"H"}),
+          new Inversion("H"),
+        }
+      );
+    } else {
+      return new Block(
+        {new Apply("LAUX_not_error_call")}
+      );
+    }
   }
 
   if (isa<ReturnInst>(si.inst)) {
-    return new Block(
-      {new Apply("LAUX_not_error_ret")}
-    );
+    ReturnInst *returnInst = dyn_cast<ReturnInst>(si.inst);
+    if (returnInst->getReturnValue()) {
+      return new Block(
+        {new Apply("LAUX_not_error_ret")}
+      );
+    } else {
+      return new Block(
+        {new Apply("LAUX_not_error_ret_void")}
+      );
+    }
   }
 
   si.inst->dump();
@@ -581,7 +599,25 @@ klee::ref<CoqTactic> ProofGenerator::getEquivTactic(StateInfo &si,
     } else {
       CallInst *callInst = dyn_cast<CallInst>(si.inst);
       if (callInst->getFunctionType()->getReturnType()->isVoidTy()) {
-        /* TODO: ... */
+        return new Block(
+          {
+            new Inversion("Hstep"),
+            new Subst(),
+            new Inversion("H14"),
+            new Subst(),
+            new Inversion("H16"),
+            new Subst(),
+            new Inversion("H17"),
+            new Subst(),
+            new Inversion("H18"),
+            new Subst(),
+            new Apply("EquivSymState"),
+            new Block({new Apply("equiv_smt_store_refl")}),
+            new Block({new Apply("equiv_sym_stack_refl")}),
+            new Block({new Apply("equiv_smt_store_refl")}),
+            new Block({new Apply("equiv_smt_expr_refl")}),
+          }
+        );
       } else {
         return new Block(
           {
@@ -611,8 +647,7 @@ klee::ref<CoqTactic> ProofGenerator::getEquivTactic(StateInfo &si,
 
   if (isa<ReturnInst>(si.inst)) {
     ReturnInst *returnInst = dyn_cast<ReturnInst>(si.inst);
-    Value *v = returnInst->getReturnValue();
-    if (v) {
+    if (returnInst->getReturnValue()) {
       return new Block(
         {
           new Inversion("Hstep"),
@@ -634,7 +669,21 @@ klee::ref<CoqTactic> ProofGenerator::getEquivTactic(StateInfo &si,
         }
       );
     } else {
-      /* TODO: ... */
+      return new Block(
+        {
+          new Inversion("Hstep"),
+          new Subst(),
+          new Inversion("H12"),
+          new Subst(),
+          new Inversion("H13"),
+          new Subst(),
+          new Apply("EquivSymState"),
+          new Block({new Apply("equiv_smt_store_refl")}),
+          new Block({new Apply("equiv_sym_stack_refl")}),
+          new Block({new Apply("equiv_smt_store_refl")}),
+          new Block({new Apply("equiv_smt_expr_refl")}),
+        }
+      );
     }
   }
 
