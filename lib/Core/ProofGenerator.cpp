@@ -421,7 +421,6 @@ klee::ref<CoqTactic> ProofGenerator::getTacticForSafety(StateInfo &si) {
     }
   }
 
-  si.inst->dump();
   assert(false);
 }
 
@@ -487,7 +486,6 @@ klee::ref<CoqTactic> ProofGenerator::getTacticForSat(StateInfo &si,
   );
 }
 
-/* TODO: split into methods */
 klee::ref<CoqTactic> ProofGenerator::getTacticForEquiv(StateInfo &si,
                                                        ExecutionState &successor) {
   if (isa<BinaryOperator>(si.inst) || isa<CmpInst>(si.inst)) {
