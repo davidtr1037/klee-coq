@@ -397,6 +397,12 @@ klee::ref<CoqTactic> ProofGenerator::getTacticForSafety(StateInfo &si) {
     );
   }
 
+  if (isa<ReturnInst>(si.inst)) {
+    return new Block(
+      {new Apply("LAUX_not_error_ret")}
+    );
+  }
+
   si.inst->dump();
   assert(false);
 }
@@ -450,6 +456,8 @@ klee::ref<CoqTactic> ProofGenerator::getTacticForSat(StateInfo &si,
   );
 }
 
+/* TODO: rename to getTacticForEquiv */
+/* TODO: split into methods */
 klee::ref<CoqTactic> ProofGenerator::getEquivTactic(StateInfo &si,
                                                     ExecutionState &successor) {
   if (isa<BinaryOperator>(si.inst) || isa<CmpInst>(si.inst)) {
@@ -570,6 +578,63 @@ klee::ref<CoqTactic> ProofGenerator::getEquivTactic(StateInfo &si,
           new Block({new Apply("equiv_smt_expr_refl")}),
         }
       );
+    } else {
+      CallInst *callInst = dyn_cast<CallInst>(si.inst);
+      if (callInst->getFunctionType()->getReturnType()->isVoidTy()) {
+        /* TODO: ... */
+      } else {
+        return new Block(
+          {
+            new Inversion("Hstep"),
+            new Subst(),
+            new Inversion("H16"),
+            new Subst(),
+            new Inversion("H18"),
+            new Subst(),
+            new Inversion("H19"),
+            new Subst(),
+            new Apply("EquivSymState"),
+            new Block(
+              {
+                new Inversion("H20"),
+                new Apply("equiv_smt_store_refl"),
+              }
+            ),
+            new Block({new Apply("equiv_sym_stack_refl")}),
+            new Block({new Apply("equiv_smt_store_refl")}),
+            new Block({new Apply("equiv_smt_expr_refl")}),
+          }
+        );
+      }
+    }
+  }
+
+  if (isa<ReturnInst>(si.inst)) {
+    ReturnInst *returnInst = dyn_cast<ReturnInst>(si.inst);
+    Value *v = returnInst->getReturnValue();
+    if (v) {
+      return new Block(
+        {
+          new Inversion("Hstep"),
+          new Subst(),
+          new Inversion("H16"),
+          new Subst(),
+          new Inversion("H17"),
+          new Subst(),
+          new Apply("EquivSymState"),
+          new Block(
+            {
+              new Inversion("H15"),
+              new Apply("equiv_smt_store_refl"),
+            }
+          ),
+          new Block({new Apply("equiv_sym_stack_refl")}),
+          new Block({new Apply("equiv_smt_store_refl")}),
+          new Block({new Apply("equiv_smt_expr_refl")}),
+        }
+      );
+    } else {
+      /* TODO: ... */
     }
   }
 
