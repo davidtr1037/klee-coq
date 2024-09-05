@@ -178,6 +178,8 @@ public:
   /* TODO: move from here */
   bool isMakeSymbolicInt32(llvm::Instruction *inst);
 
+  /* TODO: move from here */
+  bool isAssumeBool(llvm::Instruction *inst);
 };
 
 }

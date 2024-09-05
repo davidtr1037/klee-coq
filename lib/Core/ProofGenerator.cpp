@@ -441,6 +441,19 @@ klee::ref<CoqTactic> ProofGenerator::getTacticForStep(StateInfo &si,
         tactic,
       }
     );
+  } else if (isAssumeBool(si.inst)) {
+    return new Block(
+      {
+        new Intros({"s", "Hstep"}),
+        new Inversion("Hstep"),
+        new Block(
+          {
+            new Inversion("H14"),
+          }
+        ),
+        tactic,
+      }
+    );
   } else {
     return new Block(
       {
@@ -594,6 +607,18 @@ klee::ref<CoqTactic> ProofGenerator::getEquivTactic(StateInfo &si,
           new Block({new Apply("equiv_sym_stack_refl")}),
           new Block({new Apply("equiv_smt_store_refl")}),
           new Block({new Apply("equiv_smt_expr_refl")}),
+        }
+      );
+    } else if (isAssumeBool(si.inst)) {
+      return new Block(
+        {
+          new Inversion("H16"),
+          new Subst(),
+          new Apply("EquivSymState"),
+          new Block({new Apply("equiv_smt_store_refl")}),
+          new Block({new Apply("equiv_sym_stack_refl")}),
+          new Block({new Apply("equiv_smt_store_refl")}),
+          new Block({new Apply("equiv_smt_expr_simplify")}),
         }
       );
     } else {
@@ -913,12 +938,26 @@ klee::ref<CoqExpr> ProofGenerator::getTheorem() {
   );
 }
 
+/* TODO: check funcion type */
 bool ProofGenerator::isMakeSymbolicInt32(Instruction *inst) {
   if (isa<CallInst>(inst)) {
     CallInst *callInst = dyn_cast<CallInst>(inst);
     Function *f = dyn_cast<Function>(callInst->getCalledOperand());
     if (f && f->isDeclaration()) {
       return f->getName().equals("klee_make_symbolic_int32");
+    }
+  }
+
+  return false;
+}
+
+/* TODO: check funcion type */
+bool ProofGenerator::isAssumeBool(Instruction *inst) {
+  if (isa<CallInst>(inst)) {
+    CallInst *callInst = dyn_cast<CallInst>(inst);
+    Function *f = dyn_cast<Function>(callInst->getCalledOperand());
+    if (f && f->isDeclaration()) {
+      return f->getName().equals("klee_assume_bool");
     }
   }
 
