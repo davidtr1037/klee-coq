@@ -240,3 +240,8 @@ Proof.
     }
   }
 Qed.
+
+Lemma LAUX_normalize_simplify: forall e,
+  equiv_smt_expr e (simplify (normalize e)).
+Proof.
+Admitted.
