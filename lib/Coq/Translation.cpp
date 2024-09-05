@@ -331,24 +331,62 @@ ref<CoqExpr> ModuleTranslator::translateCmpInst(CmpInst *inst) {
   assert(v1->getType() == v2->getType());
   Type *operandType = v1->getType();
 
+  std::string op;
   switch (inst->getPredicate()) {
+  case ICmpInst::ICMP_EQ:
+    op = "Eq";
+    break;
+
+  case ICmpInst::ICMP_NE:
+    op = "Ne";
+    break;
+
+  case ICmpInst::ICMP_UGT:
+    op = "Ugt";
+    break;
+
+  case ICmpInst::ICMP_UGE:
+    op = "Uge";
+    break;
+
+  case ICmpInst::ICMP_ULT:
+    op = "Ult";
+    break;
+
+  case ICmpInst::ICMP_ULE:
+    op = "Ule";
+    break;
+
   case ICmpInst::ICMP_SGT:
-    return createCMDInst(
-      getInstID(inst),
-      createCmpOp(
-        createName(inst->getName().str()),
-        new CoqVariable("Sgt"),
-        translateType(operandType),
-        translateValue(v1),
-        translateValue(v2)
-      )
-    );
+    op = "Sgt";
+    break;
+
+  case ICmpInst::ICMP_SGE:
+    op = "Sge";
+    break;
+
+  case ICmpInst::ICMP_SLT:
+    op = "Slt";
+    break;
+
+  case ICmpInst::ICMP_SLE:
+    op = "Sle";
+    break;
 
   default:
-    break;
+    assert(false);
   }
 
-  assert(false);
+  return createCMDInst(
+    getInstID(inst),
+    createCmpOp(
+      createName(inst->getName().str()),
+      new CoqVariable(op),
+      translateType(operandType),
+      translateValue(v1),
+      translateValue(v2)
+    )
+  );
 }
 
 
