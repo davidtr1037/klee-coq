@@ -7,6 +7,7 @@ void foo(int x, int y) {
 }
 
 int main() {
-    foo(1, 2);
+    int a = 1;
+    foo(a + 1, a + 2);
     return 1;
 }
