@@ -245,3 +245,21 @@ Lemma LAUX_normalize_simplify: forall e,
   equiv_smt_expr e (simplify (normalize e)).
 Proof.
 Admitted.
+
+Lemma equiv_smt_expr_implied_condition: forall e1 e2,
+  unsat (SMT_BinOp SMT_And e1 (SMT_Not e2)) ->
+  equiv_smt_expr (SMT_BinOp SMT_And e1 e2) e1.
+Proof.
+Admitted.
+
+Lemma LAUX_4_1: forall e1 e2 e3,
+  equiv_smt_expr (SMT_BinOp SMT_And e1 (SMT_Not e2)) e3 ->
+  unsat e3 ->
+  equiv_smt_expr (SMT_BinOp SMT_And e1 e2) e1.
+Proof.
+  intros e1 e2 e3 Heq Hunsat.
+  apply equiv_smt_expr_implied_condition.
+  apply equiv_smt_expr_unsat with (e1 := e3).
+  { apply equiv_smt_expr_symmetry. assumption. }
+  { assumption. }
+Qed.
