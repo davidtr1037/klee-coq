@@ -15,6 +15,6 @@ run_klee test_1.bc &&
 run_klee test_2.bc &&
 run_klee test_3.bc &&
 run_klee test_4.bc &&
-#run_klee test_5.bc &&
+run_klee test_5.bc &&
 run_klee test_6.bc &&
 run_klee test_7.bc
