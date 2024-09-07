@@ -465,8 +465,9 @@ klee::ref<CoqTactic> ProofGenerator::getTacticForStep(StateInfo &si,
 
 klee::ref<CoqTactic> ProofGenerator::getTacticForSat(StateInfo &si,
                                                      ExecutionState &successor,
-                                                     unsigned index) {
-  ref<CoqTactic> eqTactic = getTacticForEquiv(si, successor);
+                                                     unsigned index,
+                                                     ProofHint *hint) {
+  ref<CoqTactic> eqTactic = getTacticForEquiv(si, successor, hint);
   return new Block(
     {
       new Left(),
@@ -487,7 +488,8 @@ klee::ref<CoqTactic> ProofGenerator::getTacticForSat(StateInfo &si,
 }
 
 klee::ref<CoqTactic> ProofGenerator::getTacticForEquiv(StateInfo &si,
-                                                       ExecutionState &successor) {
+                                                       ExecutionState &successor,
+                                                       ProofHint *hint) {
   if (isa<BinaryOperator>(si.inst) || isa<CmpInst>(si.inst)) {
     return getTacticForEquivAssignment(si, successor);
   }
@@ -497,7 +499,7 @@ klee::ref<CoqTactic> ProofGenerator::getTacticForEquiv(StateInfo &si,
   }
 
   if (isa<BranchInst>(si.inst)) {
-    return getTacticForEquivBranch(si, successor);
+    return getTacticForEquivBranch(si, successor, hint);
   }
 
   if (isa<CallInst>(si.inst)) {
@@ -627,9 +629,39 @@ klee::ref<CoqTactic> ProofGenerator::getTacticForEquivPHI(StateInfo &si,
 }
 
 klee::ref<CoqTactic> ProofGenerator::getTacticForEquivBranch(StateInfo &si,
-                                                             ExecutionState &successor) {
+                                                             ExecutionState &successor,
+                                                             ProofHint *hint) {
   BranchInst *bi = cast<BranchInst>(si.inst);
   if (bi->isConditional()) {
+    ref<CoqTactic> t;
+    if (hint) {
+      t = new Block(
+        {
+          new Inversion("H12"),
+          new Apply(
+            "LAUX_4_1",
+            {
+              createPlaceHolder(),
+              createPlaceHolder(),
+              hint->unsatPC,
+            }
+          ),
+          new Block(
+            {new Apply("LAUX_normalize_simplify")}
+          ),
+          new Block(
+            {new Apply("UNSAT_" + to_string(hint->unsatAxiomID))}
+          ),
+        }
+      );
+    } else {
+      t = new Block(
+        {
+          new Inversion("H12"),
+          new Apply("LAUX_normalize_simplify"),
+        }
+      );
+    }
     return new Block(
       {
         new Inversion("H13"),
@@ -642,12 +674,7 @@ klee::ref<CoqTactic> ProofGenerator::getTacticForEquivBranch(StateInfo &si,
         new Block({new Apply("equiv_smt_store_refl")}),
         new Block({new Apply("equiv_sym_stack_refl")}),
         new Block({new Apply("equiv_smt_store_refl")}),
-        new Block(
-          {
-            new Inversion("H12"),
-            new Apply("LAUX_normalize_simplify"),
-          }
-        ),
+        t,
       }
     );
   } else {
@@ -843,7 +870,9 @@ klee::ref<CoqTactic> ProofGenerator::getTacticForStep(StateInfo &stateInfo,
       ref<CoqExpr> e = exprTranslator->translate(si2.unsatPC, &si1.state->arrayTranslation);
       ref<CoqExpr> lemma = getUnsatAxiom(e, axiomID);
       unsatAxioms.push_front(lemma);
-      tactic1 = getTacticForSat(stateInfo, *si1.state, 0);
+
+      ProofHint hint(e, axiomID);
+      tactic1 = getTacticForSat(stateInfo, *si1.state, 0, &hint);
       tactic2 = getTacticForUnsat(e, axiomID);
     }
   } else {

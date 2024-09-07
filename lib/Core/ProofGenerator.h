@@ -41,6 +41,18 @@ struct SuccessorInfo {
 
 };
 
+class ProofHint {
+
+public:
+
+  ref<CoqExpr> unsatPC;
+  uint64_t unsatAxiomID;
+
+  ProofHint(ref<CoqExpr> unsatPC, uint64_t unsatAxiomID) :
+    unsatPC(unsatPC), unsatAxiomID(unsatAxiomID) {}
+
+};
+
 class ProofGenerator {
 
 private:
@@ -130,10 +142,12 @@ public:
 
   ref<CoqTactic> getTacticForSat(StateInfo &si,
                                  ExecutionState &successor,
-                                 unsigned index);
+                                 unsigned index,
+                                 ProofHint *hint = nullptr);
 
   ref<CoqTactic> getTacticForEquiv(StateInfo &si,
-                                   ExecutionState &successor);
+                                   ExecutionState &successor,
+                                   ProofHint *hint);
 
   ref<CoqTactic> getTacticForEquivAssignment(StateInfo &si,
                                              ExecutionState &successor);
@@ -142,7 +156,8 @@ public:
                                       ExecutionState &successor);
 
   ref<CoqTactic> getTacticForEquivBranch(StateInfo &si,
-                                         ExecutionState &successor);
+                                         ExecutionState &successor,
+                                         ProofHint *hint);
 
   ref<CoqTactic> getTacticForEquivCall(StateInfo &si,
                                        ExecutionState &successor);
