@@ -2245,19 +2245,18 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
     if (bi->isUnconditional()) {
       transferToBasicBlock(bi->getSuccessor(0), bi->getParent(), state);
     } else {
-      /* TODO: avoid duplication */
-      StateInfo stateInfo;
-      stateInfo.stepID = state.stepID;
-      stateInfo.inst = ki->inst;
-      /* TODO: is it needed in a branch instruction? */
-      stateInfo.wasRegisterUpdated = false;
-
       // FIXME: Find a way that we don't have this hidden dependency.
       assert(bi->getCondition() == bi->getOperand(0) &&
              "Wrong operand index!");
       ref<Expr> cond = eval(ki, 0, state).value;
 
       cond = optimizer.optimizeExpr(cond, false);
+
+      /* TODO: avoid duplication */
+      StateInfo stateInfo;
+      stateInfo.stepID = state.stepID;
+      stateInfo.inst = ki->inst;
+      stateInfo.branchCondition = cond;
 
       /* backup the path constraints before the fork */
       ref<Expr> pc = ConstantExpr::create(1, Expr::Bool);

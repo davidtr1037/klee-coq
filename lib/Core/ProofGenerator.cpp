@@ -633,8 +633,9 @@ klee::ref<CoqTactic> ProofGenerator::getTacticForEquivBranch(StateInfo &si,
                                                              ProofHint *hint) {
   BranchInst *bi = cast<BranchInst>(si.inst);
   if (bi->isConditional()) {
+    assert(si.branchCondition);
     ref<CoqTactic> t;
-    if (hint) {
+    if (hint && !isa<ConstantExpr>(si.branchCondition)) {
       t = new Block(
         {
           new Inversion("H12"),
@@ -863,6 +864,8 @@ klee::ref<CoqTactic> ProofGenerator::getTacticForStep(StateInfo &stateInfo,
       ref<CoqExpr> e = exprTranslator->translate(si1.unsatPC, &si2.state->arrayTranslation);
       ref<CoqExpr> lemma = getUnsatAxiom(e, axiomID);
       unsatAxioms.push_front(lemma);
+
+      /* TODO: add proof hint */
       tactic1 = getTacticForUnsat(e, axiomID);
       tactic2 = getTacticForSat(stateInfo, *si2.state, 0);
     }

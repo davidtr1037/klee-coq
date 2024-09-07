@@ -21,9 +21,10 @@ struct StateInfo {
   llvm::Instruction *inst;
   bool wasRegisterUpdated;
   std::list<RegisterUpdate> suffix;
+  ref<Expr> branchCondition;
 
   StateInfo() :
-    stepID(0), inst(nullptr), wasRegisterUpdated(false) {}
+    stepID(0), inst(nullptr), wasRegisterUpdated(false), branchCondition(nullptr)  {}
 
 };
 
