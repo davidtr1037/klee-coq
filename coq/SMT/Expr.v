@@ -178,7 +178,7 @@ Proof.
   ).
 Qed.
 
-Lemma contains_var_binop_l : forall x op e1 e2,
+Lemma contains_var_binop_intro_l : forall x op e1 e2,
   contains_var e1 x -> contains_var (SMT_BinOp op e1 e2) x.
 Proof.
   intros x op e1 e2 Hc.
@@ -190,10 +190,17 @@ Proof.
   { apply ContainsVar_I64. apply SubExpr_BinOp_L. assumption. }
 Qed.
 
-Lemma contains_var_binop_r : forall x op e1 e2,
+Lemma contains_var_binop_intro_r : forall x op e1 e2,
   contains_var e2 x -> contains_var (SMT_BinOp op e1 e2) x.
 Proof.
-Admitted.
+  intros x op e1 e2 Hc.
+  inversion Hc; subst.
+  { apply ContainsVar_I1. apply SubExpr_BinOp_R. assumption. }
+  { apply ContainsVar_I8. apply SubExpr_BinOp_R. assumption. }
+  { apply ContainsVar_I16. apply SubExpr_BinOp_R. assumption. }
+  { apply ContainsVar_I32. apply SubExpr_BinOp_R. assumption. }
+  { apply ContainsVar_I64. apply SubExpr_BinOp_R. assumption. }
+Qed.
 
 Lemma contains_var_cmpop : forall x op e1 e2,
   contains_var (SMT_CmpOp op e1 e2) x ->
@@ -219,15 +226,29 @@ Proof.
   ).
 Qed.
 
-Lemma contains_var_cmpop_l : forall x op e1 e2,
+Lemma contains_var_cmpop_intro_l : forall x op e1 e2,
   contains_var e1 x -> contains_var (SMT_CmpOp op e1 e2) x.
 Proof.
-Admitted.
+  intros x op e1 e2 Hc.
+  inversion Hc; subst.
+  { apply ContainsVar_I1. apply SubExpr_CmpOp_L. assumption. }
+  { apply ContainsVar_I8. apply SubExpr_CmpOp_L. assumption. }
+  { apply ContainsVar_I16. apply SubExpr_CmpOp_L. assumption. }
+  { apply ContainsVar_I32. apply SubExpr_CmpOp_L. assumption. }
+  { apply ContainsVar_I64. apply SubExpr_CmpOp_L. assumption. }
+Qed.
 
-Lemma contains_var_cmpop_r : forall x op e1 e2,
+Lemma contains_var_cmpop_intro_r : forall x op e1 e2,
   contains_var e2 x -> contains_var (SMT_CmpOp op e1 e2) x.
 Proof.
-Admitted.
+  intros x op e1 e2 Hc.
+  inversion Hc; subst.
+  { apply ContainsVar_I1. apply SubExpr_CmpOp_R. assumption. }
+  { apply ContainsVar_I8. apply SubExpr_CmpOp_R. assumption. }
+  { apply ContainsVar_I16. apply SubExpr_CmpOp_R. assumption. }
+  { apply ContainsVar_I32. apply SubExpr_CmpOp_R. assumption. }
+  { apply ContainsVar_I64. apply SubExpr_CmpOp_R. assumption. }
+Qed.
 
 Lemma contains_var_not : forall x e,
   contains_var (SMT_Not e) x -> contains_var e x.
@@ -246,7 +267,14 @@ Qed.
 Lemma contains_var_not_inverse : forall x e,
   contains_var e x -> contains_var (SMT_Not e) x.
 Proof.
-Admitted.
+  intros x e Hc.
+  inversion Hc; subst.
+  { apply ContainsVar_I1. apply SubExpr_Not. assumption. }
+  { apply ContainsVar_I8. apply SubExpr_Not. assumption. }
+  { apply ContainsVar_I16. apply SubExpr_Not. assumption. }
+  { apply ContainsVar_I32. apply SubExpr_Not. assumption. }
+  { apply ContainsVar_I64. apply SubExpr_Not. assumption. }
+Qed.
 
 Lemma contains_var_extract : forall x e i w,
   contains_var (SMT_Extract e i w) x -> contains_var e x.
@@ -290,17 +318,38 @@ Proof.
   ).
 Qed.
 
-Lemma contains_var_ite_cond : forall x cond e1 e2,
+Lemma contains_var_ite_intro_cond : forall x cond e1 e2,
   contains_var cond x -> contains_var (SMT_ITE cond e1 e2) x.
 Proof.
-Admitted.
+  intros x cond e1 e2 Hc.
+  inversion Hc; subst.
+  { apply ContainsVar_I1. apply SubExpr_ITE_Cond. assumption. }
+  { apply ContainsVar_I8. apply SubExpr_ITE_Cond. assumption. }
+  { apply ContainsVar_I16. apply SubExpr_ITE_Cond. assumption. }
+  { apply ContainsVar_I32. apply SubExpr_ITE_Cond. assumption. }
+  { apply ContainsVar_I64. apply SubExpr_ITE_Cond. assumption. }
+Qed.
 
-Lemma contains_var_ite_l : forall x cond e1 e2,
+Lemma contains_var_ite_intro_l : forall x cond e1 e2,
   contains_var e1 x -> contains_var (SMT_ITE cond e1 e2) x.
 Proof.
-Admitted.
+  intros x cond e1 e2 Hc.
+  inversion Hc; subst.
+  { apply ContainsVar_I1. apply SubExpr_ITE_L. assumption. }
+  { apply ContainsVar_I8. apply SubExpr_ITE_L. assumption. }
+  { apply ContainsVar_I16. apply SubExpr_ITE_L. assumption. }
+  { apply ContainsVar_I32. apply SubExpr_ITE_L. assumption. }
+  { apply ContainsVar_I64. apply SubExpr_ITE_L. assumption. }
+Qed.
 
-Lemma contains_var_ite_r : forall x cond e1 e2,
+Lemma contains_var_ite_intro_r : forall x cond e1 e2,
   contains_var e2 x -> contains_var (SMT_ITE cond e1 e2) x.
 Proof.
-Admitted.
+  intros x cond e1 e2 Hc.
+  inversion Hc; subst.
+  { apply ContainsVar_I1. apply SubExpr_ITE_R. assumption. }
+  { apply ContainsVar_I8. apply SubExpr_ITE_R. assumption. }
+  { apply ContainsVar_I16. apply SubExpr_ITE_R. assumption. }
+  { apply ContainsVar_I32. apply SubExpr_ITE_R. assumption. }
+  { apply ContainsVar_I64. apply SubExpr_ITE_R. assumption. }
+Qed.

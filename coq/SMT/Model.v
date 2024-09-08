@@ -217,9 +217,9 @@ Proof.
   ).
   {
     assert(L1 : ~ contains_var e1 x).
-    { intros Hse. apply H. apply contains_var_binop_l. assumption. }
+    { intros Hse. apply H. apply contains_var_binop_intro_l. assumption. }
     assert(L2 : ~ contains_var e2 x).
-    { intros Hse. apply H. apply contains_var_binop_r. assumption. }
+    { intros Hse. apply H. apply contains_var_binop_intro_r. assumption. }
     apply IHe1 in L1.
     apply IHe2 in L2.
     rewrite L1, L2.
@@ -227,9 +227,9 @@ Proof.
   }
   {
     assert(L1 : ~ contains_var e1 x).
-    { intros Hse. apply H. apply contains_var_cmpop_l. assumption. }
+    { intros Hse. apply H. apply contains_var_cmpop_intro_l. assumption. }
     assert(L2 : ~ contains_var e2 x).
-    { intros Hse. apply H. apply contains_var_cmpop_r. assumption. }
+    { intros Hse. apply H. apply contains_var_cmpop_intro_r. assumption. }
     apply IHe1 in L1.
     apply IHe2 in L2.
     rewrite L1, L2.
@@ -237,11 +237,11 @@ Proof.
   }
   {
     assert(L1 : ~ contains_var e1 x).
-    { intros Hse. apply H. apply contains_var_ite_cond. assumption. }
+    { intros Hse. apply H. apply contains_var_ite_intro_cond. assumption. }
     assert(L2 : ~ contains_var e2 x).
-    { intros Hse. apply H. apply contains_var_ite_l. assumption. }
+    { intros Hse. apply H. apply contains_var_ite_intro_l. assumption. }
     assert(L3 : ~ contains_var e3 x).
-    { intros Hse. apply H. apply contains_var_ite_r. assumption. }
+    { intros Hse. apply H. apply contains_var_ite_intro_r. assumption. }
     apply IHe1 in L1.
     apply IHe2 in L2.
     apply IHe3 in L3.
