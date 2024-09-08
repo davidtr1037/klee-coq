@@ -99,20 +99,20 @@ Definition create_int_by_sort (s : smt_sort) (n : Z) : (smt_sort_to_int_type s) 
 
 Fixpoint smt_eval_internal (m : typed_smt_model) (s : smt_sort) (ast : typed_smt_ast s) : (smt_sort_to_int_type s) :=
   match ast with
-  | TypedSMT_Const sort n => n
-  | TypedSMT_Var sort x => create_int_by_sort sort ((bv_model m) x)
-  | TypedSMT_BinOp sort op ast1 ast2 =>
+  | TypedSMT_Const arg_sort n => n
+  | TypedSMT_Var arg_sort x => create_int_by_sort arg_sort ((bv_model m) x)
+  | TypedSMT_BinOp arg_sort op ast1 ast2 =>
       smt_eval_binop_by_sort
         op
-        sort
-        (smt_eval_internal m sort ast1)
-        (smt_eval_internal m sort ast2)
-  | TypedSMT_CmpOp sort op ast1 ast2 =>
+        arg_sort
+        (smt_eval_internal m arg_sort ast1)
+        (smt_eval_internal m arg_sort ast2)
+  | TypedSMT_CmpOp arg_sort op ast1 ast2 =>
       smt_eval_cmpop_by_sort
         op
-        sort
-        (smt_eval_internal m sort ast1)
-        (smt_eval_internal m sort ast2)
+        arg_sort
+        (smt_eval_internal m arg_sort ast1)
+        (smt_eval_internal m arg_sort ast2)
   (* TODO: replace create_int_by_sort *)
   | TypedSMT_Not sort e => create_int_by_sort sort 0%Z
   end
