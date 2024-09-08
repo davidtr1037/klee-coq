@@ -137,45 +137,6 @@ Definition icmp_to_smt_cmpop (op : icmp) : smt_cmpop :=
 Definition sym_eval_icmp (op : icmp) (e1 e2 : smt_expr) : smt_expr :=
   SMT_CmpOp (icmp_to_smt_cmpop op) e1 e2.
 
-Definition sym_convert (conv : conversion_type) (e : smt_expr) t1 t2 : option smt_expr :=
-  match conv with
-  | Trunc =>
-    match t1, t2 with
-    | TYPE_I w1, TYPE_I w2 =>
-        if (w2 <=? w1)%positive then
-          Some (SMT_Extract e 0 w2)
-        else
-          None
-    | _, _ => None
-    end
-  | Zext =>
-    match t1, t2 with
-    | TYPE_I w1, TYPE_I w2 =>
-        if (w2 =? w1)%positive then
-          Some e
-        else
-          if (w2 <=? w1)%positive then
-            Some (SMT_Extract e 0 w2)
-          else
-            Some (SMT_ZExt e w2)
-    | _, _ => None
-    end
-  | Sext =>
-    match t1, t2 with
-    | TYPE_I w1, TYPE_I w2 =>
-        if (w2 =? w1)%positive then
-          Some e
-        else
-          if (w2 <=? w1)%positive then
-            Some (SMT_Extract e 0 w2)
-          else
-            Some (SMT_SExt e w2)
-    | _, _ => None
-    end
-  | Bitcast => Some e
-  end
-.
-
 Fixpoint sym_eval_exp (s : smt_store) (g : smt_store) (t : option typ) (e : exp typ) : option smt_expr :=
   match e with
   | EXP_Ident id => sym_lookup_ident s g id
@@ -199,11 +160,7 @@ Fixpoint sym_eval_exp (s : smt_store) (g : smt_store) (t : option typ) (e : exp 
       | (Some e1, Some e2) => Some (sym_eval_icmp op e1 e2)
       | (_, _) => None
       end
-  | OP_Conversion conv t1 v t2 =>
-      match sym_eval_exp s g (Some t1) v with
-      | Some e => sym_convert conv e t1 t2
-      | _ => None
-      end
+  | OP_Conversion conv t1 v t2 => None
   | OP_Select _ _ _ => None
   end
 .

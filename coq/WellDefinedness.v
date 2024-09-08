@@ -90,88 +90,6 @@ Proof.
   ).
 Qed.
 
-Lemma contains_var_conv : forall x conv e1 t1 t2 e2,
-  (sym_convert conv e1 t1 t2) = Some e2 ->
-  contains_var e2 x ->
-  contains_var e1 x.
-Proof.
-  intros x conv e1 t1 t2 e2 Heq Hse.
-  destruct conv; simpl in *.
-  {
-    destruct t1; try (discriminate Heq).
-    {
-      destruct t2; try (discriminate Heq).
-      {
-        destruct (w0 <=? w)%positive eqn:E.
-        {
-          injection Heq. clear Heq. intros Heq.
-          subst.
-          apply contains_var_extract with (i := 0%N) (w := w0).
-          assumption.
-        }
-        { discriminate Heq. }
-      }
-    }
-  }
-  {
-    destruct t1; try (discriminate Heq).
-    {
-      destruct t2; try (discriminate Heq).
-      {
-        destruct (w0 =? w)%positive eqn:E1.
-        {
-          inversion Heq; subst.
-          assumption.
-        }
-        {
-          destruct (w0 <=? w)%positive eqn:E2.
-          {
-            inversion Heq; subst.
-            apply contains_var_extract with (i := 0%N) (w := w0).
-            assumption.
-          }
-          {
-            inversion Heq; subst.
-            apply contains_var_zext with (w := w0).
-            assumption.
-          }
-        }
-      }
-    }
-  }
-  {
-    destruct t1; try (discriminate Heq).
-    {
-      destruct t2; try (discriminate Heq).
-      {
-        destruct (w0 =? w)%positive eqn:E1.
-        {
-          inversion Heq; subst.
-          assumption.
-        }
-        {
-          destruct (w0 <=? w)%positive eqn:E2.
-          {
-            inversion Heq; subst.
-            apply contains_var_extract with (i := 0%N) (w := w0).
-            assumption.
-          }
-          {
-            inversion Heq; subst.
-            apply contains_var_sext with (w := w0).
-            assumption.
-          }
-        }
-      }
-    }
-  }
-  {
-    injection Heq. clear Heq. intros Heq.
-    subst.
-    assumption.
-  }
-Qed.
-
 (* TODO: rename *)
 Lemma well_defined_smt_expr_ext : forall se sym syms,
   well_defined_smt_expr se syms ->
@@ -399,20 +317,7 @@ Proof.
     }
     { discriminate Heq. }
   }
-  {
-    specialize (IHe (Some t1)).
-    destruct (sym_eval_exp ls gs (Some t1) e) as [se' | ] eqn:E.
-    {
-      apply WD_Expr.
-      intros n Hse.
-      assert(L : well_defined_smt_expr se' syms).
-      { apply IHe. reflexivity. }
-      inversion L; subst.
-      apply H.
-      apply (contains_var_conv n conv se' t1 t2 se); assumption.
-    }
-    { discriminate Heq. }
-  }
+  { discriminate Heq. }
   { discriminate Heq. }
 Qed.
 
