@@ -793,7 +793,6 @@ Proof.
     }
   }
   {
-    rewrite extend_names_lemma.
     apply WD_State.
     split.
     {
