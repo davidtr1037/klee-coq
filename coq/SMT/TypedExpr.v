@@ -71,5 +71,59 @@ Inductive typed_smt_expr : Type :=
   | TypedSMTExpr (s : smt_sort) (ast : typed_smt_ast s)
 .
 
+Definition get_sort (e : typed_smt_expr) : smt_sort :=
+  match e with
+  | TypedSMTExpr sort _ => sort
+  end
+.
+
+Definition get_ast (e : typed_smt_expr) : (typed_smt_ast (get_sort e)) :=
+  match e with
+  | TypedSMTExpr _ ast => ast
+  end
+.
+
 Definition smt_true := (TypedSMTExpr Sort_BV1 (TypedSMT_Const Sort_BV1 one)).
 Definition smt_false := (TypedSMTExpr Sort_BV1 (TypedSMT_Const Sort_BV1 zero)).
+
+Definition make_smt_const (bits : positive) (n : Z) : option typed_smt_expr :=
+  match bits with
+  | 1%positive => Some (TypedSMTExpr Sort_BV1 (TypedSMT_Const Sort_BV1 (Int1.repr n)))
+  | 8%positive => Some (TypedSMTExpr Sort_BV8 (TypedSMT_Const Sort_BV8 (Int8.repr n)))
+  | 16%positive => Some (TypedSMTExpr Sort_BV16 (TypedSMT_Const Sort_BV16 (Int16.repr n)))
+  | 32%positive => Some (TypedSMTExpr Sort_BV32 (TypedSMT_Const Sort_BV32 (Int32.repr n)))
+  | 64%positive => Some (TypedSMTExpr Sort_BV64 (TypedSMT_Const Sort_BV64 (Int64.repr n)))
+  | _ => None
+  end
+.
+
+Definition make_smt_bool (b : bool) : typed_smt_expr :=
+  match b with
+  | true => smt_true
+  | false => smt_false
+  end
+.
+
+Inductive subexpr : typed_smt_expr -> typed_smt_expr -> Prop :=
+  | SubExpr_Refl : forall e, subexpr e e
+  | SubExpr_BinOp_L : forall e sort (a1 a2 : (typed_smt_ast sort)) op,
+      subexpr e (TypedSMTExpr sort a1) ->
+      subexpr e (TypedSMTExpr sort (TypedSMT_BinOp sort op a1 a2))
+  | SubExpr_BinOp_R : forall e sort (a1 a2 : (typed_smt_ast sort)) op,
+      subexpr e (TypedSMTExpr sort a2) ->
+      subexpr e (TypedSMTExpr sort (TypedSMT_BinOp sort op a1 a2))
+  | SubExpr_CmpOp_L : forall e sort (a1 a2 : (typed_smt_ast sort)) op,
+      subexpr e (TypedSMTExpr sort a1) ->
+      subexpr e (TypedSMTExpr sort (TypedSMT_CmpOp sort op a1 a2))
+  | SubExpr_CmpOp_R : forall e sort (a1 a2 : (typed_smt_ast sort)) op,
+      subexpr e (TypedSMTExpr sort a2) ->
+      subexpr e (TypedSMTExpr sort (TypedSMT_CmpOp sort op a1 a2))
+  | SubExpr_Not : forall e sort (a : (typed_smt_ast sort)),
+      subexpr e (TypedSMTExpr sort a) ->
+      subexpr e (TypedSMTExpr sort (TypedSMT_Not sort a))
+.
+
+Inductive contains_var : typed_smt_expr -> string -> Prop :=
+  | ContainsVar : forall sort x e,
+      subexpr (TypedSMTExpr sort (TypedSMT_Var sort x)) e -> contains_var e x
+.
