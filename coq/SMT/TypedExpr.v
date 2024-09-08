@@ -56,13 +56,13 @@ Definition smt_sort_to_int_type (s : smt_sort) :=
 
 Inductive typed_smt_ast : smt_sort -> Type :=
   | TypedSMT_Const :
-      forall (s : smt_sort) (t : (smt_sort_to_int_type s)), typed_smt_ast s
+      forall (s : smt_sort) (n : (smt_sort_to_int_type s)), typed_smt_ast s
   | TypedSMT_Var :
       forall (s : smt_sort) (x : string), typed_smt_ast s
   | TypedSMT_BinOp :
       forall (s : smt_sort) (op : smt_binop) (e1 e2 : typed_smt_ast s), typed_smt_ast s
   | TypedSMT_CmpOp :
-      forall (s : smt_sort) (op : smt_cmpop) (e1 e2 : typed_smt_ast s), typed_smt_ast s
+      forall (s : smt_sort) (op : smt_cmpop) (e1 e2 : typed_smt_ast s), typed_smt_ast Sort_BV1
   | TypedSMT_Not :
       forall (s : smt_sort) (e : typed_smt_ast s), typed_smt_ast s
 .
@@ -115,10 +115,10 @@ Inductive subexpr : typed_smt_expr -> typed_smt_expr -> Prop :=
       subexpr e (TypedSMTExpr sort (TypedSMT_BinOp sort op a1 a2))
   | SubExpr_CmpOp_L : forall e op sort (a1 a2 : (typed_smt_ast sort)),
       subexpr e (TypedSMTExpr sort a1) ->
-      subexpr e (TypedSMTExpr sort (TypedSMT_CmpOp sort op a1 a2))
+      subexpr e (TypedSMTExpr Sort_BV1 (TypedSMT_CmpOp sort op a1 a2))
   | SubExpr_CmpOp_R : forall e op sort (a1 a2 : (typed_smt_ast sort)),
       subexpr e (TypedSMTExpr sort a2) ->
-      subexpr e (TypedSMTExpr sort (TypedSMT_CmpOp sort op a1 a2))
+      subexpr e (TypedSMTExpr Sort_BV1 (TypedSMT_CmpOp sort op a1 a2))
   | SubExpr_Not : forall e sort (a : (typed_smt_ast sort)),
       subexpr e (TypedSMTExpr sort a) ->
       subexpr e (TypedSMTExpr sort (TypedSMT_Not sort a))
