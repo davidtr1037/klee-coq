@@ -125,7 +125,8 @@ Fixpoint smt_eval_internal (m : typed_smt_model) (s : smt_sort) (ast : typed_smt
         arg_sort
         (smt_eval_internal m arg_sort ast1)
         (smt_eval_internal m arg_sort ast2)
-  | TypedSMT_Not arg_sort ast => smt_eval_not_by_sort arg_sort (smt_eval_internal m arg_sort ast)
+  | TypedSMT_Not arg_sort ast =>
+      smt_eval_not_by_sort arg_sort (smt_eval_internal m arg_sort ast)
   end
 .
 
@@ -157,9 +158,9 @@ Proof.
 Admitted.
 
 Inductive equiv_typed_smt_expr : typed_smt_expr -> typed_smt_expr -> Prop :=
-  | EquivTypedSMTExpr : forall sort (ast1 ast2 : typed_smt_ast sort),
-      (forall m, smt_eval_internal m sort ast1 = smt_eval_internal m sort ast2) ->
-      equiv_typed_smt_expr (TypedSMTExpr sort ast1) (TypedSMTExpr sort ast2)
+  | EquivTypedSMTExpr : forall s (ast1 ast2 : typed_smt_ast s),
+      (forall m, smt_eval_internal m s ast1 = smt_eval_internal m s ast2) ->
+      equiv_typed_smt_expr (TypedSMTExpr s ast1) (TypedSMTExpr s ast2)
 .
 
 Lemma equiv_typed_smt_expr_refl : forall e, equiv_typed_smt_expr e e.
@@ -183,12 +184,12 @@ Lemma equiv_typed_smt_expr_unsat : forall (ast1 ast2 : smt_ast_i1),
 Proof.
 Admitted.
 
-Lemma equiv_typed_smt_expr_binop : forall sort op (ast1 ast2 ast3 ast4 : typed_smt_ast sort),
-  equiv_typed_smt_expr (TypedSMTExpr sort ast1) (TypedSMTExpr sort ast2) ->
-  equiv_typed_smt_expr (TypedSMTExpr sort ast3) (TypedSMTExpr sort ast4) ->
+Lemma equiv_typed_smt_expr_binop : forall s op (ast1 ast2 ast3 ast4 : typed_smt_ast s),
+  equiv_typed_smt_expr (TypedSMTExpr s ast1) (TypedSMTExpr s ast2) ->
+  equiv_typed_smt_expr (TypedSMTExpr s ast3) (TypedSMTExpr s ast4) ->
   equiv_typed_smt_expr
-    (TypedSMTExpr sort (TypedSMT_BinOp sort op ast1 ast3))
-    (TypedSMTExpr sort (TypedSMT_BinOp sort op ast2 ast4)).
+    (TypedSMTExpr s (TypedSMT_BinOp s op ast1 ast3))
+    (TypedSMTExpr s (TypedSMT_BinOp s op ast2 ast4)).
 Proof.
 Admitted.
 
