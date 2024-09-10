@@ -198,8 +198,6 @@ Lemma well_defined_sym_eval_exp : forall ls gs ot e se syms,
   (sym_eval_exp ls gs ot e) = Some se ->
   well_defined_smt_expr se syms.
 Proof.
-Admitted.
-(*
   intros ls gs ot e se syms Hwd_ls Hwd_gs Heq.
   generalize dependent se.
   generalize dependent ot.
@@ -268,11 +266,10 @@ Admitted.
     {
       destruct (sym_eval_exp ls gs (Some t) e2) as [se2 | ] eqn:E2.
       {
-        injection Heq. clear Heq. intros Heq.
-        subst.
         apply WD_Expr.
         intros n Hse.
-        apply contains_var_ibinop in Hse.
+        apply contains_var_ibinop with (op := op) (e1 := se1) (e2 := se2) in Hse;
+        try assumption.
         destruct Hse as [Hse | Hse].
         {
           assert(L : well_defined_smt_expr se1 syms).
@@ -300,11 +297,10 @@ Admitted.
     {
       destruct (sym_eval_exp ls gs (Some t) e2) as [se2 | ] eqn:E2.
       {
-        injection Heq. clear Heq. intros Heq.
-        subst.
         apply WD_Expr.
         intros n Hse.
-        apply contains_var_icmp in Hse.
+        apply contains_var_icmp with (op := op) (e1 := se1) (e2 := se2) in Hse;
+        try assumption.
         destruct Hse as [Hse | Hse].
         {
           assert(L : well_defined_smt_expr se1 syms).
@@ -328,7 +324,6 @@ Admitted.
   { discriminate Heq. }
   { discriminate Heq. }
 Qed.
-*)
 
 Lemma well_defined_sym_eval_phi_args : forall s t args pbid se,
   well_defined s ->

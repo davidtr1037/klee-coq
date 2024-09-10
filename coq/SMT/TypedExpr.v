@@ -89,8 +89,9 @@ Definition get_ast (e : typed_smt_expr) : (typed_smt_ast (get_sort e)) :=
   end
 .
 
-Definition smt_true := (TypedSMTExpr Sort_BV1 (TypedSMT_Const Sort_BV1 one)).
-Definition smt_false := (TypedSMTExpr Sort_BV1 (TypedSMT_Const Sort_BV1 zero)).
+(* TODO: rename to smt_expr_ *)
+Definition smt_true := (TypedSMTExpr Sort_BV1 smt_ast_true).
+Definition smt_false := (TypedSMTExpr Sort_BV1 smt_ast_false).
 
 Definition make_smt_const (bits : positive) (n : Z) : option typed_smt_expr :=
   match bits with
@@ -154,6 +155,12 @@ Proof.
     assumption.
   }
 Qed.
+
+Lemma contains_var_cmpop : forall x sort op (ast1 ast2 : typed_smt_ast sort),
+  contains_var (TypedSMTExpr Sort_BV1 (TypedSMT_CmpOp sort op ast1 ast2)) x ->
+  contains_var (TypedSMTExpr sort ast1) x \/ contains_var (TypedSMTExpr sort ast2) x.
+Proof.
+Admitted.
 
 Lemma contains_var_not : forall x sort (ast : typed_smt_ast sort),
   contains_var (TypedSMTExpr sort (TypedSMT_Not sort ast)) x ->

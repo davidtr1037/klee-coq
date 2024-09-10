@@ -222,6 +222,7 @@ Fixpoint sym_eval_phi_args ls gs t args pbid : option typed_smt_expr :=
   end
 .
 
+(* TODO: renmae se/cond/... to ast? *)
 Inductive sym_step : sym_state -> sym_state -> Prop :=
   | Sym_Step_OP : forall ic cid v e c cs pbid ls stk gs syms pc mdl se,
       (sym_eval_exp ls gs None e) = Some se ->
@@ -306,8 +307,8 @@ Inductive sym_step : sym_state -> sym_state -> Prop :=
           pc
           mdl
         )
-  | Sym_Step_Br_True : forall ic cid e bid1 bid2 pbid ls stk gs syms pc mdl se d b c cs,
-      (sym_eval_exp ls gs (Some (TYPE_I 1)) e) = Some (TypedSMTExpr Sort_BV1 se) ->
+  | Sym_Step_Br_True : forall ic cid e bid1 bid2 pbid ls stk gs syms pc mdl cond d b c cs,
+      (sym_eval_exp ls gs (Some (TYPE_I 1)) e) = Some (TypedSMTExpr Sort_BV1 cond) ->
       (find_function mdl (ic_fid ic)) = Some d ->
       (fetch_block d bid1) = Some b ->
       (blk_cmds b) = c :: cs ->
@@ -333,11 +334,11 @@ Inductive sym_step : sym_state -> sym_state -> Prop :=
           stk
           gs
           syms
-          (TypedSMT_BinOp Sort_BV1 SMT_And pc se)
+          (TypedSMT_BinOp Sort_BV1 SMT_And pc cond)
           mdl
         )
-  | Sym_Step_Br_False : forall ic cid e bid1 bid2 pbid ls stk gs syms pc mdl se d b c cs,
-      (sym_eval_exp ls gs (Some (TYPE_I 1)) e) = Some (TypedSMTExpr Sort_BV1 se) ->
+  | Sym_Step_Br_False : forall ic cid e bid1 bid2 pbid ls stk gs syms pc mdl cond d b c cs,
+      (sym_eval_exp ls gs (Some (TYPE_I 1)) e) = Some (TypedSMTExpr Sort_BV1 cond) ->
       (find_function mdl (ic_fid ic)) = Some d ->
       (fetch_block d bid2) = Some b ->
       (blk_cmds b) = c :: cs ->
@@ -363,7 +364,7 @@ Inductive sym_step : sym_state -> sym_state -> Prop :=
           stk
           gs
           syms
-          (TypedSMT_BinOp Sort_BV1 SMT_And pc (TypedSMT_Not Sort_BV1 se))
+          (TypedSMT_BinOp Sort_BV1 SMT_And pc (TypedSMT_Not Sort_BV1 cond))
           mdl
         )
   | Sym_Step_VoidCall : forall ic cid f args anns c cs pbid ls stk gs syms pc mdl d b c' cs' ls',
@@ -487,11 +488,11 @@ Inductive sym_step : sym_state -> sym_state -> Prop :=
           pc
           mdl
         )
-  | Sym_Step_Assume : forall ic cid e attrs c cs pbid ls stk gs syms pc mdl d se,
+  | Sym_Step_Assume : forall ic cid e attrs c cs pbid ls stk gs syms pc mdl d cond,
       (find_function mdl klee_assume_id) = None ->
       (find_declaration mdl klee_assume_id) = Some d ->
       (dc_type d) = klee_assume_type ->
-      (sym_eval_exp ls gs (Some (TYPE_I 1)) e) = Some (TypedSMTExpr Sort_BV1 se) ->
+      (sym_eval_exp ls gs (Some (TYPE_I 1)) e) = Some (TypedSMTExpr Sort_BV1 cond) ->
       sym_step
         (mk_sym_state
           ic
@@ -514,7 +515,7 @@ Inductive sym_step : sym_state -> sym_state -> Prop :=
           stk
           gs
           syms
-          (TypedSMT_BinOp Sort_BV1 SMT_And pc se)
+          (TypedSMT_BinOp Sort_BV1 SMT_And pc cond)
           mdl
         )
   | Sym_Step_MakeSymbolicInt32 : forall ic cid v c cs pbid ls stk gs syms pc mdl d,
