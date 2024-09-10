@@ -167,6 +167,15 @@ Inductive equiv_typed_smt_expr : typed_smt_expr -> typed_smt_expr -> Prop :=
       equiv_typed_smt_expr (TypedSMTExpr s ast1) (TypedSMTExpr s ast2)
 .
 
+Lemma sort_injection : forall sort1 sort2 ast1 ast2,
+  equiv_typed_smt_expr (TypedSMTExpr sort1 ast1) (TypedSMTExpr sort2 ast2) ->
+  sort1 = sort2.
+Proof.
+  intros sort1 sort2 ast1 ast2 H.
+  inversion H; subst.
+  reflexivity.
+Qed.
+
 Lemma equiv_typed_smt_expr_refl : forall e, equiv_typed_smt_expr e e.
 Proof.
 Admitted.
@@ -194,6 +203,15 @@ Lemma equiv_typed_smt_expr_binop : forall s op (ast1 ast2 ast3 ast4 : typed_smt_
   equiv_typed_smt_expr
     (TypedSMTExpr s (TypedAST_BinOp s op ast1 ast3))
     (TypedSMTExpr s (TypedAST_BinOp s op ast2 ast4)).
+Proof.
+Admitted.
+
+Lemma equiv_typed_smt_expr_cmpop : forall s op (ast1 ast2 ast3 ast4 : typed_smt_ast s),
+  equiv_typed_smt_expr (TypedSMTExpr s ast1) (TypedSMTExpr s ast2) ->
+  equiv_typed_smt_expr (TypedSMTExpr s ast3) (TypedSMTExpr s ast4) ->
+  equiv_typed_smt_expr
+    (TypedSMTExpr Sort_BV1 (TypedAST_CmpOp s op ast1 ast3))
+    (TypedSMTExpr Sort_BV1 (TypedAST_CmpOp s op ast2 ast4)).
 Proof.
 Admitted.
 

@@ -177,8 +177,6 @@ Lemma equiv_sym_eval_exp : forall ls1 gs1 ls2 gs2 ot e se1,
   sym_eval_exp ls1 gs1 ot e = Some se1 ->
   (exists se2, (sym_eval_exp ls2 gs2 ot e) = Some se2 /\ equiv_typed_smt_expr se1 se2).
 Proof.
-Admitted.
-(*
   intros ls1 gs1 ls2 gs2 ot e se1 His Heq1 Heq2 Heval.
   generalize dependent se1.
   generalize dependent ot.
@@ -227,39 +225,56 @@ Admitted.
     inversion H5; subst.
     destruct (sym_eval_exp ls1 gs1 (Some t) e1) as [se1' | ] eqn:E1; try discriminate Heval.
     destruct (sym_eval_exp ls1 gs1 (Some t) e2) as [se2' | ] eqn:E2; try discriminate Heval.
-    simpl in Heval.
     apply IHe1 with (ot := Some t) (se1 := se1') in H2; try assumption.
     destruct H2 as [se1'' [H2_1 H2_2]].
     apply IHe2 with (ot := Some t) (se1 := se2') in H4; try assumption.
     destruct H4 as [se2'' [H4_1 H4_2]].
     simpl.
     rewrite H2_1, H4_1.
-    inversion Heval; subst.
-    exists (SMT_BinOp SMT_Add se1'' se2'').
-    split; try reflexivity.
-    apply equiv_smt_expr_binop; assumption.
+    destruct se1 as [sort1 ast1].
+    destruct se1' as [sort1' ast1'].
+    destruct se2' as [sort2' ast2'].
+    destruct se1'' as [sort1'' ast1''].
+    destruct se2'' as [sort2'' ast2''].
+    assert(L1 : sort1' = sort1'').
+    { apply sort_injection in H2_2. assumption. }
+    assert(L2 : sort2' = sort2'').
+    { apply sort_injection in H4_2. assumption. }
+    subst.
+    destruct sort1'', sort2''; try discriminate Heval; (
+      inversion Heval; subst;
+      eexists;
+      split; try reflexivity;
+      apply equiv_typed_smt_expr_binop; assumption
+    ).
   }
   {
     destruct (sym_eval_exp ls1 gs1 (Some t) e1) as [se1' | ] eqn:E1; try discriminate Heval.
     destruct (sym_eval_exp ls1 gs1 (Some t) e2) as [se2' | ] eqn:E2; try discriminate Heval.
-    destruct op eqn:Eop; (
-      simpl in Heval;
-      apply IHe1 with (ot := Some t) (se1 := se1') in H1; try assumption;
-      destruct H1 as [se1'' [H1_1 H1_2]];
-      apply IHe2 with (ot := Some t) (se1 := se2') in H4; try assumption;
-      destruct H4 as [se2'' [H4_1 H4_2]];
-      simpl;
-      rewrite H1_1, H4_1;
-      injection Heval; clear Heval; intros Heval;
-      exists (SMT_CmpOp (icmp_to_smt_cmpop op) se1'' se2'');
-      split; rewrite Eop; [
-        reflexivity |
-        (rewrite <- Heval; apply equiv_smt_expr_cmpop; assumption)
-      ]
+    apply IHe1 with (ot := Some t) (se1 := se1') in H1; try assumption.
+    destruct H1 as [se1'' [H1_1 H1_2]].
+    apply IHe2 with (ot := Some t) (se1 := se2') in H4; try assumption.
+    destruct H4 as [se2'' [H4_1 H4_2]].
+    simpl.
+    rewrite H1_1, H4_1.
+    destruct se1 as [sort1 ast1].
+    destruct se1' as [sort1' ast1'].
+    destruct se2' as [sort2' ast2'].
+    destruct se1'' as [sort1'' ast1''].
+    destruct se2'' as [sort2'' ast2''].
+    assert(L1 : sort1' = sort1'').
+    { apply sort_injection in H1_2. assumption. }
+    assert(L2 : sort2' = sort2'').
+    { apply sort_injection in H4_2. assumption. }
+    subst.
+    destruct sort1'', sort2''; try discriminate Heval; (
+      inversion Heval; subst;
+      eexists;
+      split; try reflexivity;
+      apply equiv_typed_smt_expr_cmpop; assumption
     ).
   }
 Qed.
-*)
 
 Lemma equiv_sym_eval_phi_args : forall ls1 gs1 ls2 gs2 t args pbid se1,
   (forall bid e, In (bid, e) args -> is_supported_exp e) ->
