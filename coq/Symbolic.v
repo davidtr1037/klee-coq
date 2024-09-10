@@ -615,23 +615,26 @@ Definition init_sym_state (mdl : llvm_module) (fid : function_id) : option sym_s
   end
 .
 
-Definition smt_sort_to_dint (s : smt_sort) (x : smt_sort_to_int_type s) : dynamic_int :=
-  match s return smt_sort_to_int_type s -> dynamic_int with
-  | Sort_BV1 => DI_I1
-  | Sort_BV8 => DI_I8
-  | Sort_BV16 => DI_I16
-  | Sort_BV32 => DI_I32
-  | Sort_BV64 => DI_I64
-  end x
+Definition make_dynamic_int (s : smt_sort) (x : smt_sort_to_int_type s) : dynamic_int :=
+  let f :=
+    match s return smt_sort_to_int_type s -> dynamic_int with
+    | Sort_BV1 => DI_I1
+    | Sort_BV8 => DI_I8
+    | Sort_BV16 => DI_I16
+    | Sort_BV32 => DI_I32
+    | Sort_BV64 => DI_I64
+    end
+  in f x
 .
 
-(* TODO: rename (corresponds/over_approx) *)
+(* TODO: rename (over_approx/over_approx_via_model) *)
 Inductive equiv_via_model :
   option dynamic_value -> option typed_smt_expr -> typed_smt_model -> Prop :=
-  | EVM_None : forall m, equiv_via_model None None m
-  | EVM_Some : forall m sort (ast : typed_smt_ast sort) (x : smt_sort_to_int_type sort),
-      (smt_eval_ast m sort ast) = x ->
-      equiv_via_model (Some (DV_Int (smt_sort_to_dint sort x))) (Some (TypedSMTExpr sort ast)) m
+  | EVM_None : forall m,
+      equiv_via_model None None m
+  | EVM_Some : forall m sort (ast : typed_smt_ast sort) (i : smt_sort_to_int_type sort),
+      (smt_eval_ast m sort ast) = i ->
+      equiv_via_model (Some (DV_Int (make_dynamic_int sort i))) (Some (TypedSMTExpr sort ast)) m
 .
 
 (* TODO: use in the relevant locations *)
