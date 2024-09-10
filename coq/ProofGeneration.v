@@ -15,8 +15,8 @@ From SE Require Import Symbolic.
 From SE Require Import Relation.
 From SE Require Import WellDefinedness.
 
-From SE.SMT Require Import Expr.
-From SE.SMT Require Import Model.
+From SE.SMT Require Import TypedExpr.
+From SE.SMT Require Import TypedModel.
 
 From SE.Utils Require Import IDMap.
 
@@ -187,7 +187,7 @@ Qed.
 
 Lemma LAUX_1 : forall s v se1 se2 se3,
   Some se1 = Some se2 ->
-  equiv_smt_expr se1 se3 ->
+  equiv_typed_smt_expr se1 se3 ->
   equiv_smt_store (v !-> Some se2; s) (v !-> Some se3; s).
 Proof.
   intros s v se1 se2 se3 H Heq.
@@ -198,7 +198,7 @@ Proof.
 Qed.
 
 Lemma LAUX_2: forall m x se1 se2 se3 l,
-  equiv_smt_expr se2 se3 ->
+  equiv_typed_smt_expr se2 se3 ->
   equiv_smt_store
     (x !-> Some se2; (multi_update_map (x !-> Some se1; m) l))
     (x !-> Some se3; (multi_update_map m l)).
@@ -232,7 +232,7 @@ Proof.
       exists se, se.
       split; try reflexivity.
       split; try reflexivity.
-      apply equiv_smt_expr_refl.
+      apply equiv_typed_smt_expr_refl.
     }
     {
       left.
@@ -242,24 +242,30 @@ Proof.
 Qed.
 
 Lemma LAUX_normalize_simplify: forall e,
-  equiv_smt_expr e (simplify (normalize e)).
+  equiv_typed_smt_expr e (simplify (normalize e)).
 Proof.
 Admitted.
 
-Lemma equiv_smt_expr_implied_condition: forall e1 e2,
-  unsat (SMT_BinOp SMT_And e1 (SMT_Not e2)) ->
-  equiv_smt_expr (SMT_BinOp SMT_And e1 e2) e1.
+Lemma equiv_smt_expr_implied_condition: forall ast1 ast2,
+  unsat (TypedSMT_BinOp Sort_BV1 SMT_And ast1 (TypedSMT_Not Sort_BV1 ast2)) ->
+  equiv_typed_smt_expr
+    (TypedSMTExpr Sort_BV1 (TypedSMT_BinOp Sort_BV1 SMT_And ast1 ast2))
+    (TypedSMTExpr Sort_BV1 ast1).
 Proof.
 Admitted.
 
-Lemma LAUX_4_1: forall e1 e2 e3,
-  equiv_smt_expr (SMT_BinOp SMT_And e1 (SMT_Not e2)) e3 ->
-  unsat e3 ->
-  equiv_smt_expr (SMT_BinOp SMT_And e1 e2) e1.
+Lemma LAUX_4_1: forall ast1 ast2 ast3,
+  equiv_typed_smt_expr
+    (TypedSMTExpr Sort_BV1 (TypedSMT_BinOp Sort_BV1 SMT_And ast1 (TypedSMT_Not Sort_BV1 ast2)))
+    (TypedSMTExpr Sort_BV1 ast3) ->
+  unsat ast3 ->
+  equiv_typed_smt_expr
+    (TypedSMTExpr Sort_BV1 (TypedSMT_BinOp Sort_BV1 SMT_And ast1 ast2))
+    (TypedSMTExpr Sort_BV1 ast1).
 Proof.
-  intros e1 e2 e3 Heq Hunsat.
+  intros ast1 ast2 ast3 Heq Hunsat.
   apply equiv_smt_expr_implied_condition.
-  apply equiv_smt_expr_unsat with (e1 := e3).
-  { apply equiv_smt_expr_symmetry. assumption. }
+  apply equiv_typed_smt_expr_unsat with (ast1 := ast3).
+  { apply equiv_typed_smt_expr_symmetry. assumption. }
   { assumption. }
 Qed.

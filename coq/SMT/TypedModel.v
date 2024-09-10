@@ -205,7 +205,12 @@ Lemma equiv_typed_smt_expr_not : forall s (ast1 ast2 : typed_smt_ast s),
 Proof.
 Admitted.
 
-(* TODO: define lemmas for cmpop and not *)
+(* TODO: define lemmas for cmpop *)
 
-(* TODO: define normalize *)
-(* TODO: define simplify *)
+Definition normalize (e : typed_smt_expr) : typed_smt_expr :=
+  e
+.
+
+Definition simplify (e : typed_smt_expr) : typed_smt_expr :=
+  e
+.
