@@ -158,12 +158,31 @@ Lemma contains_var_cmpop : forall x sort op (ast1 ast2 : typed_smt_ast sort),
   contains_var (TypedSMTExpr Sort_BV1 (TypedAST_CmpOp sort op ast1 ast2)) x ->
   contains_var (TypedSMTExpr sort ast1) x \/ contains_var (TypedSMTExpr sort ast2) x.
 Proof.
-Admitted.
+  intros x sort op ast1 ast2 Hc.
+  inversion Hc; subst.
+  inversion H; subst.
+  {
+    apply inj_pair2 in H4; subst.
+    left.
+    apply ContainsVar with (sort := sort0).
+    assumption.
+  }
+  {
+    apply inj_pair2 in H5; subst.
+    right.
+    apply ContainsVar with (sort := sort0).
+    assumption.
+  }
+Qed.
 
 Lemma contains_var_not : forall x sort (ast : typed_smt_ast sort),
   contains_var (TypedSMTExpr sort (TypedAST_Not sort ast)) x ->
   contains_var (TypedSMTExpr sort ast) x.
 Proof.
-Admitted.
-
-(* TODO: add the other lemmas *)
+  intros x sort ast Hc.
+  inversion Hc; subst.
+  inversion H; subst.
+  apply inj_pair2 in H4; subst.
+  apply ContainsVar with (sort := sort0).
+  assumption.
+Qed.
