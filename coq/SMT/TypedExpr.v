@@ -89,9 +89,8 @@ Definition get_ast (e : typed_smt_expr) : (typed_smt_ast (get_sort e)) :=
   end
 .
 
-(* TODO: rename to smt_expr_ *)
-Definition smt_true := (TypedSMTExpr Sort_BV1 smt_ast_true).
-Definition smt_false := (TypedSMTExpr Sort_BV1 smt_ast_false).
+Definition smt_expr_true := (TypedSMTExpr Sort_BV1 smt_ast_true).
+Definition smt_expr_false := (TypedSMTExpr Sort_BV1 smt_ast_false).
 
 Definition make_smt_const (bits : positive) (n : Z) : option typed_smt_expr :=
   match bits with
@@ -106,8 +105,8 @@ Definition make_smt_const (bits : positive) (n : Z) : option typed_smt_expr :=
 
 Definition make_smt_bool (b : bool) : typed_smt_expr :=
   match b with
-  | true => smt_true
-  | false => smt_false
+  | true => smt_expr_true
+  | false => smt_expr_false
   end
 .
 
