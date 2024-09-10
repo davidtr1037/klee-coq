@@ -187,7 +187,7 @@ klee::ref<CoqExpr> ProofGenerator::translateRegisterUpdates(ExecutionState &es,
     }
 
     ref<CoqExpr> coqName = moduleTranslator->createName(ru.name);
-    ref<CoqExpr> coqExpr = exprTranslator->translate(ru.value, &es.arrayTranslation);
+    ref<CoqExpr> coqExpr = exprTranslator->translateAsSMTExpr(ru.value, &es.arrayTranslation);
     assert(coqName && coqExpr);
     output << coqName->dump() << " !-> " << "Some (" << coqExpr->dump() << "); ";
   }
@@ -307,8 +307,8 @@ vector<klee::ref<CoqExpr>> ProofGenerator::getImports() {
     new CoqRequire("SE", "LLVMAst"),
     new CoqRequire("SE", "Symbolic"),
     new CoqRequire("SE", "ProofGeneration"),
-    new CoqRequire("SE.SMT", "Expr"),
-    new CoqRequire("SE.SMT", "Model"),
+    new CoqRequire("SE.SMT", "TypedExpr"),
+    new CoqRequire("SE.SMT", "TypedModel"),
   };
 }
 

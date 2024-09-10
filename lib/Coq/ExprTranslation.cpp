@@ -13,6 +13,22 @@ ExprTranslator::ExprTranslator() {
 
 }
 
+ref<CoqExpr> ExprTranslator::translateAsSMTExpr(ref<Expr> e,
+                                                ArrayTranslation *m) {
+  ref<CoqExpr> coqAST = translate(e, m);
+  if (coqAST.isNull()) {
+    return nullptr;
+  }
+
+  return new CoqApplication(
+    new CoqVariable("TypedSMTExpr"),
+    {
+      createBVSort(e->getWidth()),
+      coqAST,
+    }
+  );
+}
+
 ref<CoqExpr> ExprTranslator::translate(ref<Expr> e,
                                        ArrayTranslation *m) {
   if (isa<ConstantExpr>(e)) {
@@ -77,12 +93,13 @@ ref<CoqExpr> ExprTranslator::translateConstantExpr(ref<ConstantExpr> e) {
   }
 
   return new CoqApplication(
-    new CoqVariable(smt_constructor),
+    new CoqVariable("TypedAST_Const"),
     {
+      createBVSort(e->getWidth()),
       new CoqApplication(
         new CoqVariable(repr),
         {new CoqVariable(std::to_string(e->getZExtValue()))}
-      )
+      ),
     }
   );
 }
@@ -102,8 +119,9 @@ ref<CoqExpr> ExprTranslator::createSMTBinOp(std::string op,
   }
 
   return new CoqApplication(
-    new CoqVariable("SMT_BinOp"),
+    new CoqVariable("TypedAST_BinOp"),
     {
+      createBVSort(left->getWidth()),
       new CoqVariable(op),
       coqLeft,
       coqRight,
@@ -171,8 +189,9 @@ ref<CoqExpr> ExprTranslator::translateCmpExpr(ref<CmpExpr> e,
   }
 
   return new CoqApplication(
-    new CoqVariable("SMT_CmpOp"),
+    new CoqVariable("TypedAST_CmpOp"),
     {
+      createBVSort(e->left->getWidth()),
       new CoqVariable(op),
       coqLeft,
       coqRight,
@@ -230,9 +249,57 @@ ref<CoqExpr> ExprTranslator::createSMTVar(unsigned width,
   }
 
   return new CoqApplication(
-    new CoqVariable(constructor),
-    {name}
+    new CoqVariable("TypedAST_Var"),
+    {
+      createBVSort(width),
+      name
+    }
   );
+}
+
+ref<CoqExpr> ExprTranslator::createBVSort(Expr::Width w) {
+  static ref<CoqExpr> coqBVSort1 = nullptr;
+  static ref<CoqExpr> coqBVSort8 = nullptr;
+  static ref<CoqExpr> coqBVSort16 = nullptr;
+  static ref<CoqExpr> coqBVSort32 = nullptr;
+  static ref<CoqExpr> coqBVSort64 = nullptr;
+
+  switch (w) {
+  case Expr::Bool:
+   if (coqBVSort1.isNull()) {
+     coqBVSort1 = new CoqVariable("Sort_BV1");
+   }
+   return coqBVSort1;
+
+  case Expr::Int8:
+    if (coqBVSort8.isNull()) {
+      coqBVSort8 = new CoqVariable("Sort_BV8");
+    }
+    return coqBVSort8;
+
+  case Expr::Int16:
+    if (coqBVSort16.isNull()) {
+      coqBVSort16 = new CoqVariable("Sort_BV16");
+    }
+    return coqBVSort16;
+
+  case Expr::Int32:
+    if (coqBVSort32.isNull()) {
+      coqBVSort32 = new CoqVariable("Sort_BV32");
+    }
+    return coqBVSort32;
+
+  case Expr::Int64:
+    if (coqBVSort64.isNull()) {
+      coqBVSort64 = new CoqVariable("Sort_BV64");
+    }
+    return coqBVSort64;
+
+  default:
+    break;
+  }
+
+  assert(false);
 }
 
 ExprTranslator::~ExprTranslator() {

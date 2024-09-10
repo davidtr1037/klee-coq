@@ -17,6 +17,9 @@ public:
 
   ExprTranslator();
 
+  ref<CoqExpr> translateAsSMTExpr(ref<Expr> e,
+                                  ArrayTranslation *m = nullptr);
+
   ref<CoqExpr> translate(ref<Expr> e,
                          ArrayTranslation *m = nullptr);
 
@@ -35,6 +38,8 @@ public:
 
   ref<CoqExpr> createSMTVar(unsigned width,
                             ref<CoqExpr> name);
+
+  ref<CoqExpr> createBVSort(Expr::Width w);
 
   ~ExprTranslator();
 };
