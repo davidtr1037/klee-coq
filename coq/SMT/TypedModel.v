@@ -130,7 +130,7 @@ Fixpoint smt_eval_ast (m : typed_smt_model) (s : smt_sort) (ast : typed_smt_ast 
   end
 .
 
-Fixpoint smt_eval (m : typed_smt_model) (e : typed_smt_expr) : (smt_sort_to_int_type (get_sort e)) :=
+Definition smt_eval (m : typed_smt_model) (e : typed_smt_expr) : (smt_sort_to_int_type (get_sort e)) :=
   match e with
   | TypedSMTExpr sort ast => smt_eval_ast m sort ast
   end
@@ -152,8 +152,9 @@ Lemma unsat_and : forall (e1 e2 : smt_ast_i1),
 Proof.
 Admitted.
 
-Lemma subexpr_non_interference : forall e x m n,
-  (~ contains_var e x ) -> smt_eval m e = smt_eval (mk_smt_model (x !-> n; bv_model m)) e.
+Lemma subexpr_non_interference : forall sort (ast : typed_smt_ast sort) x m n,
+  (~ contains_var (TypedSMTExpr sort ast) x ) ->
+  smt_eval_ast m sort ast = smt_eval_ast (mk_smt_model (x !-> n; bv_model m)) sort ast.
 Proof.
 Admitted.
 

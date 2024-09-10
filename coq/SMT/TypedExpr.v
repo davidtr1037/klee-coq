@@ -54,6 +54,7 @@ Definition smt_sort_to_int_type (s : smt_sort) :=
   end
 .
 
+(* TODO: rename to TypedAST_* *)
 Inductive typed_smt_ast : smt_sort -> Type :=
   | TypedSMT_Const :
       forall (s : smt_sort) (n : (smt_sort_to_int_type s)), typed_smt_ast s
