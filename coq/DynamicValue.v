@@ -149,27 +149,28 @@ Fixpoint eval_ibinop (op : ibinop) (dv1 dv2 : dynamic_value) : option dynamic_va
   end
 .
 
-Definition eval_cmp_result {Int} `{VInt Int} (op : icmp) (x y : Int) : bool :=
+Definition icmp_to_comparison (op : icmp) : comparison :=
   match op with
-  | Eq => cmp Ceq x y
-  | Ne => cmp Cne x y
-  | Ugt => cmpu Cgt x y
-  | Uge => cmpu Cge x y
-  | Ult => cmpu Clt x y
-  | Ule => cmpu Cle x y
-  | Sgt => cmp Cgt x y
-  | Sge => cmp Cge x y
-  | Slt => cmp Clt x y
-  | Sle => cmp Cle x y
+  | Eq => Ceq
+  | Ne => Cne
+  | Ugt => Cgt
+  | Uge => Cge
+  | Ult => Clt
+  | Ule => Cle
+  | Sgt => Cgt
+  | Sge => Cge
+  | Slt => Clt
+  | Sle => Cle
   end
+.
+
+Definition eval_cmp_result {Int} `{VInt Int} (op : icmp) (x y : Int) : bool :=
+  cmp (icmp_to_comparison op) x y
 .
 
 (* TODO: compare with the latest version *)
 Definition eval_icmp_generic {Int} `{VInt Int} (op : icmp) (x y : Int) : dynamic_value :=
-  if (eval_cmp_result op x y) then
-    dv_true
-  else
-    dv_false
+  DV_Int (if (eval_cmp_result op x y) then di_true else di_false)
 .
 
 Fixpoint eval_icmp (op : icmp) (v1 v2 : dynamic_value) : option dynamic_value :=
