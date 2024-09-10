@@ -153,6 +153,14 @@ Definition sym_eval_icmp (op : icmp) (e1 e2 : typed_smt_expr) : option typed_smt
   match e1, e2 with
   | (TypedSMTExpr Sort_BV1 ast1), (TypedSMTExpr Sort_BV1 ast2) =>
       Some (TypedSMTExpr Sort_BV1 (TypedSMT_CmpOp Sort_BV1 (icmp_to_smt_cmpop op) ast1 ast2))
+  | (TypedSMTExpr Sort_BV8 ast1), (TypedSMTExpr Sort_BV8 ast2) =>
+      Some (TypedSMTExpr Sort_BV1 (TypedSMT_CmpOp Sort_BV8 (icmp_to_smt_cmpop op) ast1 ast2))
+  | (TypedSMTExpr Sort_BV16 ast1), (TypedSMTExpr Sort_BV16 ast2) =>
+      Some (TypedSMTExpr Sort_BV1 (TypedSMT_CmpOp Sort_BV16 (icmp_to_smt_cmpop op) ast1 ast2))
+  | (TypedSMTExpr Sort_BV32 ast1), (TypedSMTExpr Sort_BV32 ast2) =>
+      Some (TypedSMTExpr Sort_BV1 (TypedSMT_CmpOp Sort_BV32 (icmp_to_smt_cmpop op) ast1 ast2))
+  | (TypedSMTExpr Sort_BV64 ast1), (TypedSMTExpr Sort_BV64 ast2) =>
+      Some (TypedSMTExpr Sort_BV1 (TypedSMT_CmpOp Sort_BV64 (icmp_to_smt_cmpop op) ast1 ast2))
   | _, _ => None
   end
 .
