@@ -641,9 +641,10 @@ Inductive equiv_via_model :
   option dynamic_value -> option typed_smt_expr -> typed_smt_model -> Prop :=
   | EVM_None : forall m,
       equiv_via_model None None m
-  | EVM_Some : forall m sort (ast : typed_smt_ast sort) (i : smt_sort_to_int_type sort),
+  | EVM_Some : forall m sort (ast : typed_smt_ast sort) (i : smt_sort_to_int_type sort) di,
       (smt_eval_ast m sort ast) = i ->
-      equiv_via_model (Some (DV_Int (make_dynamic_int sort i))) (Some (TypedSMTExpr sort ast)) m
+      (make_dynamic_int sort i) = di ->
+      equiv_via_model (Some (DV_Int di)) (Some (TypedSMTExpr sort ast)) m
 .
 
 (* TODO: use in the relevant locations *)

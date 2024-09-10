@@ -15,6 +15,8 @@ From SE Require Import Symbolic.
 From SE Require Import Relation.
 From SE Require Import WellDefinedness.
 
+From SE.Numeric Require Import Integers.
+
 From SE.SMT Require Import TypedExpr.
 From SE.SMT Require Import TypedModel.
 
@@ -30,8 +32,6 @@ Lemma eval_exp_correspondence : forall c_ls s_ls c_gs s_gs ot e m,
   over_approx_store_via s_gs c_gs m ->
   equiv_via_model (eval_exp c_ls c_gs ot e) (sym_eval_exp s_ls s_gs ot e) m.
 Proof.
-Admitted.
-(*
   intros c_ls s_ls c_gs s_gs ot e m His Hls Hgs.
   generalize dependent ot.
   induction e; intros ot; simpl; try (inversion His; subst).
@@ -52,7 +52,9 @@ Admitted.
     destruct ot.
     {
       destruct t; try (apply EVM_None).
-      repeat (destruct w; try (apply EVM_None)); (apply EVM_Some; reflexivity).
+      repeat (destruct w; try (apply EVM_None)); (
+        eapply EVM_Some; reflexivity
+      ).
     }
     { apply EVM_None. }
   }
@@ -66,64 +68,20 @@ Admitted.
       {
         inversion H2; subst.
         inversion H4; subst.
-        rename se into se1, di into di1, se0 into se2, di0 into di2.
-        destruct di1 as [n1 | n1 | n1 | n1 | n1], di2 as [n2 | n2 | n2 | n2 | n2]; try (
-          simpl;
-          apply EVM_NoneViaModel;
-          simpl;
-          rewrite H1, H6;
-          simpl;
-          reflexivity
-        ); (
-          simpl;
-          apply EVM_Some;
-          simpl;
-          rewrite H1, H6;
-          simpl;
-          reflexivity
+        rename sort into sort1, ast into ast1, sort0 into sort2, ast0 into ast2.
+        destruct sort1, sort2; try (apply EVM_None); (
+          eapply EVM_Some; reflexivity
         ).
       }
       {
         inversion H2; subst.
         inversion H4; subst.
-        { apply EVM_None. }
-        {
-          apply EVM_NoneViaModel.
-          simpl.
-          rewrite H1, H3.
-          reflexivity.
-        }
+        apply EVM_None.
       }
     }
     {
-      destruct (eval_exp c_ls c_gs (Some t) e2) as [dv2 | ] eqn:E2.
-      {
-        inversion H2; subst.
-        { apply EVM_None. }
-        {
-          inversion H4; subst.
-          apply EVM_NoneViaModel.
-          simpl.
-          rewrite H0.
-          reflexivity.
-        }
-      }
-      {
-        inversion H2; subst.
-        { apply EVM_None. }
-        {
-          rename se into se1.
-          inversion H4; subst.
-          { apply EVM_None. }
-          {
-            rename se into se2.
-            apply EVM_NoneViaModel.
-            simpl.
-            rewrite H0.
-            reflexivity.
-          }
-        }
-      }
+      inversion H2; subst.
+      apply EVM_None.
     }
   }
   {
@@ -135,80 +93,47 @@ Admitted.
       {
         inversion H1; subst.
         inversion H4; subst.
-        rename se into se1, di into di1, se0 into se2, di0 into di2.
-        destruct di1 as [n1 | n1 | n1 | n1 | n1], di2 as [n2 | n2 | n2 | n2 | n2]; try (
-          simpl;
-          apply EVM_NoneViaModel; (
-            destruct op;
-            (
-              unfold sym_eval_icmp;
-              simpl;
-              rewrite H2, H5;
-              reflexivity
-            )
-          )
-        ); (
-          simpl;
-          unfold eval_icmp_generic, sym_eval_icmp;
-          destruct (eval_cmp_result op n1 n2) eqn:E; (
-            destruct op; (
-              apply EVM_Some;
-              simpl;
-              rewrite H2, H5;
-              unfold smt_eval_cmpop;
-              simpl in *;
-              rewrite E;
-              reflexivity
-            )
-          )
-        ).
+        rename sort into sort1, ast into ast1, sort0 into sort2, ast0 into ast2.
+        destruct sort1, sort2; try (apply EVM_None).
+        {
+          eapply EVM_Some.
+          { reflexivity. }
+          {
+            simpl.
+            unfold smt_eval_cmpop_by_sort.
+            unfold smt_eval_cmpop_generic.
+            simpl.
+            replace
+              (smt_cmpop_to_comparison (icmp_to_smt_cmpop op)) with (icmp_to_comparison op).
+            {
+              remember (
+                Int1.cmp
+                  (icmp_to_comparison op)
+                  (smt_eval_ast m Sort_BV1 ast1)
+                  (smt_eval_ast m Sort_BV1 ast2)
+              ) as b.
+              destruct b; reflexivity.
+            }
+            { destruct op; reflexivity. }
+          }
+        }
+        { admit. }
+        { admit. }
+        { admit. }
+        { admit. }
       }
       {
         inversion H1; subst.
-        rename se into se1, di into di1.
         inversion H4; subst.
-        { apply EVM_None. }
-        {
-          apply EVM_NoneViaModel.
-          unfold sym_eval_icmp.
-          destruct op;
-          (simpl; rewrite H2, H3; reflexivity).
-        }
+        apply EVM_None.
       }
     }
     {
-      destruct (eval_exp c_ls c_gs (Some t) e2) as [dv2 | ] eqn:E2.
-      {
-        inversion H1; subst.
-        { apply EVM_None. }
-        {
-          inversion H4; subst.
-          apply EVM_NoneViaModel.
-          unfold sym_eval_icmp.
-          destruct op;
-          (simpl; rewrite H0; reflexivity).
-        }
-      }
-      {
-        inversion H1; subst.
-        { apply EVM_None. }
-        {
-          rename se into se1.
-          inversion H4; subst.
-          { apply EVM_None. }
-          {
-            rename se into se2.
-            apply EVM_NoneViaModel.
-            unfold sym_eval_icmp.
-            destruct op;
-            (simpl; rewrite H0; reflexivity).
-          }
-        }
-      }
+      inversion H1; subst.
+      apply EVM_None.
     }
   }
-Qed.
-*)
+Admitted.
 
 Lemma empty_store_correspondence : forall m,
   over_approx_store_via empty_smt_store empty_dv_store m.
@@ -354,8 +279,7 @@ Proof.
           {
             inversion Hc; subst.
             apply store_update_correspondence; try assumption.
-            apply EVM_Some.
-            reflexivity.
+            eapply EVM_Some; reflexivity.
           }
         }
       }
@@ -422,7 +346,7 @@ Proof.
   inversion H; subst.
   { apply EVM_None. }
   {
-    apply EVM_Some.
+    eapply EVM_Some; try reflexivity.
     rewrite <- subexpr_non_interference with (x := name) (n := n).
     { reflexivity. }
     {
@@ -528,8 +452,7 @@ Proof.
         {
           rewrite H8 in H0.
           rewrite <- H0.
-          apply EVM_Some.
-          reflexivity.
+          eapply EVM_Some; reflexivity.
         }
         { assumption. }
       }
@@ -580,8 +503,7 @@ Proof.
         {
           rewrite H8 in H0.
           rewrite <- H0.
-          apply EVM_Some.
-          reflexivity.
+          eapply EVM_Some; reflexivity.
         }
         { assumption. }
       }
@@ -868,8 +790,7 @@ Proof.
         {
           rewrite H8 in H0.
           rewrite <- H0.
-          apply EVM_Some.
-          reflexivity.
+          eapply EVM_Some; reflexivity.
         }
         { assumption. }
       }
@@ -907,7 +828,7 @@ Proof.
         {
           replace (DI_I32 (repr n)) with (make_dynamic_int Sort_BV32 (Int32.repr n)).
           {
-            apply EVM_Some.
+            eapply EVM_Some; try reflexivity.
             simpl.
             rewrite StringMap.update_map_eq.
             reflexivity.

@@ -90,12 +90,12 @@ Proof.
   intros x op e1 e2 e3 Heq Hc.
   destruct e1 as [s1 ast1], e2 as [s2 ast2].
   simpl in Heq.
-  destruct s1, s2; ( inversion Heq ).
-  {
-    inversion Heq; subst.
-    apply contains_var_cmpop in Hc.
-    assumption.
-  }
+  destruct s1, s2; ( inversion Heq );
+  (
+    inversion Heq; subst;
+    apply contains_var_cmpop in Hc;
+    assumption
+  ).
 Qed.
 
 Lemma well_defined_smt_expr_extended_syms : forall se sym syms,
