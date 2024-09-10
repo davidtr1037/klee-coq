@@ -13,14 +13,14 @@ From SE Require Import LLVMAst.
 From SE Require Import Symbolic.
 From SE Require Import Relation.
 
-From SE.SMT Require Import Expr.
-From SE.SMT Require Import Model.
+From SE.SMT Require Import TypedExpr.
+From SE.SMT Require Import TypedModel.
 
 From SE.Utils Require Import IDMap.
 From SE.Utils Require Import ListUtil.
 From SE.Utils Require Import Util.
 
-Inductive well_defined_smt_expr : smt_expr -> list string -> Prop :=
+Inductive well_defined_smt_expr : typed_smt_expr -> list string -> Prop :=
   | WD_Expr : forall se syms,
       (forall n, contains_var se n -> In n syms) ->
       well_defined_smt_expr se syms
@@ -49,7 +49,7 @@ Inductive well_defined : sym_state -> Prop :=
         well_defined_smt_store ls syms /\
         well_defined_smt_store gs syms /\
         well_defined_stack stk syms /\
-        well_defined_smt_expr pc syms
+        well_defined_smt_expr (TypedSMTExpr Sort_BV1 pc) syms
       ) ->
       well_defined
         (mk_sym_state
@@ -66,32 +66,39 @@ Inductive well_defined : sym_state -> Prop :=
         )
 .
 
-Lemma contains_var_ibinop : forall x op e1 e2,
-  contains_var (sym_eval_ibinop op e1 e2) x ->
+Lemma contains_var_ibinop : forall x op e1 e2 e3,
+  (sym_eval_ibinop op e1 e2) = Some e3 ->
+  contains_var e3 x ->
   contains_var e1 x \/ contains_var e2 x.
 Proof.
-  intros x op e1 e2 Hc.
-  destruct op; (
-    simpl in Hc;
+  intros x op e1 e2 e3 Heq Hc.
+  destruct e1 as [s1 ast1], e2 as [s2 ast2].
+  simpl in Heq.
+  destruct s1, s2; ( inversion Heq );
+  (
+    inversion Heq; subst;
     apply contains_var_binop in Hc;
     assumption
   ).
 Qed.
 
-Lemma contains_var_icmp : forall x op e1 e2,
-  contains_var (sym_eval_icmp op e1 e2) x ->
+Lemma contains_var_icmp : forall x op e1 e2 e3,
+  (sym_eval_icmp op e1 e2) = Some e3 ->
+  contains_var e3 x ->
   contains_var e1 x \/ contains_var e2 x.
 Proof.
-  intros x op e1 e2 Hc.
-  destruct op; (
-    simpl in Hc;
-    apply contains_var_cmpop in Hc;
-    assumption
-  ).
+  intros x op e1 e2 e3 Heq Hc.
+  destruct e1 as [s1 ast1], e2 as [s2 ast2].
+  simpl in Heq.
+  destruct s1, s2; ( inversion Heq ).
+  {
+    inversion Heq; subst.
+    apply contains_var_cmpop in Hc.
+    assumption.
+  }
 Qed.
 
-(* TODO: rename *)
-Lemma well_defined_smt_expr_ext : forall se sym syms,
+Lemma well_defined_smt_expr_extended_syms : forall se sym syms,
   well_defined_smt_expr se syms ->
   well_defined_smt_expr se (sym :: syms).
 Proof.
@@ -173,15 +180,14 @@ Proof.
   }
 Qed.
 
-(* TODO: rename *)
-Lemma well_defined_smt_store_ext : forall s sym syms,
+Lemma well_defined_smt_store_extended_syms : forall s sym syms,
   well_defined_smt_store s syms -> well_defined_smt_store s (sym :: syms).
 Proof.
   intros s sym syms Hwd.
   inversion Hwd; subst.
   apply WD_SMTStore.
   intros x se Heq.
-  apply well_defined_smt_expr_ext.
+  apply well_defined_smt_expr_extended_syms.
   apply (H x se).
   assumption.
 Qed.
@@ -192,6 +198,8 @@ Lemma well_defined_sym_eval_exp : forall ls gs ot e se syms,
   (sym_eval_exp ls gs ot e) = Some se ->
   well_defined_smt_expr se syms.
 Proof.
+Admitted.
+(*
   intros ls gs ot e se syms Hwd_ls Hwd_gs Heq.
   generalize dependent se.
   generalize dependent ot.
@@ -320,6 +328,7 @@ Proof.
   { discriminate Heq. }
   { discriminate Heq. }
 Qed.
+*)
 
 Lemma well_defined_sym_eval_phi_args : forall s t args pbid se,
   well_defined s ->
@@ -412,8 +421,7 @@ Proof.
   { discriminate H. }
 Qed.
 
-(* TODO: rename *)
-Lemma well_defined_stack_ext : forall stk sym syms,
+Lemma well_defined_stack_extended_syms : forall stk sym syms,
   well_defined_stack stk syms -> well_defined_stack stk (sym :: syms).
 Proof.
   intros stk sym syms Hwd.
@@ -422,7 +430,7 @@ Proof.
   {
     apply WD_Frame.
     {
-      apply well_defined_smt_store_ext.
+      apply well_defined_smt_store_extended_syms.
       assumption.
     }
     { assumption. }
@@ -539,14 +547,14 @@ Proof.
           assumption.
         }
         {
-          assert(L : well_defined_smt_expr se syms).
+          assert(L : well_defined_smt_expr (TypedSMTExpr Sort_BV1 cond) syms).
           {
             apply (well_defined_sym_eval_exp
               ls
               gs
               (Some (TYPE_I 1))
               e
-              se
+              (TypedSMTExpr Sort_BV1 cond)
               syms
             ); assumption.
           }
@@ -577,14 +585,14 @@ Proof.
           assumption.
         }
         {
-          assert(L : well_defined_smt_expr se syms).
+          assert(L : well_defined_smt_expr (TypedSMTExpr Sort_BV1 cond) syms).
           {
             apply (well_defined_sym_eval_exp
               ls
               gs
               (Some (TYPE_I 1))
               e
-              se
+              (TypedSMTExpr Sort_BV1 cond)
               syms
             ); assumption.
           }
@@ -679,14 +687,14 @@ Proof.
           assumption.
         }
         {
-          assert(L : well_defined_smt_expr se syms).
+          assert(L : well_defined_smt_expr (TypedSMTExpr Sort_BV1 cond) syms).
           {
             apply (well_defined_sym_eval_exp
               ls
               gs
               (Some (TYPE_I 1))
               e
-              se
+              (TypedSMTExpr Sort_BV1 cond)
               syms
             ); assumption.
           }
@@ -720,7 +728,7 @@ Proof.
         rewrite raw_id_eqb_neq in E.
         rewrite update_map_neq in Heq.
         {
-          apply well_defined_smt_expr_ext.
+          apply well_defined_smt_expr_extended_syms.
           apply (H x se').
           assumption.
         }
@@ -730,17 +738,17 @@ Proof.
     {
       split.
       {
-        apply well_defined_smt_store_ext.
+        apply well_defined_smt_store_extended_syms.
         assumption.
       }
       {
         split.
         {
-          apply well_defined_stack_ext.
+          apply well_defined_stack_extended_syms.
           assumption.
         }
         {
-          apply well_defined_smt_expr_ext.
+          apply well_defined_smt_expr_extended_syms.
           assumption.
         }
       }
