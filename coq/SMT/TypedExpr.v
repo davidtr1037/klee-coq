@@ -186,3 +186,68 @@ Proof.
   apply ContainsVar with (sort := sort0).
   assumption.
 Qed.
+
+(* TODO: remove *)
+Definition create_zero_by_sort (s : smt_sort) : typed_smt_ast s :=
+  match s with
+  | Sort_BV1 => TypedAST_Const Sort_BV1 zero
+  | Sort_BV8 => TypedAST_Const Sort_BV8 zero
+  | Sort_BV16 => TypedAST_Const Sort_BV16 zero
+  | Sort_BV32 => TypedAST_Const Sort_BV32 zero
+  | Sort_BV64 => TypedAST_Const Sort_BV64 zero
+  end
+.
+
+Fixpoint normalize (s : smt_sort) (ast : typed_smt_ast s) : typed_smt_ast s :=
+  match ast with
+  | TypedAST_Const sort n => TypedAST_Const sort n
+  | TypedAST_Var sort x => TypedAST_Var sort x
+  | TypedAST_BinOp sort op ast1 ast2 =>
+      TypedAST_BinOp sort op (normalize sort ast1) (normalize sort ast2)
+  | TypedAST_CmpOp sort op ast1 ast2 =>
+      match op with
+      | SMT_Sge => TypedAST_CmpOp sort SMT_Sgt (normalize sort ast2) (normalize sort ast1)
+      | SMT_Sgt => TypedAST_CmpOp sort SMT_Sge (normalize sort ast2) (normalize sort ast1)
+      | SMT_Uge => TypedAST_CmpOp sort SMT_Ugt (normalize sort ast2) (normalize sort ast1)
+      | SMT_Ugt => TypedAST_CmpOp sort SMT_Uge (normalize sort ast2) (normalize sort ast1)
+      | _ => TypedAST_CmpOp sort op (normalize sort ast1) (normalize sort ast2)
+      end
+  | TypedAST_Not sort ast =>
+      let f :=
+      match sort return (typed_smt_ast sort) -> (typed_smt_ast sort) with
+      | Sort_BV1 =>
+          TypedAST_CmpOp Sort_BV1 SMT_Eq smt_ast_false
+      | Sort_BV8 => TypedAST_Not Sort_BV8
+      | Sort_BV16 => TypedAST_Not Sort_BV16
+      | Sort_BV32 => TypedAST_Not Sort_BV32
+      | Sort_BV64 => TypedAST_Not Sort_BV64
+      end in
+      f (normalize sort ast)
+  end
+.
+
+(*
+Fixpoint simplify_ast (s : smt_sort) (ast : typed_smt_ast s) : typed_smt_ast s :=
+  match ast with
+  | TypedAST_BinOp sort op ast1 ast2 =>
+    match op with
+    | SMT_Add => ast
+      match (simplify_ast sort ast1), (simplify_ast sort ast2) return (typed_smt_ast s) with
+      | TypedAST_Const Sort_BV1 n1, TypedAST_Const Sort_BV1 n2 =>
+          TypedAST_Const Sort_BV1 (add n1 n2)
+      | TypedAST_Const Sort_BV8 n1, TypedAST_Const Sort_BV8 n2 =>
+          TypedAST_Const Sort_BV8 (add n1 n2)
+      | TypedAST_Const Sort_BV16 n1, TypedAST_Const Sort_BV16 n2 =>
+          TypedAST_Const Sort_BV16 (add n1 n2)
+      | TypedAST_Const Sort_BV32 n1, TypedAST_Const Sort_BV32 n2 =>
+          TypedAST_Const Sort_BV32 (add n1 n2)
+      | TypedAST_Const Sort_BV64 n1, TypedAST_Const Sort_BV64 n2 =>
+          TypedAST_Const Sort_BV64 (add n1 n2)
+      | _, _ => ast
+      end
+    | _ => ast
+    end
+  | _ => ast
+  end
+.
+*)
