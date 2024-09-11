@@ -102,6 +102,13 @@ Definition make_smt_const (bits : positive) (n : Z) : option typed_smt_expr :=
   end
 .
 
+Definition make_smt_ast_bool (b : bool) : smt_ast_bool :=
+  match b with
+  | true => smt_ast_true
+  | false => smt_ast_false
+  end
+.
+
 Definition make_smt_bool (b : bool) : typed_smt_expr :=
   match b with
   | true => smt_expr_true
@@ -214,7 +221,7 @@ Fixpoint normalize (s : smt_sort) (ast : typed_smt_ast s) : typed_smt_ast s :=
       end
   | TypedAST_Not sort ast =>
       let f :=
-      match sort return (typed_smt_ast sort) -> (typed_smt_ast sort) with
+      match sort with
       | Sort_BV1 =>
           TypedAST_CmpOp Sort_BV1 SMT_Eq smt_ast_false
       | Sort_BV8 => TypedAST_Not Sort_BV8
@@ -226,28 +233,183 @@ Fixpoint normalize (s : smt_sort) (ast : typed_smt_ast s) : typed_smt_ast s :=
   end
 .
 
-(*
-Fixpoint simplify_ast (s : smt_sort) (ast : typed_smt_ast s) : typed_smt_ast s :=
-  match ast with
-  | TypedAST_BinOp sort op ast1 ast2 =>
-    match op with
-    | SMT_Add => ast
-      match (simplify_ast sort ast1), (simplify_ast sort ast2) return (typed_smt_ast s) with
-      | TypedAST_Const Sort_BV1 n1, TypedAST_Const Sort_BV1 n2 =>
-          TypedAST_Const Sort_BV1 (add n1 n2)
-      | TypedAST_Const Sort_BV8 n1, TypedAST_Const Sort_BV8 n2 =>
-          TypedAST_Const Sort_BV8 (add n1 n2)
-      | TypedAST_Const Sort_BV16 n1, TypedAST_Const Sort_BV16 n2 =>
-          TypedAST_Const Sort_BV16 (add n1 n2)
-      | TypedAST_Const Sort_BV32 n1, TypedAST_Const Sort_BV32 n2 =>
-          TypedAST_Const Sort_BV32 (add n1 n2)
-      | TypedAST_Const Sort_BV64 n1, TypedAST_Const Sort_BV64 n2 =>
-          TypedAST_Const Sort_BV64 (add n1 n2)
-      | _, _ => ast
+Definition simplify_binop_bv1 op (ast1 ast2 : typed_smt_ast Sort_BV1) :=
+  match ast1, ast2 with
+  | TypedAST_Const Sort_BV1 n1, TypedAST_Const Sort_BV1 n2 =>
+      match op with
+      | SMT_Add => TypedAST_Const Sort_BV1 (add n1 n2)
+      | _ => TypedAST_BinOp Sort_BV1 op ast1 ast2
       end
-    | _ => ast
-    end
-  | _ => ast
+  | _, _ => TypedAST_BinOp Sort_BV1 op ast1 ast2
   end
 .
-*)
+
+Definition simplify_binop_bv8 op (ast1 ast2 : typed_smt_ast Sort_BV8) :=
+  match ast1, ast2 with
+  | TypedAST_Const Sort_BV8 n1, TypedAST_Const Sort_BV8 n2 =>
+      match op with
+      | SMT_Add => TypedAST_Const Sort_BV8 (add n1 n2)
+      | _ => TypedAST_BinOp Sort_BV8 op ast1 ast2
+      end
+  | _, _ => TypedAST_BinOp Sort_BV8 op ast1 ast2
+  end
+.
+
+Definition simplify_binop_bv16 op (ast1 ast2 : typed_smt_ast Sort_BV16) :=
+  match ast1, ast2 with
+  | TypedAST_Const Sort_BV16 n1, TypedAST_Const Sort_BV16 n2 =>
+      match op with
+      | SMT_Add => TypedAST_Const Sort_BV16 (add n1 n2)
+      | _ => TypedAST_BinOp Sort_BV16 op ast1 ast2
+      end
+  | _, _ => TypedAST_BinOp Sort_BV16 op ast1 ast2
+  end
+.
+
+Definition simplify_binop_bv32 op (ast1 ast2 : typed_smt_ast Sort_BV32) :=
+  match ast1, ast2 with
+  | TypedAST_Const Sort_BV32 n1, TypedAST_Const Sort_BV32 n2 =>
+      match op with
+      | SMT_Add => TypedAST_Const Sort_BV32 (add n1 n2)
+      | _ => TypedAST_BinOp Sort_BV32 op ast1 ast2
+      end
+  | _, _ => TypedAST_BinOp Sort_BV32 op ast1 ast2
+  end
+.
+
+Definition simplify_binop_bv64 op (ast1 ast2 : typed_smt_ast Sort_BV64) :=
+  match ast1, ast2 with
+  | TypedAST_Const Sort_BV64 n1, TypedAST_Const Sort_BV64 n2 =>
+      match op with
+      | SMT_Add => TypedAST_Const Sort_BV64 (add n1 n2)
+      | _ => TypedAST_BinOp Sort_BV64 op ast1 ast2
+      end
+  | _, _ => TypedAST_BinOp Sort_BV64 op ast1 ast2
+  end
+.
+
+Definition simplify_binop op (s : smt_sort) (ast1 ast2 : typed_smt_ast s) : typed_smt_ast s :=
+  let f :=
+    match s with
+    | Sort_BV1 => simplify_binop_bv1
+    | Sort_BV8 => simplify_binop_bv8
+    | Sort_BV16 => simplify_binop_bv16
+    | Sort_BV32 => simplify_binop_bv32
+    | Sort_BV64 => simplify_binop_bv64
+    end in
+  f op ast1 ast2
+.
+
+Definition smt_cmpop_to_comparison (op : smt_cmpop) : comparison :=
+  match op with
+  | SMT_Eq => Ceq
+  | SMT_Ne => Cne
+  | SMT_Ugt => Cgt
+  | SMT_Uge => Cge
+  | SMT_Ult => Clt
+  | SMT_Ule => Cle
+  | SMT_Sgt => Cgt
+  | SMT_Sge => Cge
+  | SMT_Slt => Clt
+  | SMT_Sle => Cle
+  end
+.
+
+Definition simplify_cmpop_bv1 op (ast1 ast2 : typed_smt_ast Sort_BV1) :=
+  match ast1, ast2 with
+  | TypedAST_Const Sort_BV1 n1, TypedAST_Const Sort_BV1 n2 =>
+      match op with
+      | SMT_Eq => (make_smt_ast_bool (eq n1 n2))
+      | SMT_Slt
+      | SMT_Sle => make_smt_ast_bool (cmp (smt_cmpop_to_comparison op) n1 n2)
+      | SMT_Ult
+      | SMT_Ule => make_smt_ast_bool (cmpu (smt_cmpop_to_comparison op) n1 n2)
+      | _ => TypedAST_CmpOp Sort_BV1 op ast1 ast2
+      end
+  | _, _ => TypedAST_CmpOp Sort_BV1 op ast1 ast2
+  end
+.
+
+Definition simplify_cmpop_bv8 op (ast1 ast2 : typed_smt_ast Sort_BV8) :=
+  match ast1, ast2 with
+  | TypedAST_Const Sort_BV8 n1, TypedAST_Const Sort_BV8 n2 =>
+      match op with
+      | SMT_Eq => (make_smt_ast_bool (eq n1 n2))
+      | SMT_Slt
+      | SMT_Sle => make_smt_ast_bool (cmp (smt_cmpop_to_comparison op) n1 n2)
+      | SMT_Ult
+      | SMT_Ule => make_smt_ast_bool (cmpu (smt_cmpop_to_comparison op) n1 n2)
+      | _ => TypedAST_CmpOp Sort_BV8 op ast1 ast2
+      end
+  | _, _ => TypedAST_CmpOp Sort_BV8 op ast1 ast2
+  end
+.
+
+Definition simplify_cmpop_bv16 op (ast1 ast2 : typed_smt_ast Sort_BV16) :=
+  match ast1, ast2 with
+  | TypedAST_Const Sort_BV16 n1, TypedAST_Const Sort_BV16 n2 =>
+      match op with
+      | SMT_Eq => (make_smt_ast_bool (eq n1 n2))
+      | SMT_Slt
+      | SMT_Sle => make_smt_ast_bool (cmp (smt_cmpop_to_comparison op) n1 n2)
+      | SMT_Ult
+      | SMT_Ule => make_smt_ast_bool (cmpu (smt_cmpop_to_comparison op) n1 n2)
+      | _ => TypedAST_CmpOp Sort_BV16 op ast1 ast2
+      end
+  | _, _ => TypedAST_CmpOp Sort_BV16 op ast1 ast2
+  end
+.
+
+Definition simplify_cmpop_bv32 op (ast1 ast2 : typed_smt_ast Sort_BV32) :=
+  match ast1, ast2 with
+  | TypedAST_Const Sort_BV32 n1, TypedAST_Const Sort_BV32 n2 =>
+      match op with
+      | SMT_Eq => (make_smt_ast_bool (eq n1 n2))
+      | SMT_Slt
+      | SMT_Sle => make_smt_ast_bool (cmp (smt_cmpop_to_comparison op) n1 n2)
+      | SMT_Ult
+      | SMT_Ule => make_smt_ast_bool (cmpu (smt_cmpop_to_comparison op) n1 n2)
+      | _ => TypedAST_CmpOp Sort_BV32 op ast1 ast2
+      end
+  | _, _ => TypedAST_CmpOp Sort_BV32 op ast1 ast2
+  end
+.
+
+Definition simplify_cmpop_bv64 op (ast1 ast2 : typed_smt_ast Sort_BV64) :=
+  match ast1, ast2 with
+  | TypedAST_Const Sort_BV64 n1, TypedAST_Const Sort_BV64 n2 =>
+      match op with
+      | SMT_Eq => (make_smt_ast_bool (eq n1 n2))
+      | SMT_Slt
+      | SMT_Sle => make_smt_ast_bool (cmp (smt_cmpop_to_comparison op) n1 n2)
+      | SMT_Ult
+      | SMT_Ule => make_smt_ast_bool (cmpu (smt_cmpop_to_comparison op) n1 n2)
+      | _ => TypedAST_CmpOp Sort_BV64 op ast1 ast2
+      end
+  | _, _ => TypedAST_CmpOp Sort_BV64 op ast1 ast2
+  end
+.
+
+Definition simplify_cmpop op (s : smt_sort) (ast1 ast2 : typed_smt_ast s) : typed_smt_ast Sort_BV1 :=
+  let f :=
+    match s with
+    | Sort_BV1 => simplify_cmpop_bv1
+    | Sort_BV8 => simplify_cmpop_bv8
+    | Sort_BV16 => simplify_cmpop_bv16
+    | Sort_BV32 => simplify_cmpop_bv32
+    | Sort_BV64 => simplify_cmpop_bv64
+    end in
+  f op ast1 ast2
+.
+
+Fixpoint simplify_ast (s : smt_sort) (ast : typed_smt_ast s) : typed_smt_ast s :=
+  match ast with
+  | TypedAST_Const sort n => TypedAST_Const sort n
+  | TypedAST_Var sort x => TypedAST_Var sort x
+  | TypedAST_BinOp sort op ast1 ast2 =>
+      simplify_binop op sort (simplify_ast sort ast1) (simplify_ast sort ast2)
+  | TypedAST_CmpOp sort op ast1 ast2 =>
+      simplify_cmpop op sort (simplify_ast sort ast1) (simplify_ast sort ast2)
+  | TypedAST_Not sort ast => TypedAST_Not sort (simplify_ast sort ast)
+  end
+.
