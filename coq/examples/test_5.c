@@ -7,6 +7,11 @@
 int main() {
     int n = klee_make_symbolic_int32();
     klee_assume_bool(n > 7);
-    assert(n > 3);
-    return 0;
+    assert(n > 0);
+
+    if (n < 3) {
+        return 1;
+    } else {
+        return 0;
+    }
 }
