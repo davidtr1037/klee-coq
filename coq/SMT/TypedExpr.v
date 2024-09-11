@@ -213,10 +213,10 @@ Fixpoint normalize (s : smt_sort) (ast : typed_smt_ast s) : typed_smt_ast s :=
       TypedAST_BinOp sort op (normalize sort ast1) (normalize sort ast2)
   | TypedAST_CmpOp sort op ast1 ast2 =>
       match op with
-      | SMT_Sge => TypedAST_CmpOp sort SMT_Sgt (normalize sort ast2) (normalize sort ast1)
-      | SMT_Sgt => TypedAST_CmpOp sort SMT_Sge (normalize sort ast2) (normalize sort ast1)
-      | SMT_Uge => TypedAST_CmpOp sort SMT_Ugt (normalize sort ast2) (normalize sort ast1)
-      | SMT_Ugt => TypedAST_CmpOp sort SMT_Uge (normalize sort ast2) (normalize sort ast1)
+      | SMT_Sge => TypedAST_CmpOp sort SMT_Sle (normalize sort ast2) (normalize sort ast1)
+      | SMT_Sgt => TypedAST_CmpOp sort SMT_Slt (normalize sort ast2) (normalize sort ast1)
+      | SMT_Uge => TypedAST_CmpOp sort SMT_Ule (normalize sort ast2) (normalize sort ast1)
+      | SMT_Ugt => TypedAST_CmpOp sort SMT_Ult (normalize sort ast2) (normalize sort ast1)
       | _ => TypedAST_CmpOp sort op (normalize sort ast1) (normalize sort ast2)
       end
   | TypedAST_Not sort ast =>
