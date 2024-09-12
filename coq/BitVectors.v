@@ -361,6 +361,7 @@ Lemma int1_destruct : forall (n : Int1.int),
 Proof.
 Admitted.
 
+(* TOOD: rename to int1_and_one_l *)
 Lemma int1_and_one : forall (n1 n2 : Int1.int),
   Int1.and n1 n2 = Int1.one -> n1 = Int1.one.
 Proof.

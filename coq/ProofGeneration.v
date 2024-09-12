@@ -256,7 +256,42 @@ Lemma equiv_smt_expr_implied_condition: forall ast1 ast2,
     (TypedSMTExpr Sort_BV1 (TypedAST_BinOp Sort_BV1 SMT_And ast1 ast2))
     (TypedSMTExpr Sort_BV1 ast1).
 Proof.
-Admitted.
+  intros ast1 ast2 Hunsat.
+  apply EquivTypedSMTExpr.
+  intros m.
+  unfold unsat, sat in Hunsat.
+  assert(L1 :
+    (smt_eval_ast m Sort_BV1 ast1) = Int1.zero \/
+    (smt_eval_ast m Sort_BV1 ast1) = Int1.one
+  ).
+  { apply int1_destruct. }
+  destruct L1 as [L1 | L1].
+  {
+    simpl.
+    rewrite L1.
+    apply Int1.and_zero_l.
+  }
+  {
+    unfold sat_via in Hunsat.
+    simpl in *.
+    assert(L2 :
+      (smt_eval_ast m Sort_BV1 ast2) = Int1.zero \/
+      (smt_eval_ast m Sort_BV1 ast2) = Int1.one
+    ).
+    { apply int1_destruct. }
+    destruct L2 as [L2 | L2].
+    {
+      destruct Hunsat.
+      exists m.
+      rewrite L1, L2.
+      reflexivity.
+    }
+    {
+      rewrite L1, L2.
+      reflexivity.
+    }
+  }
+Qed.
 
 Lemma implied_condition: forall ast1 ast2 ast3,
   equiv_typed_smt_expr
