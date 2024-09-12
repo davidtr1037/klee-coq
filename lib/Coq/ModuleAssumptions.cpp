@@ -243,15 +243,52 @@ ref<CoqTactic> ModuleSupport::getTacticForBinaryOperator(BinaryOperator *inst) {
 }
 
 ref<CoqTactic> ModuleSupport::getTacticForCmpInst(CmpInst *inst) {
-  return new Admit();
+  return new Block(
+    {
+      new Apply("IS_INSTR_Op"),
+      new Apply("IS_OP_ICmp"),
+      getTacticForValue(inst->getOperand(0)),
+      getTacticForValue(inst->getOperand(1)),
+    }
+  );
 }
 
 ref<CoqTactic> ModuleSupport::getTacticForBranchInst(BranchInst *inst) {
-  return new Admit();
+  if (inst->isConditional()) {
+    return new Block(
+      {
+        new Apply("IS_Term_Br"),
+        getTacticForValue(inst->getCondition()),
+      }
+    );
+  } else {
+    return new Block(
+      {new Apply("IS_Term_UnconditionalBr")}
+    );
+  }
 }
 
 ref<CoqTactic> ModuleSupport::getTacticForPHINode(PHINode *inst) {
-  return new Admit();
+  std::vector<ref<CoqTactic>> tactics;
+
+  tactics.push_back(new Apply("IS_Phi"));
+  tactics.push_back(new Intros({"bid", "e", "Hin"}));
+  for (unsigned i = 0; i < inst->getNumIncomingValues(); i++) {
+    tactics.push_back(new Destruct("Hin", {{"Hin"}, {"Hin"}}));
+    tactics.push_back(
+      new Block(
+        {
+          new Inversion("Hin"),
+          new Subst(),
+          getTacticForValue(inst->getIncomingValue(i)),
+        }
+      )
+    );
+  }
+
+  tactics.push_back(new Destruct("Hin"));
+
+  return new Block(tactics);
 }
 
 ref<CoqTactic> ModuleSupport::getTacticForCallInst(CallInst *inst) {
