@@ -102,10 +102,35 @@ ref<CoqLemma> ModuleSupport::getLemmaForFunction(Function &f) {
 }
 
 ref<CoqTactic> ModuleSupport::getTacticForFunction(Function &f) {
-  return new Block({new Admit()});
+  std::vector<ref<CoqTactic>> tactics;
+
+  tactics.push_back(new Apply("IS_Definition"));
+  tactics.push_back(new Intros({"b", "Hin"}));
+
+  for (BasicBlock &bb : f) {
+    tactics.push_back(
+      new Destruct("Hin", {{"Hin"}, {"Hin"}})
+    );
+    ref<CoqLemma> lemma = getLemmaForBasicBlock(bb);
+    bbLemmas.push_back(lemma);
+    tactics.push_back(
+      new Block(
+        {
+          new Subst(),
+          new Apply(lemma->name),
+        }
+      )
+    );
+  }
+
+  tactics.push_back(
+    new Block({new Destruct("Hin")})
+  );
+
+  return new Block(tactics);
 }
 
-ref<CoqExpr> ModuleSupport::getLemmaForBasicBlock(BasicBlock &bb) {
+ref<CoqLemma> ModuleSupport::getLemmaForBasicBlock(BasicBlock &bb) {
   ref<CoqExpr> body = new CoqApplication(
     new CoqVariable("is_supported_block"),
     {moduleTranslator.translateBasicBlock(bb)}
@@ -125,7 +150,7 @@ ref<CoqTactic> ModuleSupport::getTacticForBasicBlock(BasicBlock &bb) {
   return new Block({new Admit()});
 }
 
-ref<CoqExpr> ModuleSupport::getLemmaForInst(Instruction &inst) {
+ref<CoqLemma> ModuleSupport::getLemmaForInst(Instruction &inst) {
   ref<CoqExpr> body = new CoqApplication(
     new CoqVariable("is_supported_cmd"),
     {moduleTranslator.translateInstCached(inst)}

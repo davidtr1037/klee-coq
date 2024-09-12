@@ -84,6 +84,14 @@ void ProofGenerator::generateModule() {
 void ProofGenerator::generateModuleAssumptionsProof() {
   ref<CoqExpr> lemma = moduleSupport->generateProof();
 
+  for (ref<CoqLemma> lemma : moduleSupport->instLemmas) {
+    output << lemma->dump() << "\n";
+  }
+
+  for (ref<CoqLemma> lemma : moduleSupport->bbLemmas) {
+    output << lemma->dump() << "\n";
+  }
+
   for (ref<CoqLemma> lemma : moduleSupport->functionLemmas) {
     output << lemma->dump() << "\n";
   }

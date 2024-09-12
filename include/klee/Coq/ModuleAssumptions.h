@@ -22,6 +22,10 @@ public:
 
   std::vector<ref<CoqLemma>> functionLemmas;
 
+  std::vector<ref<CoqLemma>> bbLemmas;
+
+  std::vector<ref<CoqLemma>> instLemmas;
+
   ModuleSupport(llvm::Module &m, ModuleTranslator &moduleTranslator);
 
   ref<CoqExpr> generateProof();
@@ -34,11 +38,11 @@ public:
 
   ref<CoqTactic> getTacticForFunction(llvm::Function &f);
 
-  ref<CoqExpr> getLemmaForBasicBlock(llvm::BasicBlock &bb);
+  ref<CoqLemma> getLemmaForBasicBlock(llvm::BasicBlock &bb);
 
   ref<CoqTactic> getTacticForBasicBlock(llvm::BasicBlock &bb);
 
-  ref<CoqExpr> getLemmaForInst(llvm::Instruction &inst);
+  ref<CoqLemma> getLemmaForInst(llvm::Instruction &inst);
 
   ref<CoqTactic> getTacticForInst(llvm::Instruction &inst);
 
