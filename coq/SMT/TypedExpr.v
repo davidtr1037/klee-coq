@@ -140,11 +140,11 @@ Inductive contains_var : typed_smt_expr -> string -> Prop :=
       subexpr (TypedSMTExpr sort (TypedAST_Var sort x)) e -> contains_var e x
 .
 
-Lemma contains_var_binop : forall x sort op (ast1 ast2 : typed_smt_ast sort),
+Lemma contains_var_binop : forall op sort (ast1 ast2 : typed_smt_ast sort) x,
   contains_var (TypedSMTExpr sort (TypedAST_BinOp sort op ast1 ast2)) x ->
   contains_var (TypedSMTExpr sort ast1) x \/ contains_var (TypedSMTExpr sort ast2) x.
 Proof.
-  intros x sort op ast1 ast2 Hc.
+  intros op sort ast1 ast2 x Hc.
   inversion Hc; subst.
   inversion H; subst.
   {
@@ -165,19 +165,29 @@ Lemma contains_var_binop_intro_l : forall op sort (ast1 ast2 : typed_smt_ast sor
   contains_var (TypedSMTExpr sort ast1) x ->
   contains_var (TypedSMTExpr sort (TypedAST_BinOp sort op ast1 ast2)) x.
 Proof.
-Admitted.
+  intros op sort ast1 ast2 x Hc.
+  inversion Hc; subst.
+  apply ContainsVar with (sort := sort0).
+  apply SubExpr_BinOp_L.
+  assumption.
+Qed.
 
 Lemma contains_var_binop_intro_r : forall op sort (ast1 ast2 : typed_smt_ast sort) x,
   contains_var (TypedSMTExpr sort ast2) x ->
   contains_var (TypedSMTExpr sort (TypedAST_BinOp sort op ast1 ast2)) x.
 Proof.
-Admitted.
+  intros op sort ast1 ast2 x Hc.
+  inversion Hc; subst.
+  apply ContainsVar with (sort := sort0).
+  apply SubExpr_BinOp_R.
+  assumption.
+Qed.
 
-Lemma contains_var_cmpop : forall x sort op (ast1 ast2 : typed_smt_ast sort),
+Lemma contains_var_cmpop : forall op sort (ast1 ast2 : typed_smt_ast sort) x,
   contains_var (TypedSMTExpr Sort_BV1 (TypedAST_CmpOp sort op ast1 ast2)) x ->
   contains_var (TypedSMTExpr sort ast1) x \/ contains_var (TypedSMTExpr sort ast2) x.
 Proof.
-  intros x sort op ast1 ast2 Hc.
+  intros op sort ast1 ast2 x Hc.
   inversion Hc; subst.
   inversion H; subst.
   {
@@ -198,19 +208,29 @@ Lemma contains_var_cmpop_intro_l : forall op sort (ast1 ast2 : typed_smt_ast sor
   contains_var (TypedSMTExpr sort ast1) x ->
   contains_var (TypedSMTExpr Sort_BV1 (TypedAST_CmpOp sort op ast1 ast2)) x.
 Proof.
-Admitted.
+  intros op sort ast1 ast2 x Hc.
+  inversion Hc; subst.
+  apply ContainsVar with (sort := sort0).
+  apply SubExpr_CmpOp_L.
+  assumption.
+Qed.
 
 Lemma contains_var_cmpop_intro_r : forall op sort (ast1 ast2 : typed_smt_ast sort) x,
   contains_var (TypedSMTExpr sort ast2) x ->
   contains_var (TypedSMTExpr Sort_BV1 (TypedAST_CmpOp sort op ast1 ast2)) x.
 Proof.
-Admitted.
+  intros op sort ast1 ast2 x Hc.
+  inversion Hc; subst.
+  apply ContainsVar with (sort := sort0).
+  apply SubExpr_CmpOp_R.
+  assumption.
+Qed.
 
-Lemma contains_var_not : forall x sort (ast : typed_smt_ast sort),
+Lemma contains_var_not : forall sort (ast : typed_smt_ast sort) x,
   contains_var (TypedSMTExpr sort (TypedAST_Not sort ast)) x ->
   contains_var (TypedSMTExpr sort ast) x.
 Proof.
-  intros x sort ast Hc.
+  intros sort ast x Hc.
   inversion Hc; subst.
   inversion H; subst.
   apply inj_pair2 in H4; subst.
@@ -222,7 +242,12 @@ Lemma contains_var_not_intro : forall sort (ast : typed_smt_ast sort) x,
   contains_var (TypedSMTExpr sort ast) x ->
   contains_var (TypedSMTExpr sort (TypedAST_Not sort ast)) x.
 Proof.
-Admitted.
+  intros sort ast x Hc.
+  inversion Hc; subst.
+  apply ContainsVar with (sort := sort0).
+  apply SubExpr_Not.
+  assumption.
+Qed.
 
 Fixpoint normalize (s : smt_sort) (ast : typed_smt_ast s) : typed_smt_ast s :=
   match ast with
