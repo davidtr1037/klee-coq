@@ -35,8 +35,7 @@ ref<CoqExpr> ModuleSupport::getLemmaForModule() {
   return new CoqLemma(
     "is_supported_mdl",
     body,
-    proof,
-    true
+    proof
   );
 }
 
@@ -96,8 +95,7 @@ ref<CoqLemma> ModuleSupport::getLemmaForFunction(Function &f) {
   return new CoqLemma(
     "is_supported_def_" + f.getName().str(),
     body,
-    proof,
-    true
+    proof
   );
 }
 
@@ -141,8 +139,7 @@ ref<CoqLemma> ModuleSupport::getLemmaForBasicBlock(BasicBlock &bb) {
   return new CoqLemma(
     "is_supported_bb_" + std::to_string(moduleTranslator.getBasicBlockID(bb)),
     body,
-    proof,
-    true
+    proof
   );
 }
 
@@ -187,8 +184,7 @@ ref<CoqLemma> ModuleSupport::getLemmaForInst(Instruction &inst) {
   return new CoqLemma(
     "is_supported_inst_" + std::to_string(moduleTranslator.getInstID(inst)),
     body,
-    proof,
-    true
+    proof
   );
 }
 
@@ -225,7 +221,25 @@ ref<CoqTactic> ModuleSupport::getTacticForInst(Instruction &inst) {
 }
 
 ref<CoqTactic> ModuleSupport::getTacticForBinaryOperator(BinaryOperator *inst) {
-  return new Admit();
+  ref<CoqTactic> opTactic = nullptr;
+  switch (inst->getOpcode()) {
+  case Instruction::Add:
+    opTactic = new Block({new Apply("IS_Add")});
+    break;
+
+  default:
+      assert(false);
+  }
+
+  return new Block(
+    {
+      new Apply("IS_INSTR_Op"),
+      new Apply("IS_OP_IBinop"),
+      getTacticForValue(inst->getOperand(0)),
+      getTacticForValue(inst->getOperand(1)),
+      opTactic,
+    }
+  );
 }
 
 ref<CoqTactic> ModuleSupport::getTacticForCmpInst(CmpInst *inst) {
@@ -245,11 +259,45 @@ ref<CoqTactic> ModuleSupport::getTacticForCallInst(CallInst *inst) {
 }
 
 ref<CoqTactic> ModuleSupport::getTacticForReturnInst(ReturnInst *inst) {
-  return new Admit();
+  Value *v = inst->getReturnValue();
+  if (v) {
+    return new Block(
+      {
+        new Apply("IS_Term_Ret"),
+        getTacticForValue(v),
+      }
+    );
+  } else {
+    return new Block(
+      {new Apply("IS_Term_RetVoid")}
+    );
+  }
 }
 
 ref<CoqTactic> ModuleSupport::getTacticForUnreachableInst(UnreachableInst *inst) {
   return new Admit();
+}
+
+ref<CoqTactic> ModuleSupport::getTacticForValue(Value *value) {
+  if (isa<llvm::Argument>(value)) {
+    return new Block(
+      {new Apply("IS_EXP_Ident")}
+    );
+  } else if (isa<llvm::User>(value)) {
+    if (isa<llvm::Constant>(value)) {
+      if (isa<llvm::ConstantInt>(value)) {
+        return new Block(
+          {new Apply("IS_EXP_Integer")}
+        );
+      }
+    } else if (isa<llvm::Instruction>(value)) {
+      return new Block(
+        {new Apply("IS_EXP_Ident")}
+      );
+    }
+  }
+
+  assert(false);
 }
 
 ModuleSupport::~ModuleSupport() {

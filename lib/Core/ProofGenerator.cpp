@@ -1046,7 +1046,7 @@ klee::ref<CoqExpr> ProofGenerator::getTheorem() {
               new CoqVariable("l"),
             }
           ),
-          new Block({new Admit()}),
+          new Block({new Apply("is_supported_mdl")}),
           new Block({new Reflexivity()}),
           new Block(
             {

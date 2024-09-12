@@ -60,6 +60,8 @@ public:
 
   ref<CoqTactic> getTacticForUnreachableInst(llvm::UnreachableInst *inst);
 
+  ref<CoqTactic> getTacticForValue(llvm::Value *value);
+
   ~ModuleSupport();
 };
 
