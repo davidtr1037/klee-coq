@@ -292,7 +292,36 @@ ref<CoqTactic> ModuleSupport::getTacticForPHINode(PHINode *inst) {
 }
 
 ref<CoqTactic> ModuleSupport::getTacticForCallInst(CallInst *inst) {
-  return new Admit();
+  std::vector<ref<CoqTactic>> tactics;
+
+  Function *f = dyn_cast<Function>(inst->getCalledOperand());
+  assert(f);
+
+  Type *returnType = f->getFunctionType()->getReturnType();
+  if (returnType->isVoidTy()) {
+    tactics.push_back(new Apply("IS_INSTR_VoidCall"));
+  } else {
+    tactics.push_back(new Apply("IS_INSTR_Call"));
+  }
+
+  tactics.push_back(new Intros({"arg", "Hin"}));
+  for (unsigned i = 0; i < inst->getNumArgOperands(); i++) {
+    tactics.push_back(new Destruct("Hin", {{"Hin"}, {"Hin"}}));
+    tactics.push_back(
+      new Block(
+        {
+          new Inversion("Hin"),
+          new Subst(),
+          new Apply("IS_FunctionArg"),
+          getTacticForValue(inst->getArgOperand(i)),
+        }
+      )
+    );
+  }
+
+  tactics.push_back(new Destruct("Hin"));
+
+  return new Block(tactics);
 }
 
 ref<CoqTactic> ModuleSupport::getTacticForReturnInst(ReturnInst *inst) {
