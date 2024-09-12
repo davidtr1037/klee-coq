@@ -22,7 +22,6 @@ ProofGenerator::ProofGenerator(Module &m, raw_ostream &output) : m(m), output(ou
   exprTranslator = new ExprTranslator();
 
   /* TODO: add shared definitions (global store, etc.) */
-  coqModuleAlias = nullptr;
   coqGlobalStoreAlias = nullptr;
 }
 
@@ -54,7 +53,7 @@ void ProofGenerator::generateGlobalDefs() {
 void ProofGenerator::generateModule() {
   vector<ref<CoqExpr>> requiredDefs;
 
-  ref<CoqExpr> coqModule = moduleTranslator->translateModule();
+  moduleTranslator->translateModuleCached();
 
   for (ref<CoqExpr> def : moduleTranslator->instDefs) {
     requiredDefs.push_back(def);
@@ -72,21 +71,11 @@ void ProofGenerator::generateModule() {
     requiredDefs.push_back(def);
   }
 
-  string alias = "mdl";
-  ref<CoqExpr> coqModuleDef = new CoqDefinition(
-    alias,
-    "llvm_module",
-     coqModule
-  );
-  requiredDefs.push_back(coqModuleDef);
+  requiredDefs.push_back(moduleTranslator->moduleDef);
 
   for (ref<CoqExpr> def : requiredDefs) {
     output << def->dump() << "\n";
   }
-
-  /* set aliases */
-  /* TODO: the alias should be defined in ModuleTranslator */
-  coqModuleAlias = new CoqVariable(alias);
 }
 
 void ProofGenerator::generateState(ExecutionState &es) {
@@ -283,7 +272,7 @@ klee::ref<CoqExpr> ProofGenerator::createPC(ExecutionState &es) {
 }
 
 klee::ref<CoqExpr> ProofGenerator::createModule() {
-  return coqModuleAlias;
+  return moduleTranslator->translateModuleCached();
 }
 
 void ProofGenerator::generateImports() {
@@ -1029,7 +1018,7 @@ klee::ref<CoqExpr> ProofGenerator::getTheorem() {
           new Apply(
             "completeness_via_et",
             {
-              coqModuleAlias,
+              moduleTranslator->translateModuleCached(),
               moduleTranslator->createName("main"),
               new CoqVariable("s_0"),
               new CoqVariable("l"),
@@ -1055,7 +1044,7 @@ klee::ref<CoqExpr> ProofGenerator::getTheorem() {
     new CoqApplication(
       new CoqVariable("is_safe_program"),
       {
-        coqModuleAlias,
+        moduleTranslator->translateModuleCached(),
         moduleTranslator->createName("main"),
       }
     ),

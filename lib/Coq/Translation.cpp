@@ -17,8 +17,20 @@ using namespace klee;
 
 /* TODO: handle constants: true, false, null */
 
-ModuleTranslator::ModuleTranslator(Module &m) : m(m) {
+ModuleTranslator::ModuleTranslator(Module &m) :
+  m(m), moduleAlias(nullptr), moduleDef(nullptr) {
 
+}
+
+ref<CoqExpr> ModuleTranslator::translateModuleCached() {
+  if (moduleAlias.isNull()) {
+    ref<CoqExpr> coqModule = translateModule();
+    std::string varName = "mdl";
+    moduleAlias = new CoqVariable(varName);
+    moduleDef = new CoqDefinition(varName, "llvm_module", coqModule);
+  }
+
+  return moduleAlias;
 }
 
 ref<CoqExpr> ModuleTranslator::translateModule() {

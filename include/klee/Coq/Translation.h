@@ -41,7 +41,13 @@ public:
 
   std::vector<ref<CoqExpr>> functionDefs;
 
+  ref<CoqExpr> moduleAlias;
+
+  ref<CoqExpr> moduleDef;
+
   ModuleTranslator(llvm::Module &m);
+
+  ref<CoqExpr> translateModuleCached();
 
   ref<CoqExpr> translateModule();
 

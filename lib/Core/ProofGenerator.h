@@ -59,8 +59,6 @@ class ProofGenerator {
 
 private:
 
-    ref<CoqExpr> coqModuleAlias;
-
     ref<CoqExpr> coqGlobalStoreAlias;
 
 public:
