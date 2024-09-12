@@ -135,17 +135,74 @@ Definition sat (ast : smt_ast_bool) :=
 
 Definition unsat (ast : smt_ast_bool) := ~ sat ast.
 
+
 Lemma unsat_and : forall (e1 e2 : smt_ast_bool),
   unsat e1 ->
   unsat (TypedAST_BinOp Sort_BV1 SMT_And e1 e2).
 Proof.
-Admitted.
+  intros e1 e2 Hunsat.
+  unfold unsat in *.
+  intros Hsat.
+  apply Hunsat.
+  unfold sat in *.
+  destruct Hsat as [m Hsat].
+  exists m.
+  unfold sat_via in *.
+  simpl in Hsat.
+  apply int1_and_one in Hsat.
+  assumption.
+Qed.
 
 Lemma subexpr_non_interference : forall sort (ast : typed_smt_ast sort) x m n,
   (~ contains_var (TypedSMTExpr sort ast) x ) ->
   smt_eval_ast m sort ast = smt_eval_ast (mk_smt_model (x !-> n; bv_model m)) sort ast.
 Proof.
-Admitted.
+  intros sort ast x m n H.
+  induction ast; simpl.
+  { reflexivity. }
+  {
+    destruct (x =? x0)%string eqn:E.
+    {
+      rewrite String.eqb_eq in E.
+      rewrite E in H.
+      destruct H.
+      apply ContainsVar with (sort := s).
+      apply SubExpr_Refl.
+    }
+    {
+      rewrite String.eqb_neq in E.
+      rewrite update_map_neq; try assumption.
+      reflexivity.
+    }
+  }
+  {
+    assert(L1 : ~ contains_var (TypedSMTExpr s ast1) x).
+    { intros Hse. apply H. apply contains_var_binop_intro_l. assumption. }
+    assert(L2 : ~ contains_var (TypedSMTExpr s ast2) x).
+    { intros Hse. apply H. apply contains_var_binop_intro_r. assumption. }
+    apply IHast1 in L1.
+    apply IHast2 in L2.
+    rewrite L1, L2.
+    reflexivity.
+  }
+  {
+    assert(L1 : ~ contains_var (TypedSMTExpr s ast1) x).
+    { intros Hse. apply H. apply contains_var_cmpop_intro_l. assumption. }
+    assert(L2 : ~ contains_var (TypedSMTExpr s ast2) x).
+    { intros Hse. apply H. apply contains_var_cmpop_intro_r. assumption. }
+    apply IHast1 in L1.
+    apply IHast2 in L2.
+    rewrite L1, L2.
+    reflexivity.
+  }
+  {
+    assert(L : ~ contains_var (TypedSMTExpr s ast) x).
+    { intros Hse. apply H. apply contains_var_not_intro. assumption. }
+    apply IHast in L.
+    rewrite L.
+    reflexivity.
+  }
+Qed.
 
 Inductive equiv_typed_smt_expr : typed_smt_expr -> typed_smt_expr -> Prop :=
   | EquivTypedSMTExpr : forall s (ast1 ast2 : typed_smt_ast s),

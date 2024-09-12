@@ -161,6 +161,18 @@ Proof.
   }
 Qed.
 
+Lemma contains_var_binop_intro_l : forall op sort (ast1 ast2 : typed_smt_ast sort) x,
+  contains_var (TypedSMTExpr sort ast1) x ->
+  contains_var (TypedSMTExpr sort (TypedAST_BinOp sort op ast1 ast2)) x.
+Proof.
+Admitted.
+
+Lemma contains_var_binop_intro_r : forall op sort (ast1 ast2 : typed_smt_ast sort) x,
+  contains_var (TypedSMTExpr sort ast2) x ->
+  contains_var (TypedSMTExpr sort (TypedAST_BinOp sort op ast1 ast2)) x.
+Proof.
+Admitted.
+
 Lemma contains_var_cmpop : forall x sort op (ast1 ast2 : typed_smt_ast sort),
   contains_var (TypedSMTExpr Sort_BV1 (TypedAST_CmpOp sort op ast1 ast2)) x ->
   contains_var (TypedSMTExpr sort ast1) x \/ contains_var (TypedSMTExpr sort ast2) x.
@@ -182,6 +194,18 @@ Proof.
   }
 Qed.
 
+Lemma contains_var_cmpop_intro_l : forall op sort (ast1 ast2 : typed_smt_ast sort) x,
+  contains_var (TypedSMTExpr sort ast1) x ->
+  contains_var (TypedSMTExpr Sort_BV1 (TypedAST_CmpOp sort op ast1 ast2)) x.
+Proof.
+Admitted.
+
+Lemma contains_var_cmpop_intro_r : forall op sort (ast1 ast2 : typed_smt_ast sort) x,
+  contains_var (TypedSMTExpr sort ast2) x ->
+  contains_var (TypedSMTExpr Sort_BV1 (TypedAST_CmpOp sort op ast1 ast2)) x.
+Proof.
+Admitted.
+
 Lemma contains_var_not : forall x sort (ast : typed_smt_ast sort),
   contains_var (TypedSMTExpr sort (TypedAST_Not sort ast)) x ->
   contains_var (TypedSMTExpr sort ast) x.
@@ -194,16 +218,11 @@ Proof.
   assumption.
 Qed.
 
-(* TODO: remove *)
-Definition create_zero_by_sort (s : smt_sort) : typed_smt_ast s :=
-  match s with
-  | Sort_BV1 => TypedAST_Const Sort_BV1 zero
-  | Sort_BV8 => TypedAST_Const Sort_BV8 zero
-  | Sort_BV16 => TypedAST_Const Sort_BV16 zero
-  | Sort_BV32 => TypedAST_Const Sort_BV32 zero
-  | Sort_BV64 => TypedAST_Const Sort_BV64 zero
-  end
-.
+Lemma contains_var_not_intro : forall sort (ast : typed_smt_ast sort) x,
+  contains_var (TypedSMTExpr sort ast) x ->
+  contains_var (TypedSMTExpr sort (TypedAST_Not sort ast)) x.
+Proof.
+Admitted.
 
 Fixpoint normalize (s : smt_sort) (ast : typed_smt_ast s) : typed_smt_ast s :=
   match ast with

@@ -336,7 +336,43 @@ Global Instance VInt64 : VInt Int64.int := {
   repr := Int64.repr;
 }.
 
-Lemma int1_and_true : forall (n1 n2 : int1),
-  to_dint (and n1 n2) = di_true -> DI_I1 n1 = di_true.
+Lemma int1_eqb_eq : forall (x y : Int1.int),
+  Int1.eq x y = true -> x = y.
+Proof.
+  intros x y H.
+  assert(L : if Int1.eq x y then x = y else x <> y).
+  { apply Int1.eq_spec. }
+  rewrite H in L.
+  assumption.
+Qed.
+
+Lemma int1_eqb_ne : forall (x y : Int1.int),
+  Int1.eq x y = false -> x <> y.
+Proof.
+  intros x y H.
+  assert(L : if Int1.eq x y then x = y else x <> y).
+  { apply Int1.eq_spec. }
+  rewrite H in L.
+  assumption.
+Qed.
+
+Lemma int1_destruct : forall (n : Int1.int),
+  n = Int1.zero \/ n = Int1.one.
 Proof.
 Admitted.
+
+Lemma int1_and_one : forall (n1 n2 : Int1.int),
+  Int1.and n1 n2 = Int1.one -> n1 = Int1.one.
+Proof.
+  intros n1 n2 H.
+  assert(L: n1 = Int1.zero \/ n1 = Int1.one).
+  { apply int1_destruct. }
+  destruct L as [L | L].
+  {
+    rewrite L in H.
+    rewrite Int1.and_commut in H.
+    rewrite Int1.and_zero in H.
+    discriminate H.
+  }
+  { assumption. }
+Qed.

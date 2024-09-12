@@ -7,7 +7,6 @@ Concrete.v
 Completeness.v
 Coqlib.v
 DynamicValue.v
-ExecutionTree.v
 ExecutionTreeOpt.v
 Symbolic.v
 LLVMAst.v
@@ -18,8 +17,6 @@ Numeric/Floats.v
 Numeric/IEEE754_extra.v
 Numeric/Integers.v
 Numeric/Zbits.v
-SMT/Expr.v
-SMT/Model.v
 SMT/TypedExpr.v
 SMT/TypedModel.v
 Soundness.v
