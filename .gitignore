@@ -41,3 +41,4 @@ autom4te.cache/
 *.v#
 .lia.cache
 *.bc
+klee-*
