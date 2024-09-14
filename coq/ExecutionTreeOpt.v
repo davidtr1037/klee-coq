@@ -467,7 +467,6 @@ Proof.
   }
 Qed.
 
-(* TODO: handle syms *)
 Inductive equiv_sym_state : sym_state -> sym_state -> Prop :=
   | EquivSymState : forall ic c cs pbid ls1 stk1 gs1 pc1 ls2 stk2 gs2 pc2 syms mdl,
       equiv_smt_store ls1 ls2 ->
