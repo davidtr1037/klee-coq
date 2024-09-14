@@ -1,4 +1,3 @@
-(* TODO: do something with exp typ *)
 From Coq Require Import List.
 From Coq Require Import Strings.String.
 From Coq Require Import ZArith.
@@ -41,7 +40,7 @@ Record state : Type := mk_state {
 }.
 
 Definition assert_id := (Name "__assert_fail").
-Definition assert_exp : exp typ := (EXP_Ident (ID_Global assert_id)).
+Definition assert_exp : llvm_exp := (EXP_Ident (ID_Global assert_id)).
 Definition assert_type :=
   TYPE_Function
     TYPE_Void
@@ -104,7 +103,7 @@ Definition lookup_ident (s : dv_store) (g : dv_store) (id : ident) : option dyna
 .
 
 (* TODO: why vellvm passes dtyp? *)
-Fixpoint eval_exp (s : dv_store) (g : dv_store) (t : option typ) (e : exp typ) : option dynamic_value :=
+Fixpoint eval_exp (s : dv_store) (g : dv_store) (t : option typ) (e : llvm_exp) : option dynamic_value :=
   match e with
   | EXP_Ident id => lookup_ident s g id
   | EXP_Integer n =>
@@ -136,7 +135,7 @@ Fixpoint eval_exp (s : dv_store) (g : dv_store) (t : option typ) (e : exp typ) :
   end
 .
 
-Definition eval_constant_exp (t : typ) (e : exp typ) : option dynamic_value :=
+Definition eval_constant_exp (t : typ) (e : llvm_exp) : option dynamic_value :=
   eval_exp empty_dv_store empty_dv_store (Some t) e
 .
 
@@ -208,12 +207,12 @@ Definition get_trailing_cmds (d : llvm_definition) (ic : inst_counter) : option 
 .
 
 Definition klee_make_symbolic_int32_id := (Name "klee_make_symbolic_int32").
-Definition klee_make_symbolic_int32_exp : exp typ :=
+Definition klee_make_symbolic_int32_exp : llvm_exp :=
   EXP_Ident (ID_Global klee_make_symbolic_int32_id).
 Definition klee_make_symbolic_int32_type := TYPE_Function (TYPE_I 32) [] false.
 
 Definition klee_assume_id := (Name "klee_assume_bool").
-Definition klee_assume_exp : exp typ := EXP_Ident (ID_Global klee_assume_id).
+Definition klee_assume_exp : llvm_exp := EXP_Ident (ID_Global klee_assume_id).
 Definition klee_assume_type := TYPE_Function TYPE_Void [(TYPE_I 1)] false.
 
 Inductive step : state -> state -> Prop :=

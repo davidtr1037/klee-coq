@@ -165,7 +165,7 @@ Definition sym_eval_icmp (op : icmp) (e1 e2 : smt_expr) : option smt_expr :=
   end
 .
 
-Fixpoint sym_eval_exp (s : smt_store) (g : smt_store) (t : option typ) (e : exp typ) : option smt_expr :=
+Fixpoint sym_eval_exp (s : smt_store) (g : smt_store) (t : option typ) (e : llvm_exp) : option smt_expr :=
   match e with
   | EXP_Ident id => sym_lookup_ident s g id
   | EXP_Integer n =>
@@ -193,7 +193,7 @@ Fixpoint sym_eval_exp (s : smt_store) (g : smt_store) (t : option typ) (e : exp 
   end
 .
 
-Definition sym_eval_constant_exp (t : typ) (e : exp typ) : option smt_expr :=
+Definition sym_eval_constant_exp (t : typ) (e : llvm_exp) : option smt_expr :=
   sym_eval_exp empty_smt_store empty_smt_store (Some t) e
 .
 

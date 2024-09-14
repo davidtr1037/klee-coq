@@ -11,7 +11,7 @@ Inductive is_supported_ibinop : ibinop -> Prop :=
   | IS_Add : is_supported_ibinop (Add false false)
 .
 
-Inductive is_supported_exp : (exp typ) -> Prop :=
+Inductive is_supported_exp : llvm_exp -> Prop :=
   | IS_EXP_Ident : forall id,
       is_supported_exp (EXP_Ident id)
   | IS_EXP_Integer : forall x,
@@ -79,7 +79,7 @@ Inductive is_supported_definition : llvm_definition -> Prop :=
 .
 
 Inductive is_supported_global : llvm_global -> Prop :=
-  | IS_Global : forall (g : llvm_global) (e : exp typ),
+  | IS_Global : forall (g : llvm_global) (e : llvm_exp),
       (g_exp g) = Some e ->
       is_supported_exp e ->
       is_supported_global g

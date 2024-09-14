@@ -1,4 +1,3 @@
-(* begin hide *)
 Require Import Equalities.
 
 From Coq Require Import ZArith List String.
@@ -16,7 +15,6 @@ Import EqvNotation.
 Import MonadNotation.
 Open Scope list.
 Open Scope monad_scope.
-(* end hide *)
 
 Section CFG.
 
@@ -52,6 +50,7 @@ Arguments m_globals {_ _}.
 Arguments m_declarations {_ _}.
 Arguments m_definitions {_ _}.
 
+Definition llvm_exp := @exp typ.
 Definition llvm_global := @global typ.
 Definition llvm_cmd := @cmd typ.
 Definition llvm_block := @block typ.
@@ -119,7 +118,7 @@ Definition find_function (m : llvm_module) (fid : function_id) : option (llvm_de
   find_map (match_function fid) (m_definitions m)
 .
 
-Definition find_function_by_exp (m : llvm_module) (e : exp typ) : option llvm_definition :=
+Definition find_function_by_exp (m : llvm_module) (e : llvm_exp) : option llvm_definition :=
   match e with
   | EXP_Ident (ID_Global id) => find_function m id
   | _ => None
