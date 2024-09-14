@@ -309,6 +309,22 @@ Proof.
   { assumption. }
 Qed.
 
+Lemma equiv_typed_smt_expr_not_not : forall (ast : typed_smt_ast Sort_BV1),
+  equiv_typed_smt_expr
+    (TypedSMTExpr Sort_BV1 ast)
+    (TypedSMTExpr Sort_BV1 (TypedAST_Not Sort_BV1 (TypedAST_Not Sort_BV1 ast))).
+Proof.
+  intros ast.
+  apply EquivTypedSMTExpr.
+  intros m.
+  simpl.
+  assert(L :
+    (smt_eval_ast m Sort_BV1 ast) = Int1.zero \/ (smt_eval_ast m Sort_BV1 ast) = Int1.one
+  ).
+  { apply int1_destruct. }
+  destruct L as [L | L]; rewrite L; reflexivity.
+Qed.
+
 Lemma implied_negated_condition: forall ast1 ast2 ast3,
   equiv_typed_smt_expr
     (TypedSMTExpr Sort_BV1 (TypedAST_BinOp Sort_BV1 SMT_And ast1 ast2))
@@ -318,4 +334,20 @@ Lemma implied_negated_condition: forall ast1 ast2 ast3,
     (TypedSMTExpr Sort_BV1 (TypedAST_BinOp Sort_BV1 SMT_And ast1 (TypedAST_Not Sort_BV1 ast2)))
     (TypedSMTExpr Sort_BV1 ast1).
 Proof.
-Admitted.
+  intros ast1 ast2 ast3 Heq Hunsat.
+  apply (implied_condition ast1 (TypedAST_Not Sort_BV1 ast2) ast3).
+  {
+    apply equiv_typed_smt_expr_transitivity with
+      (e2 := (TypedSMTExpr Sort_BV1 (TypedAST_BinOp Sort_BV1 SMT_And ast1 ast2))).
+    {
+      apply equiv_typed_smt_expr_binop.
+      { apply equiv_typed_smt_expr_refl. }
+      {
+        apply equiv_typed_smt_expr_symmetry.
+        apply equiv_typed_smt_expr_not_not.
+      }
+    }
+    { assumption. }
+  }
+  { assumption. }
+Qed.

@@ -138,7 +138,7 @@ Definition make_dv (bits : positive) (n : Z) : option dynamic_value :=
   end
 .
 
-Fixpoint eval_ibinop (op : ibinop) (dv1 dv2 : dynamic_value) : option dynamic_value :=
+Definition eval_ibinop (op : ibinop) (dv1 dv2 : dynamic_value) : option dynamic_value :=
   match (dv1, dv2) with
   | (DV_Int (DI_I1 n1),  DV_Int (DI_I1 n2))
   | (DV_Int (DI_I8 n1),  DV_Int (DI_I8 n2))
@@ -173,7 +173,7 @@ Definition eval_icmp_generic {Int} `{VInt Int} (op : icmp) (x y : Int) : dynamic
   DV_Int (if (eval_cmp_result op x y) then di_true else di_false)
 .
 
-Fixpoint eval_icmp (op : icmp) (v1 v2 : dynamic_value) : option dynamic_value :=
+Definition eval_icmp (op : icmp) (v1 v2 : dynamic_value) : option dynamic_value :=
   match (v1, v2) with
   | (DV_Int (DI_I1 n1),  DV_Int (DI_I1 n2))
   | (DV_Int (DI_I8 n1),  DV_Int (DI_I8 n2))
