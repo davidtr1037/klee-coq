@@ -540,7 +540,7 @@ Fixpoint init_global_store_internal (gs : dv_store) (l : list llvm_global) : opt
 (* TODO: change later? *)
 Definition init_global_store (mdl :llvm_module) : dv_store := empty_dv_store.
 
-(* TODO: assumes that there are no parameters *)
+(* TODO: make sure that there are no parameters *)
 Definition init_state (mdl : llvm_module) (fid : function_id) : option state :=
   match (find_function mdl fid) with
   | Some d =>
@@ -569,20 +569,6 @@ Definition init_state (mdl : llvm_module) (fid : function_id) : option state :=
   | None => None
   end
 .
-
-(* TODO: move to ModuleAssumptions? *)
-Lemma init_state_preserves_module : forall mdl fid s,
-  init_state mdl fid = Some s -> module s = mdl.
-Proof.
-  intros mdl fid s H.
-  unfold init_state in H.
-  destruct (find_function mdl fid) as [d | ] eqn:Ed; try discriminate H.
-  destruct (build_inst_counter mdl d) as [ic | ] eqn:Eic; try discriminate H.
-  destruct (entry_block d) as [b | ] eqn:Eb; try discriminate H.
-  destruct (blk_cmds b) as [ | c cs ] eqn:Ecs; try discriminate H.
-  inversion H; subst.
-  reflexivity.
-Qed.
 
 Definition is_safe_program (mdl : llvm_module) (fid : function_id) :=
   exists init_s,
