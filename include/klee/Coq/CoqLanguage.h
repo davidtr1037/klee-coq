@@ -113,15 +113,17 @@ public:
 
 };
 
-class CoqEq : public CoqExpr {
+class CoqBinOp : public CoqExpr {
 
 public:
+
+  std::string op;
 
   ref<CoqExpr> left;
 
   ref<CoqExpr> right;
 
-  CoqEq(const ref<CoqExpr> &left, const ref<CoqExpr> &right);
+  CoqBinOp(const std::string &op, const ref<CoqExpr> &left, const ref<CoqExpr> &right);
 
   std::string dump() const;
 
@@ -129,19 +131,27 @@ public:
 
 };
 
-class CoqImply : public CoqExpr {
+class CoqEq : public CoqBinOp {
 
 public:
 
-  ref<CoqExpr> left;
+  CoqEq(const ref<CoqExpr> &left, const ref<CoqExpr> &right);
 
-  ref<CoqExpr> right;
+};
+
+class CoqAnd : public CoqBinOp {
+
+public:
+
+  CoqAnd(const ref<CoqExpr> &left, const ref<CoqExpr> &right);
+
+};
+
+class CoqImply : public CoqBinOp {
+
+public:
 
   CoqImply(const ref<CoqExpr> &left, const ref<CoqExpr> &right);
-
-  std::string dump() const;
-
-  std::string pretty_dump(int indent = 0) const;
 
 };
 

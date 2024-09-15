@@ -156,40 +156,39 @@ string CoqList::pretty_dump(int indent) const {
   return os.str();
 }
 
-CoqEq::CoqEq(const ref<CoqExpr> &left, const ref<CoqExpr> &right) :
-    left(left), right(right) {
+CoqBinOp::CoqBinOp(const string &op,
+                   const ref<CoqExpr> &left,
+                   const ref<CoqExpr> &right) :
+  op(op), left(left), right(right) {
 
 }
 
-string CoqEq::dump() const {
+string CoqBinOp::dump() const {
   ostringstream os;
-  os << "(" << left->dump() << ") = (" << right->dump() << ")";
+  os << "(" << left->dump() << ") " << op << " (" << right->dump() << ")";
   return os.str();
 }
 
-string CoqEq::pretty_dump(int indent) const {
+string CoqBinOp::pretty_dump(int indent) const {
   ostringstream os;
   os << space(indent);
-  os << "(" << left->pretty_dump() << ") = (" << right->pretty_dump() << ")";
+  os << "(" << left->pretty_dump() << ") " << op << " (" << right->pretty_dump() << ")";
   return os.str();
+}
+
+CoqEq::CoqEq(const ref<CoqExpr> &left, const ref<CoqExpr> &right) :
+    CoqBinOp("=", left, right) {
+
+}
+
+CoqAnd::CoqAnd(const ref<CoqExpr> &left, const ref<CoqExpr> &right) :
+    CoqBinOp("/\\", left, right) {
+
 }
 
 CoqImply::CoqImply(const ref<CoqExpr> &left, const ref<CoqExpr> &right) :
-    left(left), right(right) {
+    CoqBinOp("->", left, right) {
 
-}
-
-string CoqImply::dump() const {
-  ostringstream os;
-  os << "(" << left->dump() << ") -> (" << right->dump() << ")";
-  return os.str();
-}
-
-string CoqImply::pretty_dump(int indent) const {
-  ostringstream os;
-  os << space(indent);
-  os << "(" << left->dump() << ") -> (" << right->dump() << ")";
-  return os.str();
 }
 
 klee::ref<CoqExpr> klee::createZ(uint64_t n) {
