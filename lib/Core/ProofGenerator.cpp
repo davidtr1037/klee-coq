@@ -881,8 +881,25 @@ klee::ref<CoqExpr> ProofGenerator::createLemmaForSubtree(StateInfo &stateInfo,
 klee::ref<CoqTactic> ProofGenerator::getTacticForStep(StateInfo &stateInfo,
                                                       SuccessorInfo &si1,
                                                       SuccessorInfo &si2) {
-  assert(si1.isSat || si2.isSat);
   ref<CoqTactic> tactic1, tactic2;
+  getTacticsForBranches(stateInfo, si1, si2, tactic1, tactic2);
+  return new Block(
+    {
+      new Intros({"s", "Hstep"}),
+      new Inversion("Hstep"),
+      new Subst(),
+      tactic1,
+      tactic2,
+    }
+  );
+}
+
+void ProofGenerator::getTacticsForBranches(StateInfo &stateInfo,
+                                           SuccessorInfo &si1,
+                                           SuccessorInfo &si2,
+                                           ref<CoqTactic> &tactic1,
+                                           ref<CoqTactic> &tactic2) {
+  assert(si1.isSat || si2.isSat);
 
   if (!si1.isSat || !si2.isSat) {
     uint64_t axiomID = allocateAxiomID();
@@ -908,16 +925,6 @@ klee::ref<CoqTactic> ProofGenerator::getTacticForStep(StateInfo &stateInfo,
     tactic1 = getTacticForSat(stateInfo, *si1.state, 0);
     tactic2 = getTacticForSat(stateInfo, *si2.state, 1);
   }
-
-  return new Block(
-    {
-      new Intros({"s", "Hstep"}),
-      new Inversion("Hstep"),
-      new Subst(),
-      tactic1,
-      tactic2,
-    }
-  );
 }
 
 klee::ref<CoqTactic> ProofGenerator::getTacticForUnsat(ref<CoqExpr> pc, uint64_t axiomID) {

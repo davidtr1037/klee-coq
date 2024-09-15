@@ -182,6 +182,12 @@ public:
                                   SuccessorInfo &successor1,
                                   SuccessorInfo &successor2);
 
+  void getTacticsForBranches(StateInfo &stateInfo,
+                             SuccessorInfo &si1,
+                             SuccessorInfo &si2,
+                             ref<CoqTactic> &tactic1,
+                             ref<CoqTactic> &tactic2);
+
   ref<CoqTactic> getTacticForUnsat(ref<CoqExpr> pc, uint64_t axiomID);
 
   ref<CoqExpr> getUnsatAxiom(ref<CoqExpr> pc, uint64_t axiomID);
