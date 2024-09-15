@@ -249,11 +249,15 @@ string CoqTactic::dump() const {
 }
 
 string CoqTactic::dump(int indent) const {
-  assert(false);
+  return dump(indent, true);
 }
 
 string CoqTactic::pretty_dump(int indent) const {
   return dump(indent);
+}
+
+string CoqTactic::dump(int indent, bool end) const {
+  assert(false);
 }
 
 BasicTactic::BasicTactic(const string &name) : name(name) {
@@ -313,6 +317,23 @@ string Apply::dump(int indent) const {
   return os.str();
 }
 
+Concat::Concat(const vector<ref<CoqTactic>> &tactics) :
+  tactics(tactics) {
+
+}
+
+string Concat::dump(int indent) const {
+  ostringstream os;
+  for (size_t i = 0; i < tactics.size(); i++) {
+    if (i != tactics.size() - 1) {
+      os << tactics[i]->dump(indent, false) << "\n";
+    } else {
+      os << tactics[i]->dump(indent);
+    }
+  }
+  return os.str();
+}
+
 Destruct::Destruct(const string &var) : var(var) {
 
 }
@@ -330,7 +351,7 @@ Destruct::Destruct(const string &var,
 
 }
 
-string Destruct::dump(int indent) const {
+string Destruct::dump(int indent, bool end) const {
   ostringstream os;
   os << space(indent) << "destruct " << var;
   if (!schemes.empty()) {
@@ -351,7 +372,7 @@ string Destruct::dump(int indent) const {
   if (!eqn.empty()) {
     os << " eqn:" << eqn;
   }
-  os << ".";
+  os << (end ? "." : ";");
   return os.str();
 }
 

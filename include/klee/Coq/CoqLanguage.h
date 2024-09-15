@@ -174,6 +174,8 @@ public:
     virtual std::string dump(int indent) const;
 
     virtual std::string pretty_dump(int indent = 0) const;
+
+    virtual std::string dump(int indent, bool end) const;
 };
 
 class BasicTactic : public CoqTactic {
@@ -210,6 +212,17 @@ public:
 
 };
 
+class Concat : public CoqTactic {
+
+public:
+
+    std::vector<ref<CoqTactic>> tactics;
+
+    Concat(const std::vector<ref<CoqTactic>> &tactics);
+
+    std::string dump(int indent) const;
+};
+
 class Destruct : public CoqTactic {
 
 public:
@@ -229,7 +242,7 @@ public:
            const std::vector<std::vector<std::string>> &schemes,
            const std::string &eqn);
 
-  std::string dump(int indent) const;
+  std::string dump(int indent, bool end) const;
 
 };
 
