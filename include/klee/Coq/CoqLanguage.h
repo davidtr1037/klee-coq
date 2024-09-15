@@ -113,6 +113,38 @@ public:
 
 };
 
+class CoqEq : public CoqExpr {
+
+public:
+
+  ref<CoqExpr> left;
+
+  ref<CoqExpr> right;
+
+  CoqEq(const ref<CoqExpr> &left, const ref<CoqExpr> &right);
+
+  std::string dump() const;
+
+  std::string pretty_dump(int indent = 0) const;
+
+};
+
+class CoqImply : public CoqExpr {
+
+public:
+
+  ref<CoqExpr> left;
+
+  ref<CoqExpr> right;
+
+  CoqImply(const ref<CoqExpr> &left, const ref<CoqExpr> &right);
+
+  std::string dump() const;
+
+  std::string pretty_dump(int indent = 0) const;
+
+};
+
 ref<CoqExpr> createZ(uint64_t n);
 
 class CoqImport : public CoqExpr {
@@ -391,6 +423,8 @@ public:
 
   std::string name;
 
+  std::vector<std::string> vars;
+
   ref<CoqExpr> body;
 
   ref<CoqTactic> proof;
@@ -398,6 +432,12 @@ public:
   bool isAdmitted;
 
   CoqLemma(const std::string &name,
+           const ref<CoqExpr> &body,
+           const ref<CoqTactic> &proof,
+           bool isAdmitted = false);
+
+  CoqLemma(const std::string &name,
+           const std::vector<std::string> &vars,
            const ref<CoqExpr> &body,
            const ref<CoqTactic> &proof,
            bool isAdmitted = false);

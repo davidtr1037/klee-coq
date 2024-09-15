@@ -156,6 +156,42 @@ string CoqList::pretty_dump(int indent) const {
   return os.str();
 }
 
+CoqEq::CoqEq(const ref<CoqExpr> &left, const ref<CoqExpr> &right) :
+    left(left), right(right) {
+
+}
+
+string CoqEq::dump() const {
+  ostringstream os;
+  os << "(" << left->dump() << ") = (" << right->dump() << ")";
+  return os.str();
+}
+
+string CoqEq::pretty_dump(int indent) const {
+  ostringstream os;
+  os << space(indent);
+  os << "(" << left->pretty_dump() << ") = (" << right->pretty_dump() << ")";
+  return os.str();
+}
+
+CoqImply::CoqImply(const ref<CoqExpr> &left, const ref<CoqExpr> &right) :
+    left(left), right(right) {
+
+}
+
+string CoqImply::dump() const {
+  ostringstream os;
+  os << "(" << left->dump() << ") -> (" << right->dump() << ")";
+  return os.str();
+}
+
+string CoqImply::pretty_dump(int indent) const {
+  ostringstream os;
+  os << space(indent);
+  os << "(" << left->dump() << ") -> (" << right->dump() << ")";
+  return os.str();
+}
+
 klee::ref<CoqExpr> klee::createZ(uint64_t n) {
   ostringstream os;
   os << "(" << n << ")" << "%Z";
@@ -452,9 +488,27 @@ CoqLemma::CoqLemma(const string &name,
 
 }
 
+CoqLemma::CoqLemma(const string &name,
+                   const vector<string> &vars,
+                   const ref<CoqExpr> &body,
+                   const ref<CoqTactic> &proof,
+                   bool isAdmitted) :
+  name(name), vars(vars), body(body), proof(proof), isAdmitted(isAdmitted) {
+
+}
+
 string CoqLemma::dump() const {
   ostringstream os;
-  os << "Lemma " << name << " : " << body->dump() << ".\n";
+  os << "Lemma " << name << " : ";
+  if (!vars.empty()) {
+    os << "forall";
+    for (string v : vars) {
+      os << " " << v;
+    }
+    os << ", ";
+  }
+  os << body->dump() << ".\n";
+
   os << "Proof.\n";
   if (!proof.isNull()) {
     os << proof->dump(0) << "\n";
