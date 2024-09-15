@@ -385,9 +385,45 @@ Proof.
   intros ic cid v e c cs pbid ls stk gs syms pc mdl s Hstep.
   inversion Hstep; subst.
   exists se.
-  split.
-  { assumption. }
-  { reflexivity. }
+  split; try assumption.
+  reflexivity.
+Qed.
+
+Lemma inversion_phi : forall ic cid v t args c cs pbid ls stk gs syms pc mdl s,
+  sym_step
+    (mk_sym_state
+      ic
+      (CMD_Phi cid (Phi v t args))
+      (c :: cs)
+      (Some pbid)
+      ls
+      stk
+      gs
+      syms
+      pc
+      mdl
+    )
+    s ->
+    exists se,
+      (sym_eval_phi_args ls gs t args pbid) = Some se /\
+      s = (mk_sym_state
+        (next_inst_counter ic c)
+        c
+        cs
+        (Some pbid)
+        (v !-> Some se; ls)
+        stk
+        gs
+        syms
+        pc
+        mdl
+      ).
+Proof.
+  intros ic cid v t args c cs pbid ls stk gs syms pc mdl s Hstep.
+  inversion Hstep.
+  exists se.
+  split; try assumption.
+  reflexivity.
 Qed.
 
 Lemma inversion_unconditional_br : forall ic cid tbid pbid ls stk gs syms pc mdl s,

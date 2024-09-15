@@ -81,7 +81,56 @@ klee::ref<CoqTactic> OptimizedProofGenerator::getTacticForEquivAssignment(StateI
 
 klee::ref<CoqTactic> OptimizedProofGenerator::getTacticForEquivPHI(StateInfo &si,
                                                                    ExecutionState &successor) {
-  return ProofGenerator::getTacticForEquivPHI(si, successor);
+  ref<CoqTactic> t;
+  if (si.wasRegisterUpdated) {
+    vector<ref<CoqExpr>> pairs;
+    for (RegisterUpdate &ru : si.suffix) {
+      ref<CoqExpr> pair = new CoqPair(
+        moduleTranslator->createName(ru.name),
+        createPlaceHolder()
+      );
+      pairs.push_back(pair);
+    }
+    t = new Block(
+      {
+        new Apply(
+          "equiv_smt_store_on_optimized_update",
+          {
+            createPlaceHolder(),
+            createPlaceHolder(),
+            createPlaceHolder(),
+            createPlaceHolder(),
+            createPlaceHolder(),
+            new CoqList(pairs),
+          }
+        ),
+        new Inversion("Heval"),
+        new Subst(),
+        new Apply("equiv_smt_expr_refl"),
+      }
+    );
+  } else {
+    t = new Block(
+      {
+        new Inversion("Heval"),
+        new Subst(),
+        new Apply("equiv_smt_store_refl"),
+      }
+    );
+  }
+  return new Block(
+    {
+      new Apply("inversion_phi", "Hstep"),
+      new Destruct("Hstep", {{"se", "Hstep"}}),
+      new Destruct("Hstep", {{"Heval", "Heq"}}),
+      new Rewrite("Heq"),
+      new Apply("EquivSymState"),
+      t,
+      new Block({new Apply("equiv_sym_stack_refl")}),
+      new Block({new Apply("equiv_smt_store_refl")}),
+      new Block({new Apply("equiv_smt_expr_refl")}),
+    }
+  );
 }
 
 klee::ref<CoqTactic> OptimizedProofGenerator::getTacticForEquivBranch(StateInfo &si,

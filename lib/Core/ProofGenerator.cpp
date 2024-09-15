@@ -621,7 +621,6 @@ klee::ref<CoqTactic> ProofGenerator::getTacticForEquivPHI(StateInfo &si,
   } else {
     t = new Block(
       {
-        /* TODO: avoid */
         new Inversion("H14"),
         new Subst(),
         new Apply("equiv_smt_store_refl"),
