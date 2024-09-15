@@ -661,7 +661,7 @@ klee::ref<CoqTactic> ProofGenerator::getTacticForEquivBranch(StateInfo &si,
           new Block(
             {
               new Apply("injection_some", "H12"),
-              new Apply("injection_ast", "H12"),
+              new Apply("injection_expr", "H12"),
               new Subst(),
               new Apply("equiv_smt_expr_normalize_simplify"),
             }
@@ -675,7 +675,7 @@ klee::ref<CoqTactic> ProofGenerator::getTacticForEquivBranch(StateInfo &si,
       t = new Block(
         {
           new Apply("injection_some", "H12"),
-          new Apply("injection_ast", "H12"),
+          new Apply("injection_expr", "H12"),
           new Subst(),
           new Apply("equiv_smt_expr_normalize_simplify"),
         }
@@ -738,7 +738,7 @@ klee::ref<CoqTactic> ProofGenerator::getTacticForEquivCall(StateInfo &si,
         new Block(
           {
             new Apply("injection_some", "H16"),
-            new Apply("injection_ast", "H16"),
+            new Apply("injection_expr", "H16"),
             new Subst(),
             new Apply("equiv_smt_expr_normalize_simplify"),
           }
@@ -928,7 +928,6 @@ klee::ref<CoqTactic> ProofGenerator::getTacticForUnsat(ref<CoqExpr> pc, uint64_t
     {
       new Right(),
       new Apply("Unsat_State"),
-      new Inversion("H12"),
       new Apply(
         "equiv_smt_expr_unsat",
         {
@@ -940,7 +939,7 @@ klee::ref<CoqTactic> ProofGenerator::getTacticForUnsat(ref<CoqExpr> pc, uint64_t
         {
           new Apply("equiv_smt_expr_symmetry"),
           new Apply("injection_some", "H12"),
-          new Apply("injection_ast", "H12"),
+          new Apply("injection_expr", "H12"),
           new Subst(),
           new Apply("equiv_smt_expr_normalize_simplify"),
         }

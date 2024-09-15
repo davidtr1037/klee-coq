@@ -198,6 +198,15 @@ Proof.
   { assumption. }
 Qed.
 
+Lemma equiv_smt_store_on_update_same : forall s v se1 se2,
+  Some se1 = Some se2 ->
+  equiv_smt_store (v !-> Some se2; s) (v !-> Some se1; s).
+Proof.
+  intros s v se1 se2 H.
+  inversion H; subst.
+  apply equiv_smt_store_refl.
+Qed.
+
 Lemma equiv_smt_store_on_optimized_update: forall m x se1 se2 se3 l,
   equiv_smt_expr se2 se3 ->
   equiv_smt_store
@@ -351,6 +360,17 @@ Proof.
   intros sort ast1 ast2 H.
   inversion H.
   apply inj_pair2.
+  assumption.
+Qed.
+
+Lemma equiv_smt_expr_1 : forall se se_no_opt se_opt,
+  Some se_no_opt = Some se ->
+  equiv_smt_expr se_no_opt se_opt ->
+  equiv_smt_expr se se_opt.
+Proof.
+  intros se se_no_opt se_opt Heq Hequiv.
+  apply injection_some in Heq.
+  subst.
   assumption.
 Qed.
 

@@ -40,8 +40,15 @@ klee::ref<CoqTactic> OptimizedProofGenerator::getTacticForEquivAssignment(StateI
             new CoqList(pairs),
           }
         ),
-        new Inversion("Heval"),
-        new Subst(),
+        new Apply(
+          "equiv_smt_expr_1",
+          {
+            createPlaceHolder(),
+            createPlaceHolder(),
+            createPlaceHolder(),
+            new CoqVariable("Heval"),
+          }
+        ),
         new Apply("equiv_smt_expr_normalize_simplify"),
       }
     );
@@ -104,17 +111,31 @@ klee::ref<CoqTactic> OptimizedProofGenerator::getTacticForEquivPHI(StateInfo &si
             new CoqList(pairs),
           }
         ),
-        new Inversion("Heval"),
-        new Subst(),
+        new Apply(
+          "equiv_smt_expr_1",
+          {
+            createPlaceHolder(),
+            createPlaceHolder(),
+            createPlaceHolder(),
+            new CoqVariable("Heval"),
+          }
+        ),
         new Apply("equiv_smt_expr_refl"),
       }
     );
   } else {
     t = new Block(
       {
-        new Inversion("Heval"),
-        new Subst(),
-        new Apply("equiv_smt_store_refl"),
+        new Apply(
+          "equiv_smt_store_on_update_same",
+          {
+            createPlaceHolder(),
+            createPlaceHolder(),
+            createPlaceHolder(),
+            createPlaceHolder(),
+            new CoqVariable("Heval"),
+          }
+        ),
       }
     );
   }
@@ -155,7 +176,7 @@ klee::ref<CoqTactic> OptimizedProofGenerator::getTacticForEquivBranch(StateInfo 
           new Block(
             {
               new Apply("injection_some", "Heval"),
-              new Apply("injection_ast", "Heval"),
+              new Apply("injection_expr", "Heval"),
               new Subst(),
               new Apply("equiv_smt_expr_normalize_simplify"),
             }
@@ -169,7 +190,7 @@ klee::ref<CoqTactic> OptimizedProofGenerator::getTacticForEquivBranch(StateInfo 
       t = new Block(
         {
           new Apply("injection_some", "Heval"),
-          new Apply("injection_ast", "Heval"),
+          new Apply("injection_expr", "Heval"),
           new Subst(),
           new Apply("equiv_smt_expr_normalize_simplify"),
         }
@@ -260,7 +281,6 @@ klee::ref<CoqTactic> OptimizedProofGenerator::getTacticForUnsat(ref<CoqExpr> pc,
     {
       new Right(),
       new Apply("Unsat_State"),
-      new Inversion("Heval"),
       new Apply(
         "equiv_smt_expr_unsat",
         {
@@ -272,7 +292,7 @@ klee::ref<CoqTactic> OptimizedProofGenerator::getTacticForUnsat(ref<CoqExpr> pc,
         {
           new Apply("equiv_smt_expr_symmetry"),
           new Apply("injection_some", "Heval"),
-          new Apply("injection_ast", "Heval"),
+          new Apply("injection_expr", "Heval"),
           new Subst(),
           new Apply("equiv_smt_expr_normalize_simplify"),
         }
