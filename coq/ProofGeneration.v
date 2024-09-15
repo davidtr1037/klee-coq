@@ -1,5 +1,6 @@
 From Coq Require Import List.
 From Coq Require Import Logic.Eqdep.
+From Coq Require Import ZArith.
 
 Import ListNotations.
 
@@ -465,4 +466,79 @@ Proof.
   split; try assumption.
   split; try assumption.
   reflexivity.
+Qed.
+
+Lemma inversion_br : forall ic cid e bid1 bid2 pbid ls stk gs syms pc mdl s,
+  sym_step
+    (mk_sym_state
+      ic
+      (CMD_Term cid (TERM_Br ((TYPE_I 1), e) bid1 bid2))
+      []
+      pbid
+      ls
+      stk
+      gs
+      syms
+      pc
+      mdl
+    )
+    s ->
+  exists cond d b c cs,
+    (sym_eval_exp ls gs (Some (TYPE_I 1)) e) = Some (Expr Sort_BV1 cond) /\
+    (find_function mdl (ic_fid ic)) = Some d /\
+    (
+      (
+        (fetch_block d bid1) = Some b /\
+        (blk_cmds b) = c :: cs /\
+        s = (mk_sym_state
+          (mk_inst_counter (ic_fid ic) bid1 (get_cmd_id c))
+          c
+          cs
+          (Some (ic_bid ic))
+          ls
+          stk
+          gs
+          syms
+          (AST_BinOp Sort_BV1 SMT_And pc cond)
+          mdl
+        )
+      ) \/
+      (
+        (fetch_block d bid2) = Some b /\
+        (blk_cmds b) = c :: cs /\
+        s = (mk_sym_state
+          (mk_inst_counter (ic_fid ic) bid2 (get_cmd_id c))
+          c
+          cs
+          (Some (ic_bid ic))
+          ls
+          stk
+          gs
+          syms
+          (AST_BinOp Sort_BV1 SMT_And pc (AST_Not Sort_BV1 cond))
+          mdl
+        )
+      )
+    ).
+Proof.
+  intros ic cid e bid1 bid2 pbid ls stk gs syms pc mdl s Hstep.
+  inversion Hstep; subst.
+  {
+    exists cond, d, b, c, cs.
+    split; try assumption.
+    split; try assumption.
+    left.
+    split; try assumption.
+    split; try assumption.
+    reflexivity.
+  }
+  {
+    exists cond, d, b, c, cs.
+    split; try assumption.
+    split; try assumption.
+    right.
+    split; try assumption.
+    split; try assumption.
+    reflexivity.
+  }
 Qed.
