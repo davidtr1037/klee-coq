@@ -154,8 +154,8 @@ public:
                                    ExecutionState &successor,
                                    ProofHint *hint);
 
-  ref<CoqTactic> getTacticForEquivAssignment(StateInfo &si,
-                                             ExecutionState &successor);
+  virtual ref<CoqTactic> getTacticForEquivAssignment(StateInfo &si,
+                                                     ExecutionState &successor);
 
   ref<CoqTactic> getTacticForEquivPHI(StateInfo &si,
                                       ExecutionState &successor);

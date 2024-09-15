@@ -28,6 +28,7 @@
 #include "TimingSolver.h"
 #include "UserSearcher.h"
 #include "ProofGenerator.h"
+#include "OptimizedProofGenerator.h"
 
 #include "klee/ADT/KTest.h"
 #include "klee/ADT/RNG.h"
@@ -488,6 +489,12 @@ cl::opt<std::string> ProofOutputPath(
   "proof-output-path",
   cl::desc(""),
   cl::value_desc(""),
+  cl::cat(ProofGenerationCat));
+
+cl::opt<bool> OptimizeProof(
+  "optimize-proof",
+  cl::init(false),
+  cl::desc(""),
   cl::cat(ProofGenerationCat));
 
 } // namespace
@@ -3666,7 +3673,11 @@ void Executor::run(ExecutionState &initialState) {
     if (!os) {
       klee_error("failed to open file '%s' error '%s'", ProofOutputPath.c_str(), error.c_str());
     }
-    proofGenerator = new ProofGenerator(*kmodule->module, *os);
+    if (OptimizeProof) {
+      proofGenerator = new OptimizedProofGenerator(*kmodule->module, *os);
+    } else {
+      proofGenerator = new ProofGenerator(*kmodule->module, *os);
+    }
     proofGenerator->generate();
   }
 
