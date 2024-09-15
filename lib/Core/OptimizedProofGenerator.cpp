@@ -78,3 +78,52 @@ klee::ref<CoqTactic> OptimizedProofGenerator::getTacticForEquivAssignment(StateI
     }
   );
 }
+
+klee::ref<CoqTactic> OptimizedProofGenerator::getTacticForEquivPHI(StateInfo &si,
+                                                                   ExecutionState &successor) {
+  return ProofGenerator::getTacticForEquivPHI(si, successor);
+}
+
+klee::ref<CoqTactic> OptimizedProofGenerator::getTacticForEquivBranch(StateInfo &si,
+                                                                      ExecutionState &successor,
+                                                                      ProofHint *hint) {
+
+  BranchInst *bi = cast<BranchInst>(si.inst);
+  if (bi->isConditional()) {
+    return ProofGenerator::getTacticForEquivBranch(si, successor, hint);
+  } else {
+    return new Block(
+      {
+        new Apply("inversion_unconditional_br", "Hstep"),
+        new Destruct("Hstep", {{"d", "Hstep"}}),
+        new Destruct("Hstep", {{"b", "Hstep"}}),
+        new Destruct("Hstep", {{"c", "Hstep"}}),
+        new Destruct("Hstep", {{"cs", "Hstep"}}),
+        new Destruct("Hstep", {{"Hd", "Hb"}}),
+        new Destruct("Hb", {{"Hb", "Hc"}}),
+        new Destruct("Hc", {{"Hc", "Hcs"}}),
+        new Inversion("Hd"),
+        new Subst(),
+        new Inversion("Hb"),
+        new Subst(),
+        new Inversion("Hc"),
+        new Subst(),
+        new Apply("EquivSymState"),
+        new Block({new Apply("equiv_smt_store_refl")}),
+        new Block({new Apply("equiv_sym_stack_refl")}),
+        new Block({new Apply("equiv_smt_store_refl")}),
+        new Block({new Apply("equiv_smt_expr_refl")}),
+      }
+    );
+  }
+}
+
+klee::ref<CoqTactic> OptimizedProofGenerator::getTacticForEquivCall(StateInfo &si,
+                                                                    ExecutionState &successor) {
+  return ProofGenerator::getTacticForEquivCall(si, successor);
+}
+
+klee::ref<CoqTactic> OptimizedProofGenerator::getTacticForEquivReturn(StateInfo &si,
+                                                                      ExecutionState &successor) {
+  return ProofGenerator::getTacticForEquivReturn(si, successor);
+}

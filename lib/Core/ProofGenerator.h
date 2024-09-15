@@ -157,18 +157,18 @@ public:
   virtual ref<CoqTactic> getTacticForEquivAssignment(StateInfo &si,
                                                      ExecutionState &successor);
 
-  ref<CoqTactic> getTacticForEquivPHI(StateInfo &si,
-                                      ExecutionState &successor);
+  virtual ref<CoqTactic> getTacticForEquivPHI(StateInfo &si,
+                                              ExecutionState &successor);
 
-  ref<CoqTactic> getTacticForEquivBranch(StateInfo &si,
-                                         ExecutionState &successor,
-                                         ProofHint *hint);
+  virtual ref<CoqTactic> getTacticForEquivBranch(StateInfo &si,
+                                                 ExecutionState &successor,
+                                                 ProofHint *hint);
 
-  ref<CoqTactic> getTacticForEquivCall(StateInfo &si,
-                                       ExecutionState &successor);
+  virtual ref<CoqTactic> getTacticForEquivCall(StateInfo &si,
+                                               ExecutionState &successor);
 
-  ref<CoqTactic> getTacticForEquivReturn(StateInfo &si,
-                                         ExecutionState &successor);
+  virtual ref<CoqTactic> getTacticForEquivReturn(StateInfo &si,
+                                                 ExecutionState &successor);
 
   void handleStep(StateInfo &stateInfo,
                   SuccessorInfo &successor1,
