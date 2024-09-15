@@ -12,8 +12,8 @@
 #include "llvm/IR/Module.h"
 #include "llvm/Support/raw_ostream.h"
 
+#include <map>
 #include <string>
-#include <vector>
 
 namespace klee {
 
@@ -21,7 +21,9 @@ class OptimizedProofGenerator : public ProofGenerator {
 
 private:
 
-  std::vector<ref<CoqLemma>> lemmas;
+  std::map<llvm::Function *, std::string> functionLemmas;
+
+  std::map<llvm::BasicBlock *, std::string> bbLemmas;
 
 public:
 

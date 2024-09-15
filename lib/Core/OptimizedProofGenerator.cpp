@@ -25,6 +25,8 @@ void OptimizedProofGenerator::generate() {
 }
 
 void OptimizedProofGenerator::generateModuleLemmas() {
+  vector<ref<CoqLemma>> lemmas;
+
   for (Function &f : m) {
     if (moduleTranslator->isSupportedFunction(f)) {
       if (f.isDeclaration()) {
@@ -33,11 +35,14 @@ void OptimizedProofGenerator::generateModuleLemmas() {
 
       ref<CoqLemma> lemma = getFunctionLemma(f);
       lemmas.push_back(lemma);
+      functionLemmas.insert(std::make_pair(&f, lemma->name));
 
-      //for (BasicBlock &bb : f) {
-      //  ref<CoqLemma> lemma = getBasicBlockLemma(bb);
-      //  lemmas.push_back(lemma);
-      //}
+
+      for (BasicBlock &bb : f) {
+        ref<CoqLemma> lemma = getBasicBlockLemma(bb);
+        lemmas.push_back(lemma);
+        bbLemmas.insert(std::make_pair(&bb, lemma->name));
+      }
     }
   }
 
@@ -76,6 +81,44 @@ klee::ref<CoqLemma> OptimizedProofGenerator::getFunctionLemma(Function &f) {
   return new CoqLemma(
     "L_" + f.getName().str(),
     {"d"},
+    body,
+    proof
+  );
+}
+
+klee::ref<CoqLemma> OptimizedProofGenerator::getBasicBlockLemma(BasicBlock &bb) {
+  ref<CoqExpr> body = new CoqImply(
+    new CoqEq(
+      new CoqApplication(
+        new CoqVariable("fetch_block"),
+        {
+          moduleTranslator->translateFunctionCached(*bb.getParent()),
+          moduleTranslator->createName(bb.getName().str()),
+        }
+      ),
+      createSome(new CoqVariable("b"))
+    ),
+    new CoqEq(
+      new CoqVariable("b"),
+      moduleTranslator->translateBasicBlockCached(bb)
+    )
+  );
+
+  ref<CoqTactic> proof = new Block(
+    {
+      new Intros({"b", "H"}),
+      new Inversion("H"),
+      new Subst(),
+      new Reflexivity(),
+    }
+  );
+
+  string name = "L_" + bb.getName().str();
+  std::replace(name.begin(), name.end(), '.', '_');
+
+  return new CoqLemma(
+    name,
+    {"b"},
     body,
     proof
   );
