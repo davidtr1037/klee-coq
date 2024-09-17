@@ -186,6 +186,16 @@ Proof.
   inversion H.
 Qed.
 
+Lemma equiv_smt_store_via_some_injection : forall ls1 ls2 ls3,
+  Some ls1 = Some ls2 ->
+  equiv_smt_store ls1 ls3 ->
+  equiv_smt_store ls2 ls3.
+Proof.
+  intros ls1 ls2 ls3 Hs Heq.
+  inversion Hs; subst.
+  assumption.
+Qed.
+
 Lemma equiv_smt_store_on_update : forall s v se1 se2 se3,
   Some se1 = Some se2 ->
   equiv_smt_expr se1 se3 ->
@@ -592,5 +602,60 @@ Proof.
     split; try assumption.
     split; try assumption.
     reflexivity.
+  }
+Qed.
+
+Lemma inversion_call : forall ic cid v t f args anns c cs pbid ls stk gs syms pc mdl d s,
+  (find_function_by_exp mdl f) = Some d ->
+  sym_step
+    (mk_sym_state
+      ic
+      (CMD_Inst cid (INSTR_Call v (t, f) args anns))
+      (c :: cs)
+      pbid
+      ls
+      stk
+      gs
+      syms
+      pc
+      mdl
+    )
+    s ->
+    exists b c' cs' ls',
+      (dc_type (df_prototype d)) = TYPE_Function t (get_arg_types args) false /\
+      (entry_block d) = Some b /\
+      (blk_cmds b) = c' :: cs' /\
+      (create_local_smt_store d ls gs args) = Some ls' /\
+      s = (mk_sym_state
+        (mk_inst_counter (get_fid d) (blk_id b) (get_cmd_id c'))
+        c'
+        cs'
+        None
+        ls'
+        ((Sym_Frame ls (next_inst_counter ic c) pbid (Some v)) :: stk)
+        gs
+        syms
+        pc
+        mdl
+      ).
+Proof.
+  intros ic cid v t f args anns c cs pbid ls stk gs syms pc mdl d s Hd Hstep.
+  inversion Hstep; subst.
+  exists b, c', cs', ls'.
+  {
+    rewrite Hd in H16.
+    inversion H16; subst.
+    rename d0 into d.
+    split; try assumption.
+    split; try assumption.
+    split; try assumption.
+    split; try assumption.
+    reflexivity.
+  }
+  {
+    unfold find_function_by_exp in Hd.
+    simpl in Hd.
+    rewrite Hd in H16.
+    discriminate H16.
   }
 Qed.

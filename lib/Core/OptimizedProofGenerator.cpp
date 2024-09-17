@@ -39,9 +39,15 @@ void OptimizedProofGenerator::generateModuleLemmas() {
 
 
       for (BasicBlock &bb : f) {
+        /* TODO: add docs */
         ref<CoqLemma> lemma = getBasicBlockLemma(bb);
         lemmas.push_back(lemma);
         bbLemmas.insert(std::make_pair(&bb, lemma->name));
+        /* TODO: add docs */
+        ref<CoqLemma> bbEntryLemma = getBasicBlockEntryLemma(bb);
+        lemmas.push_back(bbEntryLemma);
+        bbEntryLemmas.insert(std::make_pair(&bb, bbEntryLemma->name));
+        /* TODO: add docs */
         ref<CoqLemma> decompositionLemma = getBasicBlockDecompositionLemma(bb);
         lemmas.push_back(decompositionLemma);
         bbDecompositionLemmas.insert(std::make_pair(&bb, decompositionLemma->name));
@@ -118,6 +124,38 @@ klee::ref<CoqLemma> OptimizedProofGenerator::getBasicBlockLemma(BasicBlock &bb) 
 
   return new CoqLemma(
     "L_bb_" + to_string(moduleTranslator->getBasicBlockID(bb)),
+    {"b"},
+    body,
+    proof
+  );
+}
+
+klee::ref<CoqLemma> OptimizedProofGenerator::getBasicBlockEntryLemma(BasicBlock &bb) {
+  ref<CoqExpr> body = new CoqImply(
+    new CoqEq(
+      new CoqApplication(
+        new CoqVariable("entry_block"),
+        {moduleTranslator->translateFunctionCached(*bb.getParent())}
+      ),
+      createSome(new CoqVariable("b"))
+    ),
+    new CoqEq(
+      new CoqVariable("b"),
+      moduleTranslator->translateBasicBlockCached(bb)
+    )
+  );
+
+  ref<CoqTactic> proof = new Block(
+    {
+      new Intros({"b", "H"}),
+      new Inversion("H"),
+      new Subst(),
+      new Reflexivity(),
+    }
+  );
+
+  return new CoqLemma(
+    "L_entry_bb_" + to_string(moduleTranslator->getBasicBlockID(bb)),
     {"b"},
     body,
     proof
@@ -412,9 +450,70 @@ klee::ref<CoqTactic> OptimizedProofGenerator::getTacticForEquivBranch(StateInfo 
   }
 }
 
-klee::ref<CoqTactic> OptimizedProofGenerator::getTacticForEquivCall(StateInfo &si,
-                                                                    ExecutionState &successor) {
-  return ProofGenerator::getTacticForEquivCall(si, successor);
+klee::ref<CoqTactic> OptimizedProofGenerator::getTacticForEquivSimpleCall(StateInfo &si,
+                                                                          ExecutionState &successor) {
+  CallInst *callInst = dyn_cast<CallInst>(si.inst);
+  Function *f = callInst->getCalledFunction();
+  assert(f);
+
+  /* target basic block */
+  BasicBlock *bb = &*f->begin();
+
+  assert(bbEntryLemmas.find(bb) != bbEntryLemmas.end());
+  string bbEntryLemma = bbLemmas[bb];
+
+  assert(bbDecompositionLemmas.find(bb) != bbDecompositionLemmas.end());
+  string bbDecompositionLemma = bbDecompositionLemmas[bb];
+
+  if (callInst->getFunctionType()->getReturnType()->isVoidTy()) {
+    return ProofGenerator::getTacticForEquivSimpleCall(si, successor);
+  } else {
+    /* arguments for inversion_call */
+    map<string, ref<CoqExpr>> kwargs;
+    kwargs["d"] = moduleTranslator->translateFunctionCached(*f);
+
+    return new Block(
+      {
+        new Apply("inversion_call", kwargs, "Hstep"),
+        new Block(
+          {
+            new Destruct("Hstep", {{"b", "Hstep"}}),
+            new Destruct("Hstep", {{"c'", "Hstep"}}),
+            new Destruct("Hstep", {{"cs'", "Hstep"}}),
+            new Destruct("Hstep", {{"ls'", "Hstep"}}),
+            new Destruct("Hstep", {{"Hdc", "Hb"}}),
+            new Destruct("Hb", {{"Hb", "Hcs"}}),
+            new Destruct("Hcs", {{"Hcs", "Hls"}}),
+            new Destruct("Hls", {{"Hls", "Heq"}}),
+            new Apply(bbEntryLemma, "Hb"),
+            new Subst(),
+            new Apply(bbDecompositionLemma, "Hcs"),
+            new Destruct("Hcs", {{"Hc", "Hcs"}}),
+            new Subst(),
+            new Apply("EquivSymState"),
+            new Block(
+              {
+                new Apply(
+                  "equiv_smt_store_via_some_injection",
+                  {
+                    createPlaceHolder(),
+                    createPlaceHolder(),
+                    createPlaceHolder(),
+                    new CoqVariable("Hls"),
+                  }
+                ),
+                new Apply("equiv_smt_store_refl"),
+              }
+            ),
+            new Block({new Apply("equiv_sym_stack_refl")}),
+            new Block({new Apply("equiv_smt_store_refl")}),
+            new Block({new Apply("equiv_smt_expr_refl")}),
+          }
+        ),
+        new Block({new Reflexivity()}),
+      }
+    );
+  }
 }
 
 klee::ref<CoqTactic> OptimizedProofGenerator::getTacticForEquivReturn(StateInfo &si,

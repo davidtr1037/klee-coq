@@ -25,6 +25,8 @@ private:
 
   std::map<llvm::BasicBlock *, std::string> bbLemmas;
 
+  std::map<llvm::BasicBlock *, std::string> bbEntryLemmas;
+
   std::map<llvm::BasicBlock *, std::string> bbDecompositionLemmas;
 
 public:
@@ -39,6 +41,8 @@ public:
 
   ref<CoqLemma> getBasicBlockLemma(llvm::BasicBlock &bb);
 
+  ref<CoqLemma> getBasicBlockEntryLemma(llvm::BasicBlock &bb);
+
   ref<CoqLemma> getBasicBlockDecompositionLemma(llvm::BasicBlock &bb);
 
   ref<CoqTactic> getTacticForEquivAssignment(StateInfo &si,
@@ -51,8 +55,8 @@ public:
                                          ExecutionState &successor,
                                          ProofHint *hint);
 
-  ref<CoqTactic> getTacticForEquivCall(StateInfo &si,
-                                       ExecutionState &successor);
+  ref<CoqTactic> getTacticForEquivSimpleCall(StateInfo &si,
+                                             ExecutionState &successor);
 
   ref<CoqTactic> getTacticForEquivReturn(StateInfo &si,
                                          ExecutionState &successor);
