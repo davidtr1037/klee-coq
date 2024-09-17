@@ -465,13 +465,37 @@ klee::ref<CoqTactic> OptimizedProofGenerator::getTacticForEquivSimpleCall(StateI
   assert(bbDecompositionLemmas.find(bb) != bbDecompositionLemmas.end());
   string bbDecompositionLemma = bbDecompositionLemmas[bb];
 
-  if (callInst->getFunctionType()->getReturnType()->isVoidTy()) {
-    return ProofGenerator::getTacticForEquivSimpleCall(si, successor);
-  } else {
-    /* arguments for inversion_call */
-    map<string, ref<CoqExpr>> kwargs;
-    kwargs["d"] = moduleTranslator->translateFunctionCached(*f);
+  /* arguments for inversion_call */
+  map<string, ref<CoqExpr>> kwargs;
+  kwargs["d"] = moduleTranslator->translateFunctionCached(*f);
 
+  if (callInst->getFunctionType()->getReturnType()->isVoidTy()) {
+    return new Block(
+      {
+        new Apply("inversion_void_call", kwargs, "Hstep"),
+        new Block(
+          {
+            new Destruct("Hstep", {{"b", "Hstep"}}),
+            new Destruct("Hstep", {{"c'", "Hstep"}}),
+            new Destruct("Hstep", {{"cs'", "Hstep"}}),
+            new Destruct("Hstep", {{"ls'", "Hstep"}}),
+            new Destruct("Hstep", {{"Hdc", "Hb"}}),
+            new Destruct("Hb", {{"Hb", "Hcs"}}),
+            new Destruct("Hcs", {{"Hcs", "Hls"}}),
+            new Destruct("Hls", {{"Hls", "Heq"}}),
+            new Apply(bbEntryLemma, "Hb"),
+            new Subst(),
+            new Apply(bbDecompositionLemma, "Hcs"),
+            new Destruct("Hcs", {{"Hc", "Hcs"}}),
+            new Apply("injection_some", "Hls"),
+            new Subst(),
+            new Apply("equiv_sym_state_refl"),
+          }
+        ),
+        new Block({new Reflexivity()}),
+      }
+    );
+  } else {
     return new Block(
       {
         new Apply("inversion_call", kwargs, "Hstep"),

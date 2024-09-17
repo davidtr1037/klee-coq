@@ -677,7 +677,6 @@ Lemma inversion_void_call : forall ic cid f args anns c cs pbid ls stk gs syms p
     )
     s ->
     exists b c' cs' ls',
-      (find_function_by_exp mdl f) = Some d /\
       (dc_type (df_prototype d)) = TYPE_Function TYPE_Void (get_arg_types args) false /\
       (entry_block d) = Some b /\
       (blk_cmds b) = c' :: cs' /\
@@ -702,7 +701,6 @@ Proof.
     rewrite Hd in H14.
     inversion H14; subst.
     rename d0 into d.
-    split; try assumption.
     split; try assumption.
     split; try assumption.
     split; try assumption.
