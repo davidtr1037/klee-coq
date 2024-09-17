@@ -23,6 +23,21 @@ From SE.SMT Require Import Model.
 From SE.Utils Require Import IDMap.
 From SE.Utils Require Import Util.
 
+Lemma in_list_0 : forall (t : execution_tree) l,
+  In t (t :: l).
+Proof.
+  intros t l.
+  apply in_eq.
+Qed.
+
+Lemma in_list_1 : forall (t1 t2 : execution_tree) l,
+  In t2 (t1 :: (t2 :: l)).
+Proof.
+  intros t1 t2 l.
+  right.
+  apply in_eq.
+Qed.
+
 Lemma not_error_instr_op : forall ic cid v e cs pbid ls stk gs syms pc mdl,
   ~ error_sym_state
     (mk_sym_state

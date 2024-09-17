@@ -1002,14 +1002,14 @@ klee::ref<CoqExpr> ProofGenerator::createLemma(uint64_t stepID,
 
 klee::ref<CoqTactic> ProofGenerator::getTacticForList(StateInfo &si,
                                                       unsigned index) {
-  vector<ref<CoqTactic>> tactics;
-  tactics.push_back(new Simpl());
-  for (unsigned i = 0; i < index; i++) {
-    tactics.push_back(new Right());
+  if (index == 0) {
+    return new Block({new Apply("in_list_0")});
   }
-  tactics.push_back(new Left());
-  tactics.push_back(new Reflexivity());
-  return new Block(tactics);
+  if (index == 1) {
+    return new Block({new Apply("in_list_1")});
+  }
+
+  assert(false);
 }
 
 uint64_t ProofGenerator::allocateAxiomID() {
