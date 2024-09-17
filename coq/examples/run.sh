@@ -7,7 +7,11 @@ function run_klee {
     output=/tmp/out.v
     bc_file=$1
     echo "testing ${bc_file}"
-    $KLEE -search=dfs -generate-proof -proof-output-path=${output} $1 &> /dev/null
+    $KLEE \
+        -search=dfs \
+        -generate-proof \
+        -proof-output-path=${output} \
+        $1 &> /dev/null
     coqc -Q ${ROOT}/coq SE ${output}
 }
 
