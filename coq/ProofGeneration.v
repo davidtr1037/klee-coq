@@ -660,6 +660,63 @@ Proof.
   }
 Qed.
 
+Lemma inversion_void_call : forall ic cid f args anns c cs pbid ls stk gs syms pc mdl d s,
+  (find_function_by_exp mdl f) = Some d ->
+  sym_step
+    (mk_sym_state
+      ic
+      (CMD_Inst cid (INSTR_VoidCall (TYPE_Void, f) args anns))
+      (c :: cs)
+      pbid
+      ls
+      stk
+      gs
+      syms
+      pc
+      mdl
+    )
+    s ->
+    exists b c' cs' ls',
+      (find_function_by_exp mdl f) = Some d /\
+      (dc_type (df_prototype d)) = TYPE_Function TYPE_Void (get_arg_types args) false /\
+      (entry_block d) = Some b /\
+      (blk_cmds b) = c' :: cs' /\
+      (create_local_smt_store d ls gs args) = Some ls' /\
+      s = (mk_sym_state
+        (mk_inst_counter (get_fid d) (blk_id b) (get_cmd_id c'))
+        c'
+        cs'
+        None
+        ls'
+        ((Sym_Frame ls (next_inst_counter ic c) pbid None) :: stk)
+        gs
+        syms
+        pc
+        mdl
+      ).
+Proof.
+  intros ic cid f args anns c cs pbid ls stk gs syms pc mdl d s Hd Hstep.
+  inversion Hstep; subst.
+  exists b, c', cs', ls'.
+  {
+    rewrite Hd in H14.
+    inversion H14; subst.
+    rename d0 into d.
+    split; try assumption.
+    split; try assumption.
+    split; try assumption.
+    split; try assumption.
+    split; try assumption.
+    reflexivity.
+  }
+  {
+    unfold find_function_by_exp in Hd.
+    simpl in Hd.
+    rewrite Hd in H14.
+    discriminate H14.
+  }
+Qed.
+
 Lemma inversion_ret : forall ic cid t e pbid ls ls' ic' pbid' v stk gs syms pc mdl s,
   sym_step
     (mk_sym_state
