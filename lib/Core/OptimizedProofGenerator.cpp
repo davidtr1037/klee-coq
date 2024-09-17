@@ -590,7 +590,22 @@ klee::ref<CoqTactic> OptimizedProofGenerator::getTacticForEquivReturn(StateInfo 
       }
     );
   } else {
-   return ProofGenerator::getTacticForEquivReturn(si, successor);
+    return new Block(
+      {
+        new Apply("inversion_ret_void", "Hstep"),
+        new Destruct("Hstep", {{"d", "Hstep"}}),
+        new Destruct("Hstep", {{"c'", "Hstep"}}),
+        new Destruct("Hstep", {{"cs'", "Hstep"}}),
+        new Destruct("Hstep", {{"Hd", "Htrail"}}),
+        new Destruct("Htrail", {{"Htrail", "Heq"}}),
+        new Apply(functionLemma, "Hd"),
+        new Subst(),
+        /* TODO: add a lemma lazily to avoid this inversion */
+        new Inversion("Htrail"),
+        new Subst(),
+        new Apply("equiv_sym_state_refl"),
+      }
+    );
   }
 }
 
