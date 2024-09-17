@@ -225,16 +225,25 @@ ref<CoqTactic> ModuleSupport::getTacticForInst(Instruction &inst) {
 }
 
 ref<CoqTactic> ModuleSupport::getTacticForBinaryOperator(BinaryOperator *inst) {
-  ref<CoqTactic> opTactic = nullptr;
+  std::string constructor;
   switch (inst->getOpcode()) {
   case Instruction::Add:
-    opTactic = new Block({new Apply("IS_Add")});
+    constructor = "IS_Add";
+    break;
+
+  case Instruction::Sub:
+    constructor = "IS_Sub";
+    break;
+
+  case Instruction::Mul:
+    constructor = "IS_Mul";
     break;
 
   default:
       assert(false);
   }
 
+  ref<CoqTactic> opTactic = new Block({new Apply(constructor)});
   return new Block(
     {
       new Apply("IS_INSTR_Op"),

@@ -323,26 +323,52 @@ ref<CoqExpr> ModuleTranslator::translateBinaryOperator(BinaryOperator *inst) {
   assert(v1->getType() == v2->getType());
   Type *operandType = v1->getType();
 
-  if (inst->getOpcode() == Instruction::Add) {
-    return createCMDInst(
-      getInstID(inst),
-      createBinOp(
-        createName(inst->getName().str()),
-        new CoqApplication(
-          new CoqVariable("LLVMAst.Add"),
-          {
-            createFalse(),
-            createFalse(),
-          }
-        ),
-        translateType(operandType),
-        translateValue(v1),
-        translateValue(v2)
-      )
+  ref<CoqExpr> op;
+  switch (inst->getOpcode()) {
+  case Instruction::Add:
+    op = new CoqApplication(
+      new CoqVariable("LLVMAst.Add"),
+      {
+        createFalse(),
+        createFalse(),
+      }
     );
+    break;
+
+  case Instruction::Sub:
+    op = new CoqApplication(
+      new CoqVariable("LLVMAst.Sub"),
+      {
+        createFalse(),
+        createFalse(),
+      }
+    );
+    break;
+
+  case Instruction::Mul:
+    op = new CoqApplication(
+      new CoqVariable("LLVMAst.Mul"),
+      {
+        createFalse(),
+        createFalse(),
+      }
+    );
+    break;
+
+  default:
+    assert(false);
   }
 
-  assert(false);
+  return createCMDInst(
+    getInstID(inst),
+    createBinOp(
+      createName(inst->getName().str()),
+      op,
+      translateType(operandType),
+      translateValue(v1),
+      translateValue(v2)
+    )
+  );
 }
 
 ref<CoqExpr> ModuleTranslator::createBinOp(ref<CoqExpr> target,
