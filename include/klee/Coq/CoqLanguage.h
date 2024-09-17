@@ -3,6 +3,7 @@
 
 #include "klee/ADT/Ref.h"
 
+#include <map>
 #include <string>
 #include <vector>
 #include <cstdint>
@@ -418,6 +419,8 @@ public:
 
   std::vector<ref<CoqExpr>> args;
 
+  std::map<std::string, ref<CoqExpr>> kwargs;
+
   std::string in;
 
   Apply(const std::string &name) : name(name) {}
@@ -426,6 +429,11 @@ public:
 
   Apply(const std::string &name, const std::vector<ref<CoqExpr>> &args) :
     name(name), args(args) {}
+
+  Apply(const std::string &name,
+        const std::map<std::string, ref<CoqExpr>> &kwargs,
+        const std::string &in) :
+    name(name), kwargs(kwargs), in(in) {}
 
   std::string dump(int indent) const;
 

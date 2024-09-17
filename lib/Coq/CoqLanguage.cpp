@@ -347,13 +347,7 @@ string Block::dump(int indent) const {
 string Apply::dump(int indent) const {
   ostringstream os;
   os << space(indent);
-  if (args.empty()) {
-    os << "apply " << name;
-    if (!in.empty()) {
-      os << " in " << in;
-    }
-    os << ".";
-  } else {
+  if (!args.empty()) {
     os << "apply " << "(" << name;
     for (ref<CoqExpr> e : args) {
       os << " " << "(" << e->dump() << ")";
@@ -363,7 +357,25 @@ string Apply::dump(int indent) const {
       os << " in " << in;
     }
     os << ".";
+  } else if (!kwargs.empty()) {
+    os << "apply " << name << " with";
+    for (auto i : kwargs) {
+      string var = i.first;
+      ref<CoqExpr> value = i.second;
+      os << " " << "(" << var << ":=" << value->dump() << ")";
+    }
+    if (!in.empty()) {
+      os << " in " << in;
+    }
+    os << ".";
+  } else {
+    os << "apply " << name;
+    if (!in.empty()) {
+      os << " in " << in;
+    }
+    os << ".";
   }
+
   return os.str();
 }
 
