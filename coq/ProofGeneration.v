@@ -659,3 +659,83 @@ Proof.
     discriminate H16.
   }
 Qed.
+
+Lemma inversion_ret : forall ic cid t e pbid ls ls' ic' pbid' v stk gs syms pc mdl s,
+  sym_step
+    (mk_sym_state
+      ic
+      (CMD_Term cid (TERM_Ret (t, e)))
+      []
+      pbid
+      ls
+      ((Sym_Frame ls' ic' pbid' (Some v)) :: stk)
+      gs
+      syms
+      pc
+      mdl
+    )
+    s ->
+    exists se d c' cs',
+      (sym_eval_exp ls gs (Some t) e) = Some se /\
+      (find_function mdl (ic_fid ic')) = Some d /\
+      (get_trailing_cmds d ic') = Some (c' :: cs') /\
+      s = (mk_sym_state
+        ic'
+        c'
+        cs'
+        pbid'
+        (v !-> Some se; ls')
+        stk
+        gs
+        syms
+        pc
+        mdl
+      ).
+Proof.
+  intros ic cid t e pbid ls ls' ic' pbid' v stk gs syms pc mdl s Hstep.
+  inversion Hstep; subst.
+  exists se, d, c', cs'.
+  split; try assumption.
+  split; try assumption.
+  split; try assumption.
+  reflexivity.
+Qed.
+
+Lemma inversion_ret_void : forall ic cid pbid ls ls' ic' pbid' stk gs syms pc mdl s,
+  sym_step
+    (mk_sym_state
+      ic
+      (CMD_Term cid (TERM_RetVoid))
+      []
+      pbid
+      ls
+      ((Sym_Frame ls' ic' pbid' None) :: stk)
+      gs
+      syms
+      pc
+      mdl
+    )
+    s ->
+    exists d c' cs',
+      (find_function mdl (ic_fid ic')) = Some d /\
+      (get_trailing_cmds d ic') = Some (c' :: cs') /\
+      s = (mk_sym_state
+        ic'
+        c'
+        cs'
+        pbid'
+        ls'
+        stk
+        gs
+        syms
+        pc
+        mdl
+      ).
+Proof.
+  intros ic cid pbid ls ls' ic' pbid' stk gs syms pc mdl s Hstep.
+  inversion Hstep; subst.
+  exists d, c', cs'.
+  split; try assumption.
+  split; try assumption.
+  reflexivity.
+Qed.
