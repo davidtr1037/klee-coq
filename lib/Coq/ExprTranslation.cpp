@@ -46,6 +46,12 @@ ref<CoqExpr> ExprTranslator::translate(ref<Expr> e,
     if (isa<AddExpr>(e)) {
       return createSMTBinOp("SMT_Add", left, right, m);
     }
+    if (isa<SubExpr>(e)) {
+      return createSMTBinOp("SMT_Sub", left, right, m);
+    }
+    if (isa<MulExpr>(e)) {
+      return createSMTBinOp("SMT_Mul", left, right, m);
+    }
     if (isa<AndExpr>(e)) {
       return createSMTBinOp("SMT_And", left, right, m);
     }
