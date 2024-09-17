@@ -4,7 +4,7 @@
 
 #include <klee/klee.h>
 
-int gcd(a, b) {
+int gcd(int a, int b) {
     int old_a = a;
     int old_b = b;
 
