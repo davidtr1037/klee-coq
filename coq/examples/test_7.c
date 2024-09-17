@@ -4,7 +4,7 @@
 
 #include <klee/klee.h>
 
-#define N 10
+#define N 5
 
 int main() {
     int n = 0;
