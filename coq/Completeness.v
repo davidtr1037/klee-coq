@@ -61,7 +61,6 @@ Proof.
   {
     apply IHe1 with (ot := (Some t)) in H2.
     apply IHe2 with (ot := (Some t)) in H4.
-    inversion H5; subst.
     destruct (eval_exp c_ls c_gs (Some t) e1) as [dv1 | ] eqn:E1.
     {
       destruct (eval_exp c_ls c_gs (Some t) e2) as [dv2 | ] eqn:E2.
@@ -69,8 +68,11 @@ Proof.
         inversion H2; subst.
         inversion H4; subst.
         rename sort into sort1, ast into ast1, sort0 into sort2, ast0 into ast2.
-        destruct sort1, sort2; try (apply OA_None); (
-          eapply OA_Some; reflexivity
+        destruct op;
+        try inversion H5; (
+          destruct sort1, sort2; try (apply OA_None); (
+            eapply OA_Some; reflexivity
+          )
         ).
       }
       {

@@ -9,6 +9,11 @@ From SE Require Import Symbolic.
 
 Inductive is_supported_ibinop : ibinop -> Prop :=
   | IS_Add : is_supported_ibinop (Add false false)
+  | IS_Sub : is_supported_ibinop (Sub false false)
+  | IS_Mul : is_supported_ibinop (Mul false false)
+  | IS_And : is_supported_ibinop And
+  | IS_Or : is_supported_ibinop Or
+  | IS_Xor : is_supported_ibinop Xor
 .
 
 Inductive is_supported_exp : llvm_exp -> Prop :=

@@ -222,7 +222,6 @@ Proof.
     { apply equiv_smt_expr_refl. }
   }
   {
-    inversion H5; subst.
     destruct (sym_eval_exp ls1 gs1 (Some t) e1) as [se1' | ] eqn:E1; try discriminate Heval.
     destruct (sym_eval_exp ls1 gs1 (Some t) e2) as [se2' | ] eqn:E2; try discriminate Heval.
     apply IHe1 with (ot := Some t) (se1 := se1') in H2; try assumption.
