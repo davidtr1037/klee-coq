@@ -282,6 +282,8 @@ Definition simplify_binop_bv1 op (ast1 ast2 : smt_ast Sort_BV1) :=
   | AST_Const Sort_BV1 n1, AST_Const Sort_BV1 n2 =>
       match op with
       | SMT_Add => AST_Const Sort_BV1 (add n1 n2)
+      | SMT_Sub => AST_Const Sort_BV1 (sub n1 n2)
+      | SMT_Mul => AST_Const Sort_BV1 (mul n1 n2)
       | SMT_And => AST_Const Sort_BV1 (and n1 n2)
       | _ => AST_BinOp Sort_BV1 op ast1 ast2
       end
@@ -304,6 +306,8 @@ Definition simplify_binop_bv8 op (ast1 ast2 : smt_ast Sort_BV8) :=
   | AST_Const Sort_BV8 n1, AST_Const Sort_BV8 n2 =>
       match op with
       | SMT_Add => AST_Const Sort_BV8 (add n1 n2)
+      | SMT_Sub => AST_Const Sort_BV8 (sub n1 n2)
+      | SMT_Mul => AST_Const Sort_BV8 (mul n1 n2)
       | _ => AST_BinOp Sort_BV8 op ast1 ast2
       end
   | _, _ => AST_BinOp Sort_BV8 op ast1 ast2
@@ -315,6 +319,8 @@ Definition simplify_binop_bv16 op (ast1 ast2 : smt_ast Sort_BV16) :=
   | AST_Const Sort_BV16 n1, AST_Const Sort_BV16 n2 =>
       match op with
       | SMT_Add => AST_Const Sort_BV16 (add n1 n2)
+      | SMT_Sub => AST_Const Sort_BV16 (sub n1 n2)
+      | SMT_Mul => AST_Const Sort_BV16 (mul n1 n2)
       | _ => AST_BinOp Sort_BV16 op ast1 ast2
       end
   | _, _ => AST_BinOp Sort_BV16 op ast1 ast2
@@ -326,6 +332,8 @@ Definition simplify_binop_bv32 op (ast1 ast2 : smt_ast Sort_BV32) :=
   | AST_Const Sort_BV32 n1, AST_Const Sort_BV32 n2 =>
       match op with
       | SMT_Add => AST_Const Sort_BV32 (add n1 n2)
+      | SMT_Sub => AST_Const Sort_BV32 (sub n1 n2)
+      | SMT_Mul => AST_Const Sort_BV32 (mul n1 n2)
       | _ => AST_BinOp Sort_BV32 op ast1 ast2
       end
   | _, _ => AST_BinOp Sort_BV32 op ast1 ast2
@@ -337,6 +345,8 @@ Definition simplify_binop_bv64 op (ast1 ast2 : smt_ast Sort_BV64) :=
   | AST_Const Sort_BV64 n1, AST_Const Sort_BV64 n2 =>
       match op with
       | SMT_Add => AST_Const Sort_BV64 (add n1 n2)
+      | SMT_Sub => AST_Const Sort_BV64 (sub n1 n2)
+      | SMT_Mul => AST_Const Sort_BV64 (mul n1 n2)
       | _ => AST_BinOp Sort_BV64 op ast1 ast2
       end
   | _, _ => AST_BinOp Sort_BV64 op ast1 ast2
