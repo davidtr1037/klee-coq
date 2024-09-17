@@ -21,4 +21,6 @@ run_klee test_3.bc &&
 run_klee test_4.bc &&
 run_klee test_5.bc &&
 run_klee test_6.bc &&
-run_klee test_7.bc
+run_klee test_7.bc &&
+run_klee test_8.bc &&
+run_klee test_9.bc
