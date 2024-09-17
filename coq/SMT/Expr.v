@@ -393,6 +393,12 @@ Definition simplify_cmpop_bv1 op (ast1 ast2 : smt_ast Sort_BV1) :=
       | SMT_Ule => make_smt_ast_bool (cmpu (smt_cmpop_to_comparison op) n1 n2)
       | _ => AST_CmpOp Sort_BV1 op ast1 ast2
       end
+  | AST_Const Sort_BV1 n1, AST_CmpOp Sort_BV1 SMT_Eq (AST_Const Sort_BV1 n2) ast =>
+      if andb (eq n1 zero) (eq n2 zero) then
+        (* (eq 0 (eq 0 a)) ~ a *)
+        ast
+      else
+        AST_CmpOp Sort_BV1 op ast1 ast2
   | _, _ => AST_CmpOp Sort_BV1 op ast1 ast2
   end
 .
