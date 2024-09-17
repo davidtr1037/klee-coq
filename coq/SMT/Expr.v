@@ -249,12 +249,61 @@ Proof.
   assumption.
 Qed.
 
+(* TODO: ... *)
+Definition normalize_binop_bv1 op (ast1 ast2 : smt_ast Sort_BV1) :=
+  AST_BinOp Sort_BV1 op ast1 ast2
+.
+
+(* TODO: ... *)
+Definition normalize_binop_bv8 op (ast1 ast2 : smt_ast Sort_BV8) :=
+  AST_BinOp Sort_BV8 op ast1 ast2
+.
+
+(* TODO: ... *)
+Definition normalize_binop_bv16 op (ast1 ast2 : smt_ast Sort_BV16) :=
+  AST_BinOp Sort_BV16 op ast1 ast2
+.
+
+(* TODO: ... *)
+Definition normalize_binop_bv32 op (ast1 ast2 : smt_ast Sort_BV32) :=
+  match ast1, ast2 with
+  | AST_Const Sort_BV32 n1, AST_Const Sort_BV32 n2 =>
+      AST_BinOp Sort_BV32 op ast1 ast2
+  | ast1, AST_Const Sort_BV32 n2 =>
+      match op with
+      | SMT_Add =>
+          AST_BinOp Sort_BV32 op (AST_Const Sort_BV32 n2) ast1
+      | _ =>
+          AST_BinOp Sort_BV32 op ast1 ast2
+      end
+  | _, _ =>
+      AST_BinOp Sort_BV32 op ast1 ast2
+  end
+.
+
+(* TODO: ... *)
+Definition normalize_binop_bv64 op (ast1 ast2 : smt_ast Sort_BV64) :=
+  AST_BinOp Sort_BV64 op ast1 ast2
+.
+
+Definition normalize_binop op (s : smt_sort) (ast1 ast2 : smt_ast s) : smt_ast s :=
+  let f :=
+    match s with
+    | Sort_BV1 => normalize_binop_bv1
+    | Sort_BV8 => normalize_binop_bv8
+    | Sort_BV16 => normalize_binop_bv16
+    | Sort_BV32 => normalize_binop_bv32
+    | Sort_BV64 => normalize_binop_bv64
+    end in
+  f op ast1 ast2
+.
+
 Fixpoint normalize (s : smt_sort) (ast : smt_ast s) : smt_ast s :=
   match ast with
   | AST_Const sort n => AST_Const sort n
   | AST_Var sort x => AST_Var sort x
   | AST_BinOp sort op ast1 ast2 =>
-      AST_BinOp sort op (normalize sort ast1) (normalize sort ast2)
+      normalize_binop op sort (normalize sort ast1) (normalize sort ast2)
   | AST_CmpOp sort op ast1 ast2 =>
       match op with
       | SMT_Sge => AST_CmpOp sort SMT_Sle (normalize sort ast2) (normalize sort ast1)
