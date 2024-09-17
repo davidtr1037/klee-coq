@@ -426,9 +426,10 @@ void ExecutionState::addRegisterUpdate(const std::string &name,
   updates.push_back(RegisterUpdate(name, value));
 }
 
-bool ExecutionState::hasRegisterUpdate(const std::string &name,
+bool ExecutionState::hasRegisterUpdate(StackFrame &sf,
+                                       const std::string &name,
                                        std::list<RegisterUpdate> &suffix) {
-  std::list<RegisterUpdate> &updates = stack.back().updates;
+  std::list<RegisterUpdate> &updates = sf.updates;
   for (auto i = updates.begin(); i != updates.end(); ++i) {
     if (i->name == name) {
       suffix = std::list<RegisterUpdate>(std::next(i), updates.end());
@@ -437,6 +438,11 @@ bool ExecutionState::hasRegisterUpdate(const std::string &name,
   }
 
   return false;
+}
+
+bool ExecutionState::hasRegisterUpdate(const std::string &name,
+                                       std::list<RegisterUpdate> &suffix) {
+  return hasRegisterUpdate(stack.back(), name, suffix);
 }
 
 void ExecutionState::setStepID(uint64_t id) {

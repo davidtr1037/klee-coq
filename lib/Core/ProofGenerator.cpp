@@ -809,6 +809,43 @@ klee::ref<CoqTactic> ProofGenerator::getTacticForEquivReturn(StateInfo &si,
                                                              ExecutionState &successor) {
   ReturnInst *returnInst = dyn_cast<ReturnInst>(si.inst);
   if (returnInst->getReturnValue()) {
+    /* TODO: avoid code duplication */
+    ref<CoqTactic> t;
+    if (si.wasRegisterUpdated) {
+      vector<ref<CoqExpr>> pairs;
+      for (RegisterUpdate &ru : si.suffix) {
+        ref<CoqExpr> pair = new CoqPair(
+          moduleTranslator->createName(ru.name),
+          createPlaceHolder()
+        );
+        pairs.push_back(pair);
+      }
+      t = new Block(
+        {
+          new Apply(
+            "equiv_smt_store_on_optimized_update",
+            {
+              createPlaceHolder(),
+              createPlaceHolder(),
+              createPlaceHolder(),
+              createPlaceHolder(),
+              createPlaceHolder(),
+              new CoqList(pairs),
+            }
+          ),
+          new Inversion("H15"),
+          new Apply("equiv_smt_expr_refl"),
+        }
+      );
+    } else {
+      t = new Block(
+        {
+          new Inversion("H15"),
+          new Apply("equiv_smt_store_refl"),
+        }
+      );
+    }
+
     return new Block(
       {
         new Inversion("Hstep"),
@@ -818,12 +855,7 @@ klee::ref<CoqTactic> ProofGenerator::getTacticForEquivReturn(StateInfo &si,
         new Inversion("H17"),
         new Subst(),
         new Apply("EquivSymState"),
-        new Block(
-          {
-            new Inversion("H15"),
-            new Apply("equiv_smt_store_refl"),
-          }
-        ),
+        t,
         new Block({new Apply("equiv_sym_stack_refl")}),
         new Block({new Apply("equiv_smt_store_refl")}),
         new Block({new Apply("equiv_smt_expr_refl")}),

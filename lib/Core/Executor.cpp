@@ -3765,6 +3765,18 @@ void Executor::run(ExecutionState &initialState) {
     si.stepID = state.stepID;
     si.inst = ki->inst;
     si.wasRegisterUpdated = state.hasRegisterUpdate(ki->getDestName(), si.suffix);
+    /* TODO: refactor */
+    if (isa<ReturnInst>(ki->inst)) {
+      ReturnInst *returnInst = dyn_cast<ReturnInst>(ki->inst);
+      unsigned stackSize = state.stack.size();
+      if (stackSize > 1 && returnInst->getReturnValue()) {
+        KInstruction *caller = state.stack.back().caller;
+        StackFrame &callerFrame = state.stack[stackSize - 2];
+        si.wasRegisterUpdated = state.hasRegisterUpdate(callerFrame,
+                                                        caller->getDestName(),
+                                                        si.suffix);
+      }
+    }
 
     stepInstruction(state);
 
