@@ -357,7 +357,6 @@ klee::ref<CoqTactic> OptimizedProofGenerator::getTacticForEquivPHI(StateInfo &si
 klee::ref<CoqTactic> OptimizedProofGenerator::getTacticForEquivBranch(StateInfo &si,
                                                                       ExecutionState &successor,
                                                                       ProofHint *hint) {
-
   /* target instruction */
   Instruction *inst = successor.pc->inst;
   BasicBlock *bb = inst->getParent();
