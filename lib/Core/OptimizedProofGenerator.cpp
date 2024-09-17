@@ -518,7 +518,56 @@ klee::ref<CoqTactic> OptimizedProofGenerator::getTacticForEquivSimpleCall(StateI
 
 klee::ref<CoqTactic> OptimizedProofGenerator::getTacticForEquivReturn(StateInfo &si,
                                                                       ExecutionState &successor) {
-  return ProofGenerator::getTacticForEquivReturn(si, successor);
+  ReturnInst *returnInst = dyn_cast<ReturnInst>(si.inst);
+
+  /* target instruction */
+  Instruction *inst = successor.pc->inst;
+  Function *f = inst->getParent()->getParent();
+
+  assert(functionLemmas.find(f) != functionLemmas.end());
+  string functionLemma = functionLemmas[f];
+
+  if (returnInst->getReturnValue()) {
+    return new Block(
+      {
+        new Apply("inversion_ret", "Hstep"),
+        new Destruct("Hstep", {{"se", "Hstep"}}),
+        new Destruct("Hstep", {{"d", "Hstep"}}),
+        new Destruct("Hstep", {{"c'", "Hstep"}}),
+        new Destruct("Hstep", {{"cs'", "Hstep"}}),
+        new Destruct("Hstep", {{"Heval", "Hd"}}),
+        new Destruct("Hd", {{"Hd", "Htrail"}}),
+        new Destruct("Htrail", {{"Htrail", "Heq"}}),
+        new Apply(functionLemma, "Hd"),
+        new Subst(),
+        /* TODO: add a lemma lazily to avoid this inversion */
+        new Inversion("Htrail"),
+        new Subst(),
+        new Apply("EquivSymState"),
+        new Block(
+          {
+            new Apply(
+              "equiv_smt_store_on_update",
+              {
+                createPlaceHolder(),
+                createPlaceHolder(),
+                createPlaceHolder(),
+                createPlaceHolder(),
+                createPlaceHolder(),
+                new CoqVariable("Heval"),
+              }
+            ),
+            new Apply("equiv_smt_expr_refl"),
+          }
+        ),
+        new Block({new Apply("equiv_sym_stack_refl")}),
+        new Block({new Apply("equiv_smt_store_refl")}),
+        new Block({new Apply("equiv_smt_expr_refl")}),
+      }
+    );
+  } else {
+   return ProofGenerator::getTacticForEquivReturn(si, successor);
+  }
 }
 
 klee::ref<CoqTactic> OptimizedProofGenerator::getTacticForStep(StateInfo &stateInfo,
