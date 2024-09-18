@@ -15,6 +15,11 @@ using namespace std;
 using namespace llvm;
 using namespace klee;
 
+cl::opt<bool> DecomposeState(
+  "decompose-state",
+  cl::init(false),
+  cl::desc(""));
+
 /* TODO: decide how to handle assertions */
 /* TODO: add a function for generating names of axioms and lemmas (L_, UNSAT_, etc.) */
 
@@ -103,7 +108,7 @@ void ProofGenerator::generateState(ExecutionState &es) {
   vector<ref<CoqExpr>> defs;
   ref<CoqExpr> coqState = translateState(es, defs);
   ref<CoqExpr> coqStateDef = new CoqDefinition(
-    "s_" + to_string(es.stepID),
+    getStateAliasName(es.stepID),
     "sym_state",
     coqState
   );
@@ -114,8 +119,9 @@ void ProofGenerator::generateState(ExecutionState &es) {
   output << coqStateDef->dump() << "\n";
 }
 
-klee::ref<CoqExpr> ProofGenerator::translateState(ExecutionState &es, vector<ref<CoqExpr>> &defs) {
-  if (true) {
+klee::ref<CoqExpr> ProofGenerator::translateState(ExecutionState &es,
+                                                  vector<ref<CoqExpr>> &defs) {
+  if (!DecomposeState) {
     return new CoqApplication(
       new CoqVariable("mk_sym_state"),
       {
@@ -420,7 +426,7 @@ void ProofGenerator::handleTerminatedState(ExecutionState &state) {
     "execution_tree",
     new CoqApplication(
       new CoqVariable("t_leaf"),
-      {new CoqVariable("s_" + to_string(state.stepID))}
+      {new CoqVariable(getStateAliasName(state.stepID))}
     )
   );
   treeDefs.push_front(def);
@@ -446,7 +452,7 @@ void ProofGenerator::handleStep(StateInfo &si, ExecutionState &successor) {
     new CoqApplication(
       new CoqVariable("t_subtree"),
       {
-        new CoqVariable("s_" + to_string(si.stepID)),
+        new CoqVariable(getStateAliasName(si.stepID)),
         new CoqList(
           {new CoqVariable("t_" + to_string(successor.stepID))}
         )
@@ -960,7 +966,7 @@ void ProofGenerator::handleStep(StateInfo &stateInfo,
     new CoqApplication(
       new CoqVariable("t_subtree"),
       {
-        new CoqVariable("s_" + to_string(stateInfo.stepID)),
+        new CoqVariable(getStateAliasName(stateInfo.stepID)),
         new CoqList(satSuccessors),
       }
     )
@@ -1127,6 +1133,10 @@ uint64_t ProofGenerator::allocateAxiomID() {
   return globalAxiomID++;
 }
 
+string ProofGenerator::getStateAliasName(uint64_t stepID) {
+  return "s_" + to_string(stepID);
+}
+
 string ProofGenerator::getICAliasName(ExecutionState &state) {
   return "s_ic_" + to_string(state.stepID);
 }
@@ -1145,6 +1155,10 @@ string ProofGenerator::getPrevBIDAliasName(ExecutionState &state) {
 
 string ProofGenerator::getLocalStoreAliasName(ExecutionState &state) {
   return "s_local_store_" + to_string(state.stepID);
+}
+
+string ProofGenerator::getStackAliasName(ExecutionState &state) {
+  return "s_stack_" + to_string(state.stepID);
 }
 
 string ProofGenerator::getSymbolicsAliasName(ExecutionState &state) {

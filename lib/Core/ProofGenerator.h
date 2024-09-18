@@ -214,6 +214,8 @@ public:
   uint64_t allocateAxiomID();
 
   /* TODO: move all these to a separate class? */
+  std::string getStateAliasName(uint64_t stepID);
+
   std::string getICAliasName(ExecutionState &state);
 
   std::string getCommandAliasName(ExecutionState &state);
