@@ -87,7 +87,7 @@ void ProofGenerator::generateModule() {
 }
 
 void ProofGenerator::generateModuleAssumptionsProof() {
-  ref<CoqExpr> lemma = moduleSupport->generateProof();
+  ref<CoqLemma> lemma = moduleSupport->generateProof();
 
   for (ref<CoqLemma> lemma : moduleSupport->instLemmas) {
     output << lemma->dump() << "\n";
@@ -431,11 +431,11 @@ void ProofGenerator::handleTerminatedState(ExecutionState &state) {
   );
   treeDefs.push_front(def);
 
-  ref<CoqExpr> lemma = createLemmaForLeaf(state);
+  ref<CoqLemma> lemma = createLemmaForLeaf(state);
   lemmaDefs.push_front(lemma);
 }
 
-klee::ref<CoqExpr> ProofGenerator::createLemmaForLeaf(ExecutionState &state) {
+klee::ref<CoqLemma> ProofGenerator::createLemmaForLeaf(ExecutionState &state) {
   ref<CoqTactic> tactic = getTacticForLeaf(state);
   return createLemma(state.stepID, tactic);
 }
@@ -461,12 +461,12 @@ void ProofGenerator::handleStep(StateInfo &si, ExecutionState &successor) {
   );
   treeDefs.push_front(def);
 
-  ref<CoqExpr> lemma = createLemmaForSubtree(si, successor);
+  ref<CoqLemma> lemma = createLemmaForSubtree(si, successor);
   lemmaDefs.push_front(lemma);
 }
 
-klee::ref<CoqExpr> ProofGenerator::createLemmaForSubtree(StateInfo &si,
-                                                         ExecutionState &successor) {
+klee::ref<CoqLemma> ProofGenerator::createLemmaForSubtree(StateInfo &si,
+                                                          ExecutionState &successor) {
   ref<CoqTactic> safetyTactic = getTacticForSafety(si);
   ref<CoqTactic> stepTactic = getTacticForStep(si, successor);
   ref<CoqTactic> tactic = getTacticForSubtree(safetyTactic, stepTactic);
@@ -973,13 +973,13 @@ void ProofGenerator::handleStep(StateInfo &stateInfo,
   );
   treeDefs.push_front(def);
 
-  ref<CoqExpr> lemma = createLemmaForSubtree(stateInfo, si1, si2);
+  ref<CoqLemma> lemma = createLemmaForSubtree(stateInfo, si1, si2);
   lemmaDefs.push_front(lemma);
 }
 
-klee::ref<CoqExpr> ProofGenerator::createLemmaForSubtree(StateInfo &stateInfo,
-                                                         SuccessorInfo &si1,
-                                                         SuccessorInfo &si2) {
+klee::ref<CoqLemma> ProofGenerator::createLemmaForSubtree(StateInfo &stateInfo,
+                                                          SuccessorInfo &si1,
+                                                          SuccessorInfo &si2) {
   ref<CoqTactic> safetyTactic = getTacticForSafety(stateInfo);
   ref<CoqTactic> stepTactic = getTacticForStep(stateInfo, si1, si2);
   ref<CoqTactic> tactic = getTacticForSubtree(safetyTactic, stepTactic);
@@ -1013,7 +1013,7 @@ void ProofGenerator::getTacticsForBranches(StateInfo &stateInfo,
     uint64_t axiomID = allocateAxiomID();
     if (!si1.isSat) {
       ref<CoqExpr> e = exprTranslator->translate(si1.unsatPC, &si2.state->arrayTranslation);
-      ref<CoqExpr> lemma = getUnsatAxiom(e, axiomID);
+      ref<CoqLemma> lemma = getUnsatAxiom(e, axiomID);
       unsatAxioms.push_front(lemma);
 
       ProofHint hint(e, axiomID, false);
@@ -1022,7 +1022,7 @@ void ProofGenerator::getTacticsForBranches(StateInfo &stateInfo,
     }
     if (!si2.isSat) {
       ref<CoqExpr> e = exprTranslator->translate(si2.unsatPC, &si1.state->arrayTranslation);
-      ref<CoqExpr> lemma = getUnsatAxiom(e, axiomID);
+      ref<CoqLemma> lemma = getUnsatAxiom(e, axiomID);
       unsatAxioms.push_front(lemma);
 
       ProofHint hint(e, axiomID, true);
@@ -1065,7 +1065,7 @@ klee::ref<CoqTactic> ProofGenerator::getTacticForUnsat(ref<CoqExpr> pc, uint64_t
   );
 }
 
-klee::ref<CoqExpr> ProofGenerator::getUnsatAxiom(ref<CoqExpr> pc, uint64_t axiomID) {
+klee::ref<CoqLemma> ProofGenerator::getUnsatAxiom(ref<CoqExpr> pc, uint64_t axiomID) {
   return new CoqLemma(
     "UNSAT_" + to_string(axiomID),
     new CoqApplication(
@@ -1088,9 +1088,9 @@ klee::ref<CoqTactic> ProofGenerator::getTacticForSubtree(ref<CoqTactic> safetyTa
   );
 }
 
-klee::ref<CoqExpr> ProofGenerator::createLemma(uint64_t stepID,
-                                               ref<CoqTactic> tactic,
-                                               bool isAdmitted) {
+klee::ref<CoqLemma> ProofGenerator::createLemma(uint64_t stepID,
+                                                ref<CoqTactic> tactic,
+                                                bool isAdmitted) {
   return new CoqLemma(
     "L_" + to_string(stepID),
     new CoqApplication(
@@ -1263,4 +1263,18 @@ bool ProofGenerator::isAssumeBool(Instruction *inst) {
   }
 
   return false;
+}
+
+void ProofGenerator::generateDebugScript(llvm::raw_ostream &output) {
+  vector<ref<CoqExpr>> imports = {
+    new CoqRequire("SE", "out"),
+  };
+
+  for (ref<CoqExpr> import : imports) {
+    output << import->dump() << "\n";
+  }
+
+  for (ref<CoqLemma> lemma : lemmaDefs) {
+    output << "Print " << lemma->name << ".\n";
+  }
 }

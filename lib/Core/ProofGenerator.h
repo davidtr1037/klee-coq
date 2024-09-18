@@ -77,9 +77,9 @@ public:
 
   std::list<ref<CoqExpr>> treeDefs;
 
-  std::list<ref<CoqExpr>> unsatAxioms;
+  std::list<ref<CoqLemma>> unsatAxioms;
 
-  std::list<ref<CoqExpr>> lemmaDefs;
+  std::list<ref<CoqLemma>> lemmaDefs;
 
   ProofGenerator(llvm::Module &m, llvm::raw_ostream &output);
 
@@ -132,13 +132,13 @@ public:
 
   void handleTerminatedState(ExecutionState &state);
 
-  ref<CoqExpr> createLemmaForLeaf(ExecutionState &state);
+  ref<CoqLemma> createLemmaForLeaf(ExecutionState &state);
 
   ref<CoqTactic> getTacticForLeaf(ExecutionState &state);
 
   void handleStep(StateInfo &si, ExecutionState &successor);
 
-  ref<CoqExpr> createLemmaForSubtree(StateInfo &si,
+  ref<CoqLemma> createLemmaForSubtree(StateInfo &si,
                                      ExecutionState &successor);
 
   ref<CoqTactic> getTacticForSafety(StateInfo &si);
@@ -184,9 +184,9 @@ public:
                   SuccessorInfo &successor1,
                   SuccessorInfo &successor2);
 
-  ref<CoqExpr> createLemmaForSubtree(StateInfo &stateInfo,
-                                     SuccessorInfo &successor1,
-                                     SuccessorInfo &successor2);
+  ref<CoqLemma> createLemmaForSubtree(StateInfo &stateInfo,
+                                      SuccessorInfo &successor1,
+                                      SuccessorInfo &successor2);
 
   virtual ref<CoqTactic> getTacticForStep(StateInfo &stateInfo,
                                           SuccessorInfo &successor1,
@@ -200,12 +200,12 @@ public:
 
   virtual ref<CoqTactic> getTacticForUnsat(ref<CoqExpr> pc, uint64_t axiomID);
 
-  ref<CoqExpr> getUnsatAxiom(ref<CoqExpr> pc, uint64_t axiomID);
+  ref<CoqLemma> getUnsatAxiom(ref<CoqExpr> pc, uint64_t axiomID);
 
   ref<CoqTactic> getTacticForSubtree(ref<CoqTactic> safetyTactic,
                                      ref<CoqTactic> stepTactic);
 
-  ref<CoqExpr> createLemma(uint64_t stepID, ref<CoqTactic> tactic, bool isAdmitted = false);
+  ref<CoqLemma> createLemma(uint64_t stepID, ref<CoqTactic> tactic, bool isAdmitted = false);
 
   ref<CoqTactic> getTacticForList(StateInfo &si, unsigned index);
 
@@ -249,6 +249,8 @@ public:
 
   /* TODO: move from here */
   bool isAssumeBool(llvm::Instruction *inst);
+
+  void generateDebugScript(llvm::raw_ostream &output);
 };
 
 }

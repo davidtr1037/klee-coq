@@ -20,11 +20,11 @@ ModuleSupport::ModuleSupport(Module &m, ModuleTranslator &moduleTranslator) :
 
 }
 
-ref<CoqExpr> ModuleSupport::generateProof() {
+ref<CoqLemma> ModuleSupport::generateProof() {
   return getLemmaForModule();
 }
 
-ref<CoqExpr> ModuleSupport::getLemmaForModule() {
+ref<CoqLemma> ModuleSupport::getLemmaForModule() {
   ref<CoqExpr> body = new CoqApplication(
     new CoqVariable("is_supported_module"),
     {moduleTranslator.translateModuleCached()}
