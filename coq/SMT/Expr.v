@@ -269,10 +269,21 @@ Definition normalize_binop_bv32 op (ast1 ast2 : smt_ast Sort_BV32) :=
   match ast1, ast2 with
   | AST_Const Sort_BV32 n1, AST_Const Sort_BV32 n2 =>
       AST_BinOp Sort_BV32 op ast1 ast2
+  | AST_BinOp Sort_BV32 SMT_Add (AST_Const Sort_BV32 n1) ast, AST_Const Sort_BV32 n2 =>
+      match op with
+      | SMT_Add =>
+          (* (c1 + x) + c2 ~ (c1 + c2) + x *)
+          AST_BinOp Sort_BV32 SMT_Add (AST_Const Sort_BV32 (add n1 n2)) ast
+      | _ => AST_BinOp Sort_BV32 op ast1 ast2
+      end
   | ast1, AST_Const Sort_BV32 n2 =>
       match op with
       | SMT_Add =>
-          AST_BinOp Sort_BV32 op (AST_Const Sort_BV32 n2) ast1
+          (* (x + c1) ~ (c1 + x) *)
+          AST_BinOp Sort_BV32 SMT_Add (AST_Const Sort_BV32 n2) ast1
+      | SMT_Sub =>
+          (* (x - c1) ~ ((-c1) + x) *)
+          AST_BinOp Sort_BV32 SMT_Add (AST_Const Sort_BV32 (repr (unsigned (sub zero n2)))) ast1
       | _ =>
           AST_BinOp Sort_BV32 op ast1 ast2
       end
@@ -387,6 +398,15 @@ Definition simplify_binop_bv32 op (ast1 ast2 : smt_ast Sort_BV32) :=
       | SMT_Mul => AST_Const Sort_BV32 (mul n1 n2)
       | _ => AST_BinOp Sort_BV32 op ast1 ast2
       end
+  | AST_Const Sort_BV32 n1, ast =>
+      match op with
+      | SMT_Add =>
+          if (eq n1 zero) then
+            ast
+          else
+            AST_BinOp Sort_BV32 op ast1 ast2
+      | _ => AST_BinOp Sort_BV32 op ast1 ast2
+      end
   | _, _ => AST_BinOp Sort_BV32 op ast1 ast2
   end
 .
@@ -443,12 +463,16 @@ Definition simplify_cmpop_bv1 op (ast1 ast2 : smt_ast Sort_BV1) :=
       | _ => AST_CmpOp Sort_BV1 op ast1 ast2
       end
   | AST_Const Sort_BV1 n1, AST_CmpOp Sort_BV1 SMT_Eq (AST_Const Sort_BV1 n2) ast =>
-      if andb (eq n1 zero) (eq n2 zero) then
-        (* (eq 0 (eq 0 a)) ~ a *)
-        ast
-      else
-        AST_CmpOp Sort_BV1 op ast1 ast2
-  | _, _ => AST_CmpOp Sort_BV1 op ast1 ast2
+      match op with
+      | SMT_Eq =>
+          if andb (eq n1 zero) (eq n2 zero) then
+            (* (eq 0 (eq 0 a)) ~ a *)
+            ast
+          else
+            AST_CmpOp Sort_BV1 op ast1 ast2
+      | _ => AST_CmpOp Sort_BV1 op ast1 ast2
+      end
+    | _, _ => AST_CmpOp Sort_BV1 op ast1 ast2
   end
 .
 
