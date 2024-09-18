@@ -422,7 +422,7 @@ vector<klee::ref<CoqExpr>> ProofGenerator::getImports() {
 
 void ProofGenerator::handleTerminatedState(ExecutionState &state) {
   ref<CoqExpr> def = new CoqDefinition(
-    "t_" + to_string(state.stepID),
+    getTreeAliasName(state.stepID),
     "execution_tree",
     new CoqApplication(
       new CoqVariable("t_leaf"),
@@ -447,14 +447,14 @@ klee::ref<CoqTactic> ProofGenerator::getTacticForLeaf(ExecutionState &state) {
 
 void ProofGenerator::handleStep(StateInfo &si, ExecutionState &successor) {
   ref<CoqExpr> def = new CoqDefinition(
-    "t_" + to_string(si.stepID),
+    getTreeAliasName(si.stepID),
     "execution_tree",
     new CoqApplication(
       new CoqVariable("t_subtree"),
       {
         new CoqVariable(getStateAliasName(si.stepID)),
         new CoqList(
-          {new CoqVariable("t_" + to_string(successor.stepID))}
+          {new CoqVariable(getTreeAliasName(successor.stepID))}
         )
       }
     )
@@ -579,7 +579,7 @@ klee::ref<CoqTactic> ProofGenerator::getTacticForSat(StateInfo &si,
   return new Block(
     {
       new Left(),
-      new Exists(new CoqVariable("t_" + to_string(successor.stepID))),
+      new Exists(new CoqVariable(getTreeAliasName(successor.stepID))),
       new Split(
         getTacticForList(si, index),
         new Block(
@@ -954,14 +954,14 @@ void ProofGenerator::handleStep(StateInfo &stateInfo,
                                 SuccessorInfo &si2) {
   vector<ref<CoqExpr>> satSuccessors;
   if (si1.isSat) {
-    satSuccessors.push_back(new CoqVariable("t_" + to_string(si1.state->stepID)));
+    satSuccessors.push_back(new CoqVariable(getTreeAliasName(si1.state->stepID)));
   }
   if (si2.isSat) {
-    satSuccessors.push_back(new CoqVariable("t_" + to_string(si2.state->stepID)));
+    satSuccessors.push_back(new CoqVariable(getTreeAliasName(si2.state->stepID)));
   }
 
   ref<CoqExpr> def = new CoqDefinition(
-    "t_" + to_string(stateInfo.stepID),
+    getTreeAliasName(stateInfo.stepID),
     "execution_tree",
     new CoqApplication(
       new CoqVariable("t_subtree"),
@@ -1095,7 +1095,7 @@ klee::ref<CoqExpr> ProofGenerator::createLemma(uint64_t stepID,
     "L_" + to_string(stepID),
     new CoqApplication(
       new CoqVariable("safe_et_opt"),
-      {new CoqVariable("t_" + to_string(stepID))}
+      {new CoqVariable(getTreeAliasName(stepID))}
     ),
     tactic,
     isAdmitted
@@ -1167,6 +1167,10 @@ string ProofGenerator::getSymbolicsAliasName(ExecutionState &state) {
 
 string ProofGenerator::getPCAliasName(ExecutionState &state) {
   return "s_pc_" + to_string(state.stepID);
+}
+
+string ProofGenerator::getTreeAliasName(uint64_t stepID) {
+  return "t_" + to_string(stepID);
 }
 
 void ProofGenerator::generateTreeDefs() {

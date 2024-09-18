@@ -232,6 +232,8 @@ public:
 
   std::string getPCAliasName(ExecutionState &state);
 
+  std::string getTreeAliasName(uint64_t stepID);
+
   void generateTreeDefs();
 
   void generateUnsatAxioms();
