@@ -264,7 +264,6 @@ Definition normalize_binop_bv16 op (ast1 ast2 : smt_ast Sort_BV16) :=
   AST_BinOp Sort_BV16 op ast1 ast2
 .
 
-(* TODO: ... *)
 Definition normalize_binop_bv32 op (ast1 ast2 : smt_ast Sort_BV32) :=
   match ast1, ast2 with
   | AST_Const Sort_BV32 n1, AST_Const Sort_BV32 n2 =>
@@ -274,6 +273,9 @@ Definition normalize_binop_bv32 op (ast1 ast2 : smt_ast Sort_BV32) :=
       | SMT_Add =>
           (* (c1 + x) + c2 ~ (c1 + c2) + x *)
           AST_BinOp Sort_BV32 SMT_Add (AST_Const Sort_BV32 (add n1 n2)) ast
+      | SMT_Sub =>
+          (* (c1 + x) - c2 ~ (c1 - c2) + x *)
+          AST_BinOp Sort_BV32 SMT_Add (AST_Const Sort_BV32 (repr (unsigned (sub n1 n2)))) ast
       | _ => AST_BinOp Sort_BV32 op ast1 ast2
       end
   | ast1, AST_Const Sort_BV32 n2 =>
