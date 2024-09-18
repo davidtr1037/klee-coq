@@ -497,6 +497,12 @@ cl::opt<bool> OptimizeProof(
   cl::desc(""),
   cl::cat(ProofGenerationCat));
 
+cl::opt<std::string> ProofDebugScriptPath(
+  "proof-debug-script-path",
+  cl::desc(""),
+  cl::value_desc(""),
+  cl::cat(ProofGenerationCat));
+
 } // namespace
 
 // XXX hack
@@ -3822,6 +3828,18 @@ void Executor::run(ExecutionState &initialState) {
     proofGenerator->generateUnsatAxioms();
     proofGenerator->generateLemmaDefs();
     proofGenerator->generateTheorem();
+
+    if (!ProofDebugScriptPath.empty()) {
+      std::unique_ptr<raw_fd_ostream> os;
+      std::string error;
+      os = klee_open_output_file(ProofDebugScriptPath, error);
+      if (!os) {
+        klee_error("failed to open file '%s' error '%s'",
+                   ProofDebugScriptPath.c_str(),
+                   error.c_str());
+      }
+      proofGenerator->generateDebugScript(*os);
+    }
   }
 
   delete searcher;

@@ -1266,9 +1266,8 @@ bool ProofGenerator::isAssumeBool(Instruction *inst) {
 }
 
 void ProofGenerator::generateDebugScript(llvm::raw_ostream &output) {
-  vector<ref<CoqExpr>> imports = {
-    new CoqRequire("SE", "out"),
-  };
+  vector<ref<CoqExpr>> imports = getImports();
+  imports.push_back(new CoqRequire("SE", "out"));
 
   for (ref<CoqExpr> import : imports) {
     output << import->dump() << "\n";
