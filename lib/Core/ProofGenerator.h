@@ -93,7 +93,7 @@ public:
 
   void generateState(ExecutionState &es);
 
-  ref<CoqExpr> translateState(ExecutionState &es);
+  ref<CoqExpr> translateState(ExecutionState &es, std::vector<ref<CoqExpr>> &defs);
 
   ref<CoqExpr> createInstCounter(ExecutionState &es);
 
@@ -212,6 +212,23 @@ public:
   ref<CoqList> createSuffixUpdates(std::list<RegisterUpdate> &updates);
 
   uint64_t allocateAxiomID();
+
+  /* TODO: move all these to a separate class? */
+  std::string getICAliasName(ExecutionState &state);
+
+  std::string getCommandAliasName(ExecutionState &state);
+
+  std::string getCommandsAliasName(ExecutionState &state);
+
+  std::string getPrevBIDAliasName(ExecutionState &state);
+
+  std::string getLocalStoreAliasName(ExecutionState &state);
+
+  std::string getStackAliasName(ExecutionState &state);
+
+  std::string getSymbolicsAliasName(ExecutionState &state);
+
+  std::string getPCAliasName(ExecutionState &state);
 
   void generateTreeDefs();
 
