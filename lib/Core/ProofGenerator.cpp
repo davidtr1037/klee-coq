@@ -657,7 +657,7 @@ klee::ref<CoqTactic> ProofGenerator::getTacticForEquivAssignment(StateInfo &si,
     t = new Block(
       {
         new Apply(
-          "equiv_smt_store_on_update",
+          "equiv_smt_store_on_update_via_some",
           {
             createPlaceHolder(),
             createPlaceHolder(),

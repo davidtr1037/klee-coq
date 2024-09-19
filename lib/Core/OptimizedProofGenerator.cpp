@@ -238,7 +238,7 @@ klee::ref<CoqTactic> OptimizedProofGenerator::getTacticForEquivAssignment(StateI
   } else {
     t = new Block(
       {
-        new Apply("equiv_smt_store_on_update_2"),
+        new Apply("equiv_smt_store_on_update"),
         new Apply("equiv_smt_expr_normalize_simplify"),
       }
     );
@@ -576,7 +576,7 @@ klee::ref<CoqTactic> OptimizedProofGenerator::getTacticForEquivReturn(StateInfo 
       t = new Block(
         {
           new Apply(
-            "equiv_smt_store_on_update",
+            "equiv_smt_store_on_update_via_some",
             {
               createPlaceHolder(),
               createPlaceHolder(),

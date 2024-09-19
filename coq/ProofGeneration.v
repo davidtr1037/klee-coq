@@ -211,8 +211,7 @@ Proof.
   assumption.
 Qed.
 
-(* TODO: rename *)
-Lemma equiv_smt_store_on_update : forall s v se1 se2 se3,
+Lemma equiv_smt_store_on_update_via_some : forall s v se1 se2 se3,
   Some se1 = Some se2 ->
   equiv_smt_expr se1 se3 ->
   equiv_smt_store (v !-> Some se2; s) (v !-> Some se3; s).
@@ -224,8 +223,7 @@ Proof.
   { assumption. }
 Qed.
 
-(* TODO: rename *)
-Lemma equiv_smt_store_on_update_2 : forall s v se1 se2,
+Lemma equiv_smt_store_on_update : forall s v se1 se2,
   equiv_smt_expr se1 se2 ->
   equiv_smt_store (v !-> Some se1; s) (v !-> Some se2; s).
 Proof.
