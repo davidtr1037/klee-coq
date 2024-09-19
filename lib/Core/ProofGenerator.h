@@ -216,23 +216,43 @@ public:
   /* TODO: move all these to a separate class? */
   std::string getStateAliasName(uint64_t stepID);
 
+  ref<CoqVariable> getStateAlias(uint64_t stepID);
+
   std::string getICAliasName(ExecutionState &state);
+
+  ref<CoqVariable> getICAlias(ExecutionState &state);
 
   std::string getCommandAliasName(ExecutionState &state);
 
+  ref<CoqVariable> getCommandAlias(ExecutionState &state);
+
   std::string getCommandsAliasName(ExecutionState &state);
+
+  ref<CoqVariable> getCommandsAlias(ExecutionState &state);
 
   std::string getPrevBIDAliasName(ExecutionState &state);
 
+  ref<CoqVariable> getPrevBIDAlias(ExecutionState &state);
+
   std::string getLocalStoreAliasName(ExecutionState &state);
+
+  ref<CoqVariable> getLocalStoreAlias(ExecutionState &state);
 
   std::string getStackAliasName(ExecutionState &state);
 
+  ref<CoqVariable> getStackAlias(ExecutionState &state);
+
   std::string getSymbolicsAliasName(ExecutionState &state);
+
+  ref<CoqVariable> getSymbolicsAlias(ExecutionState &state);
 
   std::string getPCAliasName(ExecutionState &state);
 
+  ref<CoqVariable> getPCAlias(ExecutionState &state);
+
   std::string getTreeAliasName(uint64_t stepID);
+
+  ref<CoqVariable> getTreeAlias(uint64_t stepID);
 
   void generateTreeDefs();
 
