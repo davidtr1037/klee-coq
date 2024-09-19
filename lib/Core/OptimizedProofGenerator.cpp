@@ -275,7 +275,7 @@ klee::ref<CoqTactic> OptimizedProofGenerator::getTacticForEquivAssignment(StateI
           getPrevBIDAlias(si.stepID),
           getLocalStoreAlias(si.stepID),
           getStackAlias(si.stepID),
-          createPlaceHolder(), // createGlobalStore(),
+          createPlaceHolder(), /* TODO: pass argument */
           getSymbolicsAlias(si.stepID),
           getPCAlias(si.stepID),
           createModule(),
@@ -306,45 +306,45 @@ klee::ref<CoqTactic> OptimizedProofGenerator::getTacticForEquivPHI(StateInfo &si
             createSuffixUpdates(si.suffix),
           }
         ),
-        new Apply(
-          "equiv_smt_expr_1",
-          {
-            createPlaceHolder(),
-            createPlaceHolder(),
-            createPlaceHolder(),
-            new CoqVariable("Heval"),
-          }
-        ),
+        /* TODO: this can be avoided by adding another lemma */
         new Apply("equiv_smt_expr_refl"),
       }
     );
   } else {
+    /* TODO: this can be avoided by defining two phi lemmas */
     t = new Block(
-      {
-        new Apply(
-          "equiv_smt_store_on_update_same",
-          {
-            createPlaceHolder(),
-            createPlaceHolder(),
-            createPlaceHolder(),
-            createPlaceHolder(),
-            new CoqVariable("Heval"),
-          }
-        ),
-      }
+      {new Apply("equiv_smt_store_refl")}
     );
   }
+
+  PHINode *phi = dyn_cast<PHINode>(si.inst);
+  assert(phi);
+
   return new Block(
     {
-      new Apply("inversion_phi", "Hstep"),
-      new Destruct("Hstep", {{"se", "Hstep"}}),
-      new Destruct("Hstep", {{"Heval", "Heq"}}),
-      new Rewrite("Heq"),
-      new Apply("EquivSymState"),
+      new Apply(
+        "equiv_sym_state_phi",
+        {
+          getICAlias(si.stepID),
+          createNat(moduleTranslator->getInstID(*si.inst)),
+          moduleTranslator->translatePHINodeName(phi),
+          moduleTranslator->translatePHINodeType(phi),
+          moduleTranslator->translatePHINodeArgs(phi),
+          getCommandAlias(successor.stepID),
+          getCommandsAlias(successor.stepID),
+          createPlaceHolder(), /* TODO: pass argument */
+          getLocalStoreAlias(si.stepID),
+          getStackAlias(si.stepID),
+          createPlaceHolder(), /* TODO: pass argument */
+          getSymbolicsAlias(si.stepID),
+          getPCAlias(si.stepID),
+          createModule(),
+          getLocalStoreAlias(successor.stepID),
+          new CoqVariable("s"),
+        }
+      ),
       t,
-      new Block({new Apply("equiv_sym_stack_refl")}),
-      new Block({new Apply("equiv_smt_store_refl")}),
-      new Block({new Apply("equiv_smt_expr_refl")}),
+      new Block({new Assumption()}),
     }
   );
 }

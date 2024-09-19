@@ -511,6 +511,28 @@ ref<CoqExpr> ModuleTranslator::translateBranchInst(BranchInst *inst) {
 }
 
 ref<CoqExpr> ModuleTranslator::translatePHINode(PHINode *inst) {
+  return createCMDPhi(
+    getInstID(inst),
+    new CoqApplication(
+      new CoqVariable("Phi"),
+      {
+        translatePHINodeName(inst),
+        translatePHINodeType(inst),
+        translatePHINodeArgs(inst),
+      }
+    )
+  );
+}
+
+ref<CoqExpr> ModuleTranslator::translatePHINodeName(PHINode *inst) {
+  return createName(inst->getName().str());
+}
+
+ref<CoqExpr> ModuleTranslator::translatePHINodeType(PHINode *inst) {
+  return translateType(inst->getType());
+}
+
+ref<CoqExpr> ModuleTranslator::translatePHINodeArgs(PHINode *inst) {
   std::vector<ref<CoqExpr>> incoming;
 
   assert(inst->getNumIncomingValues() > 0);
@@ -526,17 +548,7 @@ ref<CoqExpr> ModuleTranslator::translatePHINode(PHINode *inst) {
     incoming.push_back(node);
   }
 
-  return createCMDPhi(
-    getInstID(inst),
-    new CoqApplication(
-      new CoqVariable("Phi"),
-      {
-        createName(inst->getName().str()),
-        translateType(inst->getType()),
-        new CoqList(incoming),
-      }
-    )
-  );
+  return new CoqList(incoming);
 }
 
 ref<CoqExpr> ModuleTranslator::translateCallInst(CallInst *inst) {

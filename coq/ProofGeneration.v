@@ -569,6 +569,49 @@ Proof.
   reflexivity.
 Qed.
 
+Lemma equiv_sym_state_phi : forall ic cid v t args c cs pbid ls stk gs syms pc mdl ls_opt s,
+  equiv_smt_store (v !-> (sym_eval_phi_args ls gs t args pbid); ls) ls_opt ->
+  sym_step
+    (mk_sym_state
+      ic
+      (CMD_Phi cid (Phi v t args))
+      (c :: cs)
+      (Some pbid)
+      ls
+      stk
+      gs
+      syms
+      pc
+      mdl
+    )
+    s ->
+    equiv_sym_state
+      s
+      (mk_sym_state
+        (next_inst_counter ic c)
+        c
+        cs
+        (Some pbid)
+        ls_opt
+        stk
+        gs
+        syms
+        pc
+        mdl
+      ).
+Proof.
+  intros ic cid v t args c cs pbid ls stk gs syms pc mdl ls_opt s Heq Hstep.
+  apply inversion_phi in Hstep.
+  destruct Hstep as [se [Heval Hs]].
+  subst.
+  rewrite Heval in Heq.
+  apply EquivSymState.
+  { assumption. }
+  { apply equiv_sym_stack_refl. }
+  { apply equiv_smt_store_refl. }
+  { apply equiv_smt_expr_refl. }
+Qed.
+
 Lemma inversion_unconditional_br : forall ic cid tbid pbid ls stk gs syms pc mdl s,
   sym_step
     (mk_sym_state

@@ -103,6 +103,12 @@ public:
 
   ref<CoqExpr> translatePHINode(llvm::PHINode *inst);
 
+  ref<CoqExpr> translatePHINodeName(llvm::PHINode *inst);
+
+  ref<CoqExpr> translatePHINodeType(llvm::PHINode *inst);
+
+  ref<CoqExpr> translatePHINodeArgs(llvm::PHINode *inst);
+
   ref<CoqExpr> translateCallInst(llvm::CallInst *inst);
 
   bool shouldIgnoreCall(llvm::CallInst *inst);
