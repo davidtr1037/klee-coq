@@ -238,17 +238,7 @@ klee::ref<CoqTactic> OptimizedProofGenerator::getTacticForEquivAssignment(StateI
   } else {
     t = new Block(
       {
-        new Apply(
-          "equiv_smt_store_on_update",
-          {
-            createPlaceHolder(),
-            createPlaceHolder(),
-            createPlaceHolder(),
-            createPlaceHolder(),
-            createPlaceHolder(),
-            new CoqVariable("Heval"),
-          }
-        ),
+        new Apply("equiv_smt_store_on_update_2"),
         new Apply("equiv_smt_expr_normalize_simplify"),
       }
     );

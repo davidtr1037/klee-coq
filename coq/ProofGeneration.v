@@ -211,6 +211,7 @@ Proof.
   assumption.
 Qed.
 
+(* TODO: rename *)
 Lemma equiv_smt_store_on_update : forall s v se1 se2 se3,
   Some se1 = Some se2 ->
   equiv_smt_expr se1 se3 ->
@@ -218,6 +219,17 @@ Lemma equiv_smt_store_on_update : forall s v se1 se2 se3,
 Proof.
   intros s v se1 se2 se3 H Heq.
   inversion H; subst.
+  apply equiv_smt_store_update.
+  { apply equiv_smt_store_refl. }
+  { assumption. }
+Qed.
+
+(* TODO: rename *)
+Lemma equiv_smt_store_on_update_2 : forall s v se1 se2,
+  equiv_smt_expr se1 se2 ->
+  equiv_smt_store (v !-> Some se1; s) (v !-> Some se2; s).
+Proof.
+  intros s v se1 se2 Heq.
   apply equiv_smt_store_update.
   { apply equiv_smt_store_refl. }
   { assumption. }
@@ -232,6 +244,7 @@ Proof.
   apply equiv_smt_store_refl.
 Qed.
 
+(* TODO: rename to equiv_smt_store_on_rewriting_update *)
 Lemma equiv_smt_store_on_optimized_update: forall m x se1 se2 se3 l,
   equiv_smt_expr se2 se3 ->
   equiv_smt_store
