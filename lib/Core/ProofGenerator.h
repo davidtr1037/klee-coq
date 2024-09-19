@@ -218,37 +218,37 @@ public:
 
   ref<CoqVariable> getStateAlias(uint64_t stepID);
 
-  std::string getICAliasName(ExecutionState &state);
+  std::string getICAliasName(uint64_t stepID);
 
-  ref<CoqVariable> getICAlias(ExecutionState &state);
+  ref<CoqVariable> getICAlias(uint64_t stepID);
 
-  std::string getCommandAliasName(ExecutionState &state);
+  std::string getCommandAliasName(uint64_t stepID);
 
-  ref<CoqVariable> getCommandAlias(ExecutionState &state);
+  ref<CoqVariable> getCommandAlias(uint64_t stepID);
 
-  std::string getCommandsAliasName(ExecutionState &state);
+  std::string getCommandsAliasName(uint64_t stepID);
 
-  ref<CoqVariable> getCommandsAlias(ExecutionState &state);
+  ref<CoqVariable> getCommandsAlias(uint64_t stepID);
 
-  std::string getPrevBIDAliasName(ExecutionState &state);
+  std::string getPrevBIDAliasName(uint64_t stepID);
 
-  ref<CoqVariable> getPrevBIDAlias(ExecutionState &state);
+  ref<CoqVariable> getPrevBIDAlias(uint64_t stepID);
 
-  std::string getLocalStoreAliasName(ExecutionState &state);
+  std::string getLocalStoreAliasName(uint64_t stepID);
 
-  ref<CoqVariable> getLocalStoreAlias(ExecutionState &state);
+  ref<CoqVariable> getLocalStoreAlias(uint64_t stepID);
 
-  std::string getStackAliasName(ExecutionState &state);
+  std::string getStackAliasName(uint64_t stepID);
 
-  ref<CoqVariable> getStackAlias(ExecutionState &state);
+  ref<CoqVariable> getStackAlias(uint64_t stepID);
 
-  std::string getSymbolicsAliasName(ExecutionState &state);
+  std::string getSymbolicsAliasName(uint64_t stepID);
 
-  ref<CoqVariable> getSymbolicsAlias(ExecutionState &state);
+  ref<CoqVariable> getSymbolicsAlias(uint64_t stepID);
 
-  std::string getPCAliasName(ExecutionState &state);
+  std::string getPCAliasName(uint64_t stepID);
 
-  ref<CoqVariable> getPCAlias(ExecutionState &state);
+  ref<CoqVariable> getPCAlias(uint64_t stepID);
 
   std::string getTreeAliasName(uint64_t stepID);
 

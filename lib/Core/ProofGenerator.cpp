@@ -139,7 +139,7 @@ klee::ref<CoqExpr> ProofGenerator::translateState(ExecutionState &es,
     );
   }
 
-  string icAlias = getICAliasName(es);
+  string icAlias = getICAliasName(es.stepID);
   defs.push_back(
     new CoqDefinition(
       icAlias,
@@ -147,7 +147,7 @@ klee::ref<CoqExpr> ProofGenerator::translateState(ExecutionState &es,
       createInstCounter(es)
    )
   );
-  string commandAlias = getCommandAliasName(es);
+  string commandAlias = getCommandAliasName(es.stepID);
   defs.push_back(
     new CoqDefinition(
       commandAlias,
@@ -155,7 +155,7 @@ klee::ref<CoqExpr> ProofGenerator::translateState(ExecutionState &es,
       createCommand(es)
     )
   );
-  string commandsAlias = getCommandsAliasName(es);
+  string commandsAlias = getCommandsAliasName(es.stepID);
   defs.push_back(
     new CoqDefinition(
       commandsAlias,
@@ -163,7 +163,7 @@ klee::ref<CoqExpr> ProofGenerator::translateState(ExecutionState &es,
       createTrailingCommands(es)
     )
   );
-  string prevBIDAlias = getPrevBIDAliasName(es);
+  string prevBIDAlias = getPrevBIDAliasName(es.stepID);
   defs.push_back(
     new CoqDefinition(
       prevBIDAlias,
@@ -171,7 +171,7 @@ klee::ref<CoqExpr> ProofGenerator::translateState(ExecutionState &es,
       createPrevBID(es)
     )
   );
-  string localStoreAlias = getLocalStoreAliasName(es);
+  string localStoreAlias = getLocalStoreAliasName(es.stepID);
   defs.push_back(
     new CoqDefinition(
       localStoreAlias,
@@ -179,7 +179,7 @@ klee::ref<CoqExpr> ProofGenerator::translateState(ExecutionState &es,
       createLocalStore(es)
     )
   );
-  string stackAlias = getStackAliasName(es);
+  string stackAlias = getStackAliasName(es.stepID);
   defs.push_back(
     new CoqDefinition(
       stackAlias,
@@ -187,7 +187,7 @@ klee::ref<CoqExpr> ProofGenerator::translateState(ExecutionState &es,
       createStack(es)
     )
   );
-  string symbolicsAlias = getSymbolicsAliasName(es);
+  string symbolicsAlias = getSymbolicsAliasName(es.stepID);
   defs.push_back(
     new CoqDefinition(
       symbolicsAlias,
@@ -195,7 +195,7 @@ klee::ref<CoqExpr> ProofGenerator::translateState(ExecutionState &es,
       createSymbolics(es)
     )
   );
-  string pcAlias = getPCAliasName(es);
+  string pcAlias = getPCAliasName(es.stepID);
   defs.push_back(
     new CoqDefinition(
       pcAlias,
@@ -449,15 +449,15 @@ klee::ref<CoqTactic> ProofGenerator::getTacticForLeaf(ExecutionState &state) {
   return new Apply(
     "Safe_Leaf_Ret",
     {
-      new CoqVariable(getICAliasName(state)),
+      getICAlias(state.stepID),
       createPlaceHolder(),
       createPlaceHolder(),
       createPlaceHolder(),
-      new CoqVariable(getPrevBIDAliasName(state)),
-      new CoqVariable(getLocalStoreAliasName(state)),
+      getPrevBIDAlias(state.stepID),
+      getLocalStoreAlias(state.stepID),
       createGlobalStore(state),
-      new CoqVariable(getSymbolicsAliasName(state)),
-      new CoqVariable(getPCAliasName(state)),
+      getSymbolicsAlias(state.stepID),
+      getPCAlias(state.stepID),
       createModule(),
     }
   );
@@ -1159,68 +1159,68 @@ klee::ref<CoqVariable> ProofGenerator::getStateAlias(uint64_t stepID) {
   return new CoqVariable(getStateAliasName(stepID));
 }
 
-string ProofGenerator::getICAliasName(ExecutionState &state) {
-  return "s_ic_" + to_string(state.stepID);
+string ProofGenerator::getICAliasName(uint64_t stepID) {
+  return "s_ic_" + to_string(stepID);
 }
 
-klee::ref<CoqVariable> ProofGenerator::getICAlias(ExecutionState &state) {
-  return new CoqVariable(getICAliasName(state));
+klee::ref<CoqVariable> ProofGenerator::getICAlias(uint64_t stepID) {
+  return new CoqVariable(getICAliasName(stepID));
 }
 
-string ProofGenerator::getCommandAliasName(ExecutionState &state) {
-  return "s_cmd_" + to_string(state.stepID);
+string ProofGenerator::getCommandAliasName(uint64_t stepID) {
+  return "s_cmd_" + to_string(stepID);
 }
 
-klee::ref<CoqVariable> ProofGenerator::getCommandAlias(ExecutionState &state) {
-  return new CoqVariable(getCommandAliasName(state));
+klee::ref<CoqVariable> ProofGenerator::getCommandAlias(uint64_t stepID) {
+  return new CoqVariable(getCommandAliasName(stepID));
 }
 
-string ProofGenerator::getCommandsAliasName(ExecutionState &state) {
-  return "s_cmds_" + to_string(state.stepID);
+string ProofGenerator::getCommandsAliasName(uint64_t stepID) {
+  return "s_cmds_" + to_string(stepID);
 }
 
-klee::ref<CoqVariable> ProofGenerator::getCommandsAlias(ExecutionState &state) {
-  return new CoqVariable(getCommandsAliasName(state));
+klee::ref<CoqVariable> ProofGenerator::getCommandsAlias(uint64_t stepID) {
+  return new CoqVariable(getCommandsAliasName(stepID));
 }
 
-string ProofGenerator::getPrevBIDAliasName(ExecutionState &state) {
-  return "s_prev_bid_" + to_string(state.stepID);
+string ProofGenerator::getPrevBIDAliasName(uint64_t stepID) {
+  return "s_prev_bid_" + to_string(stepID);
 }
 
-klee::ref<CoqVariable> ProofGenerator::getPrevBIDAlias(ExecutionState &state) {
-  return new CoqVariable(getPrevBIDAliasName(state));
+klee::ref<CoqVariable> ProofGenerator::getPrevBIDAlias(uint64_t stepID) {
+  return new CoqVariable(getPrevBIDAliasName(stepID));
 }
 
-string ProofGenerator::getLocalStoreAliasName(ExecutionState &state) {
-  return "s_local_store_" + to_string(state.stepID);
+string ProofGenerator::getLocalStoreAliasName(uint64_t stepID) {
+  return "s_local_store_" + to_string(stepID);
 }
 
-klee::ref<CoqVariable> ProofGenerator::getLocalStoreAlias(ExecutionState &state) {
-  return new CoqVariable(getLocalStoreAliasName(state));
+klee::ref<CoqVariable> ProofGenerator::getLocalStoreAlias(uint64_t stepID) {
+  return new CoqVariable(getLocalStoreAliasName(stepID));
 }
 
-string ProofGenerator::getStackAliasName(ExecutionState &state) {
-  return "s_stack_" + to_string(state.stepID);
+string ProofGenerator::getStackAliasName(uint64_t stepID) {
+  return "s_stack_" + to_string(stepID);
 }
 
-klee::ref<CoqVariable> ProofGenerator::getStackAlias(ExecutionState &state) {
-  return new CoqVariable(getStackAliasName(state));
+klee::ref<CoqVariable> ProofGenerator::getStackAlias(uint64_t stepID) {
+  return new CoqVariable(getStackAliasName(stepID));
 }
 
-string ProofGenerator::getSymbolicsAliasName(ExecutionState &state) {
-  return "s_symbolics_" + to_string(state.stepID);
+string ProofGenerator::getSymbolicsAliasName(uint64_t stepID) {
+  return "s_symbolics_" + to_string(stepID);
 }
 
-klee::ref<CoqVariable> ProofGenerator::getSymbolicsAlias(ExecutionState &state) {
-  return new CoqVariable(getSymbolicsAliasName(state));
+klee::ref<CoqVariable> ProofGenerator::getSymbolicsAlias(uint64_t stepID) {
+  return new CoqVariable(getSymbolicsAliasName(stepID));
 }
 
-string ProofGenerator::getPCAliasName(ExecutionState &state) {
-  return "s_pc_" + to_string(state.stepID);
+string ProofGenerator::getPCAliasName(uint64_t stepID) {
+  return "s_pc_" + to_string(stepID);
 }
 
-klee::ref<CoqVariable> ProofGenerator::getPCAlias(ExecutionState &state) {
-  return new CoqVariable(getPCAliasName(state));
+klee::ref<CoqVariable> ProofGenerator::getPCAlias(uint64_t stepID) {
+  return new CoqVariable(getPCAliasName(stepID));
 }
 
 string ProofGenerator::getTreeAliasName(uint64_t stepID) {
