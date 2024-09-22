@@ -1126,6 +1126,79 @@ Proof.
   }
 Qed.
 
+Lemma safe_subtree_call : forall ic cid v ftype f args anns c cs pbid ls stk gs syms pc mdl d b c' cs' ls' t,
+  let s_init :=
+    (mk_sym_state
+      ic
+      (CMD_Inst cid (INSTR_Call v (ftype, f) args anns))
+      (c :: cs)
+      pbid
+      ls
+      stk
+      gs
+      syms
+      pc
+      mdl
+    ) in
+  (find_function_by_exp mdl f) = Some d ->
+  (dc_type (df_prototype d)) = TYPE_Function ftype (get_arg_types args) false ->
+  (entry_block d) = Some b ->
+  (blk_cmds b) = c' :: cs' ->
+  (create_local_smt_store d ls gs args) = Some ls' ->
+  (root t =
+    (mk_sym_state
+      (mk_inst_counter (get_fid d) (blk_id b) (get_cmd_id c'))
+      c'
+      cs'
+      None
+      ls'
+      ((Sym_Frame ls (next_inst_counter ic c) pbid (Some v)) :: stk)
+      gs
+      syms
+      pc
+      mdl
+    )
+  ) ->
+  (safe_et_opt t) ->
+  (safe_et_opt (t_subtree s_init [t])).
+Proof.
+  intros ic cid v ftype f args anns c cs pbid ls stk gs syms pc mdl d b c' cs' ls' t.
+  intros s_init Hd Hdc Hb Hcs Hls Ht Hsafe.
+  apply Safe_Subtree.
+  { apply not_error_call. }
+  {
+    intros s' Hstep.
+    left.
+    exists t.
+    split.
+    { apply in_list_0. }
+    {
+      split.
+      { assumption. }
+      {
+        apply inversion_call with (d := d) in Hstep.
+        {
+          destruct Hstep as [b' [c'' [cs'' [ls'' [Hdc' [Hb' [Hcs' [Hls' Hs]]]]]]]].
+          rewrite Hs.
+          rewrite Ht.
+          rewrite Hb' in Hb.
+          inversion Hb; subst.
+          rewrite Hcs' in Hcs.
+          inversion Hcs; subst.
+          rewrite Hls' in Hls.
+          inversion Hls; subst.
+          apply EquivSymState.
+          { apply equiv_smt_store_refl. }
+          { apply equiv_sym_stack_refl. }
+          { apply equiv_smt_store_refl. }
+          { apply equiv_smt_expr_refl. }
+        }
+        { assumption. }
+      }
+    }
+  }
+Qed.
+
 Lemma inversion_void_call : forall ic cid f args anns c cs pbid ls stk gs syms pc mdl d s,
   (find_function_by_exp mdl f) = Some d ->
   sym_step
@@ -1178,6 +1251,86 @@ Proof.
     simpl in Hd.
     rewrite Hd in H14.
     discriminate H14.
+  }
+Qed.
+
+Lemma safe_subtree_void_call : forall ic cid f args anns c cs pbid ls stk gs syms pc mdl d b c' cs' ls' t,
+  let s_init :=
+    (mk_sym_state
+      ic
+      (CMD_Inst cid (INSTR_VoidCall (TYPE_Void, f) args anns))
+      (c :: cs)
+      pbid
+      ls
+      stk
+      gs
+      syms
+      pc
+      mdl
+    ) in
+  f <> assert_exp ->
+  (find_function_by_exp mdl f) = Some d ->
+  (dc_type (df_prototype d)) = TYPE_Function TYPE_Void (get_arg_types args) false ->
+  (entry_block d) = Some b ->
+  (blk_cmds b) = c' :: cs' ->
+  (create_local_smt_store d ls gs args) = Some ls' ->
+  (root t =
+    (mk_sym_state
+      (mk_inst_counter (get_fid d) (blk_id b) (get_cmd_id c'))
+      c'
+      cs'
+      None
+      ls'
+      ((Sym_Frame ls (next_inst_counter ic c) pbid None) :: stk)
+      gs
+      syms
+      pc
+      mdl
+    )
+  ) ->
+  (safe_et_opt t) ->
+  (safe_et_opt (t_subtree s_init [t])).
+Proof.
+  intros ic cid f args anns c cs pbid ls stk gs syms pc mdl d b c' cs' ls' t.
+  intros s_init Hf Hd Hdc Hb Hcs Hls Ht Hsafe.
+  apply Safe_Subtree.
+  {
+    apply not_error_void_call.
+    intros H.
+    inversion H; subst.
+    apply Hf.
+    reflexivity.
+  }
+  {
+    intros s' Hstep.
+    left.
+    exists t.
+    split.
+    { apply in_list_0. }
+    {
+      split.
+      { assumption. }
+      {
+        apply inversion_void_call with (d := d) in Hstep.
+        {
+          destruct Hstep as [b' [c'' [cs'' [ls'' [Hdc' [Hb' [Hcs' [Hls' Hs]]]]]]]].
+          rewrite Hs.
+          rewrite Ht.
+          rewrite Hb' in Hb.
+          inversion Hb; subst.
+          rewrite Hcs' in Hcs.
+          inversion Hcs; subst.
+          rewrite Hls' in Hls.
+          inversion Hls; subst.
+          apply EquivSymState.
+          { apply equiv_smt_store_refl. }
+          { apply equiv_sym_stack_refl. }
+          { apply equiv_smt_store_refl. }
+          { apply equiv_smt_expr_refl. }
+        }
+        { assumption. }
+      }
+    }
   }
 Qed.
 
