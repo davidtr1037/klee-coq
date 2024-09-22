@@ -651,6 +651,91 @@ klee::ref<CoqTactic> OptimizedProofGenerator::getTacticForEquivReturn(StateInfo 
   }
 }
 
+klee::ref<CoqLemma> OptimizedProofGenerator::createLemmaForSubtree(StateInfo &stateInfo,
+                                                                   SuccessorInfo &si1,
+                                                                   SuccessorInfo &si2) {
+  BranchInst *bi = dyn_cast<BranchInst>(stateInfo.inst);
+  assert(bi);
+
+  if (!bi->isConditional()) {
+    return ProofGenerator::createLemmaForSubtree(stateInfo, si1, si2);
+  }
+
+  BasicBlock *bb = bi->getParent();
+  Function *f = bb->getParent();
+
+  if (si1.isSat && !si2.isSat) {
+    ref<CoqExpr> satPC = exprTranslator->translate(si1.satPC,
+                                                   &si1.state->arrayTranslation);
+    ref<CoqExpr> unsatPC = exprTranslator->translate(si2.unsatPC,
+                                                     &si1.state->arrayTranslation);
+    uint64_t axiomID = allocateAxiomID();
+    ref<CoqLemma> lemma = getUnsatAxiom(unsatPC, axiomID);
+    unsatAxioms.push_front(lemma);
+
+    Instruction *targetInst = si1.state->pc->inst;
+    BasicBlock *targetBB = targetInst->getParent();
+
+    ref<CoqExpr> cond = new CoqApplication(
+      new CoqVariable("extract_ast"),
+      {
+        new CoqApplication(
+          new CoqVariable("sym_eval_exp"),
+          {
+            getLocalStoreAlias(stateInfo.stepID),
+            new CoqVariable("gs"), /* TODO: replace */
+            createSome(moduleTranslator->createTypeI(1)),
+            moduleTranslator->translateBranchInstExpr(bi),
+          }
+        ),
+      }
+    );
+
+    ref<CoqTactic> t = new Block(
+      {
+        new Apply(
+          "equiv_sym_state_br_sat_unsat",
+          {
+            getICAlias(stateInfo.stepID),
+            createNat(moduleTranslator->getInstID(bi)),
+            moduleTranslator->translateBranchInstExpr(bi),
+            moduleTranslator->translateBranchInstBid(bi, 0),
+            moduleTranslator->translateBranchInstBid(bi, 1),
+            getPrevBIDAlias(stateInfo.stepID),
+            getLocalStoreAlias(stateInfo.stepID),
+            getStackAlias(stateInfo.stepID),
+            createPlaceHolder(), /* TODO: pass argument */
+            getSymbolicsAlias(stateInfo.stepID),
+            getPCAlias(stateInfo.stepID),
+            createModule(),
+            cond,
+            moduleTranslator->translateFunctionCached(*f),
+            moduleTranslator->translateBasicBlockCached(*targetBB),
+            getCommandAlias(si1.state->stepID),
+            getCommandsAlias(si1.state->stepID),
+            satPC,
+            unsatPC,
+            getTreeAlias(si1.state->stepID),
+          }
+        ),
+        new Block({new Reflexivity()}),
+        new Block({new Reflexivity()}),
+        new Block({new Reflexivity()}),
+        new Block({new Reflexivity()}),
+        new Block({new Reflexivity()}),
+        new Block({new Apply("L_" + to_string(si1.state->stepID))}),
+        new Block({new Apply("equiv_smt_expr_normalize_simplify")}),
+        new Block({new Apply("equiv_smt_expr_normalize_simplify")}),
+        new Block({new Apply("UNSAT_" + to_string(axiomID))}),
+      }
+    );
+
+    return createLemma(stateInfo.stepID, t);
+  }
+
+  return ProofGenerator::createLemmaForSubtree(stateInfo, si1, si2);
+}
+
 klee::ref<CoqTactic> OptimizedProofGenerator::getTacticForStep(StateInfo &stateInfo,
                                                                SuccessorInfo &si1,
                                                                SuccessorInfo &si2) {

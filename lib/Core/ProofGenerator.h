@@ -34,13 +34,14 @@ struct SuccessorInfo {
 
   bool isSat;
   ExecutionState *state;
+  ref<Expr> satPC;
   ref<Expr> unsatPC;
 
-  SuccessorInfo(ExecutionState *state) :
-    isSat(true), state(state), unsatPC(nullptr) {}
+  SuccessorInfo(ExecutionState *state, ref<Expr> satPC) :
+    isSat(true), state(state), satPC(satPC), unsatPC(nullptr) {}
 
   SuccessorInfo(ref<Expr> unsatPC) :
-    isSat(false), state(nullptr), unsatPC(unsatPC) {}
+    isSat(false), state(nullptr), satPC(nullptr), unsatPC(unsatPC) {}
 
 };
 
@@ -139,7 +140,7 @@ public:
   void handleStep(StateInfo &si, ExecutionState &successor);
 
   ref<CoqLemma> createLemmaForSubtree(StateInfo &si,
-                                     ExecutionState &successor);
+                                      ExecutionState &successor);
 
   ref<CoqTactic> getTacticForSafety(StateInfo &si);
 
@@ -184,9 +185,9 @@ public:
                   SuccessorInfo &successor1,
                   SuccessorInfo &successor2);
 
-  ref<CoqLemma> createLemmaForSubtree(StateInfo &stateInfo,
-                                      SuccessorInfo &successor1,
-                                      SuccessorInfo &successor2);
+  virtual ref<CoqLemma> createLemmaForSubtree(StateInfo &stateInfo,
+                                              SuccessorInfo &successor1,
+                                              SuccessorInfo &successor2);
 
   virtual ref<CoqTactic> getTacticForStep(StateInfo &stateInfo,
                                           SuccessorInfo &successor1,
