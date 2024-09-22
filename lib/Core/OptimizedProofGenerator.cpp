@@ -222,6 +222,28 @@ void OptimizedProofGenerator::decomposeBasicBlock(BasicBlock &bb,
   }
 }
 
+void OptimizedProofGenerator::decomposeBasicBlockFrom(BasicBlock &bb,
+                                                      Instruction &from,
+                                                      ref<CoqExpr> &head,
+                                                      std::vector<ref<CoqExpr>> &tail) {
+  head = nullptr;
+
+  for (Instruction &inst : bb) {
+    if (&inst == &from) {
+      head = moduleTranslator->translateInstCached(inst);
+    } else {
+      if (head) {
+        ref<CoqExpr> coqInst = moduleTranslator->translateInstCached(inst);
+        if (coqInst) {
+          tail.push_back(coqInst);
+        } else {
+          assert(false);
+        }
+      }
+    }
+  }
+}
+
 klee::ref<CoqLemma> OptimizedProofGenerator::createLemmaForSubtree(StateInfo &si,
                                                                    ExecutionState &successor) {
   ref<CoqTactic> t = getTacticForSubtree(si, successor);
@@ -248,6 +270,10 @@ klee::ref<CoqTactic> OptimizedProofGenerator::getTacticForSubtree(StateInfo &si,
 
   if (isa<CallInst>(si.inst)) {
     return getTacticForSubtreeCall(si, successor);
+  }
+
+  if (isa<ReturnInst>(si.inst)) {
+    return getTacticForSubtreeReturn(si, successor);
   }
 
   return nullptr;
@@ -492,54 +518,76 @@ klee::ref<CoqTactic> OptimizedProofGenerator::getTacticForSubtreeReturn(StateInf
                                                                         ExecutionState &successor) {
   ReturnInst *returnInst = dyn_cast<ReturnInst>(si.inst);
   assert(returnInst);
-  return nullptr;
 
-//  /* target instruction */
-//  Instruction *inst = successor.pc->inst;
-//  Function *f = inst->getParent()->getParent();
-//
-//  if (returnInst->getReturnValue()) {
-//    ref<CoqTactic> t;
-//
-//    return new Block(
-//      {
-//        new Apply(
-//          "safe_subtree_ret",
-//          {
-//            getICAlias(si.stepID),
-//            createNat(moduleTranslator->getInstID(callInst)),
-//            createPlaceHolder(),
-//            createPlaceHolder(),
-//            createPlaceHolder(),
-//            getPrevBIDAlias(si.stepID),
-//            getLocalStoreAlias(si.stepID),
-//            createPlaceHolder(),
-//            createPlaceHolder(),
-//            createPlaceHolder(),
-//            createPlaceHolder(),
-//            getStackAlias(si.stepID),
-//            createGlobalStore(),
-//            getSymbolicsAlias(si.stepID),
-//            getPCAlias(si.stepID),
-//            createModule(),
-//            moduleTranslator->translateFunctionCached(*f),
-//            moduleTranslator->translateBasicBlockCached(*bb),
-//            createPlaceHolder(),
-//            getTreeAlias(successor.stepID),
-//          }
-//        ),
-//        new Block({new Reflexivity()}),
-//        new Block({new Reflexivity()}),
-//        new Block({new Reflexivity()}),
-//        new Block({new Reflexivity()}),
-//        new Block({new Reflexivity()}),
-//        new Block({new Reflexivity()}),
-//        new Block({new Apply("L_" + to_string(successor.stepID))}),
-//      }
-//    );
-//  } else {
-//    return nullptr;
-//  }
+  /* target instruction */
+  Instruction *inst = successor.pc->inst;
+  BasicBlock *bb = inst->getParent();
+  Function *f = inst->getParent()->getParent();
+
+  ref<CoqExpr> head = nullptr;
+  vector<ref<CoqExpr>> tail;
+  decomposeBasicBlockFrom(*bb, *inst, head, tail);
+
+  if (returnInst->getReturnValue()) {
+    ref<CoqTactic> t;
+    if (si.wasRegisterUpdated) {
+      t = new Block(
+        {
+          new Apply(
+            "equiv_smt_store_on_optimized_update",
+            {
+              createPlaceHolder(),
+              createPlaceHolder(),
+              createPlaceHolder(),
+              createPlaceHolder(),
+              createPlaceHolder(),
+              createSuffixUpdates(si.suffix),
+            }
+          ),
+          new Apply("equiv_smt_expr_refl"),
+        }
+      );
+    } else {
+      t = new Block({new Apply("equiv_smt_store_refl")});
+    }
+
+    return new Block(
+      {
+        new Apply(
+          "safe_subtree_ret",
+          {
+            getICAlias(si.stepID),
+            createNat(moduleTranslator->getInstID(returnInst)),
+            moduleTranslator->translateReturnInstType(returnInst),
+            moduleTranslator->translateReturnInstExpr(returnInst),
+            getPrevBIDAlias(si.stepID),
+            getLocalStoreAlias(si.stepID),
+            createPlaceHolder(),
+            createPlaceHolder(),
+            createPlaceHolder(),
+            createPlaceHolder(),
+            createPlaceHolder(), /* TODO: pass stack */
+            createGlobalStore(),
+            getSymbolicsAlias(si.stepID),
+            getPCAlias(si.stepID),
+            createModule(),
+            moduleTranslator->translateFunctionCached(*f),
+            head,
+            new CoqList(tail),
+            getLocalStoreAlias(successor.stepID),
+            getTreeAlias(successor.stepID),
+          }
+        ),
+        t,
+        new Block({new Reflexivity()}),
+        new Block({new Reflexivity()}),
+        new Block({new Reflexivity()}),
+        new Block({new Apply("L_" + to_string(successor.stepID))}),
+      }
+    );
+  } else {
+    return nullptr;
+  }
 }
 
 klee::ref<CoqTactic> OptimizedProofGenerator::getTacticForEquivAssignment(StateInfo &si,

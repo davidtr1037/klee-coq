@@ -49,6 +49,11 @@ public:
                            ref<CoqExpr> &head,
                            std::vector<ref<CoqExpr>> &tail);
 
+  void decomposeBasicBlockFrom(llvm::BasicBlock &bb,
+                               llvm::Instruction &from,
+                               ref<CoqExpr> &head,
+                               std::vector<ref<CoqExpr>> &tail);
+
   ref<CoqLemma> createLemmaForSubtree(StateInfo &si,
                                       ExecutionState &successor);
 
