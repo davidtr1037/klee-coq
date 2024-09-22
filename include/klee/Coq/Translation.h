@@ -121,6 +121,10 @@ public:
 
   ref<CoqExpr> translateReturnInst(llvm::ReturnInst *inst);
 
+  ref<CoqExpr> translateReturnInstType(llvm::ReturnInst *inst);
+
+  ref<CoqExpr> translateReturnInstExpr(llvm::ReturnInst *inst);
+
   ref<CoqExpr> translateUnreachableInst(llvm::UnreachableInst *inst);
 
   ref<CoqExpr> createCMDInst(uint64_t id, ref<CoqExpr> e);

@@ -636,17 +636,15 @@ std::vector<ref<CoqExpr>> ModuleTranslator::translateArgs(CallInst *inst) {
 }
 
 ref<CoqExpr> ModuleTranslator::translateReturnInst(ReturnInst *inst) {
-  Value *v = inst->getReturnValue();
-  if (v) {
-    Type *returnType = v->getType();
+  if (inst->getReturnValue()) {
     return createCMDTerm(
       getInstID(inst),
       new CoqApplication(
         new CoqVariable("TERM_Ret"),
         {
           new CoqPair(
-            translateType(returnType),
-            translateValue(v)
+            translateReturnInstType(inst),
+            translateReturnInstExpr(inst)
           )
         }
       )
@@ -656,6 +654,24 @@ ref<CoqExpr> ModuleTranslator::translateReturnInst(ReturnInst *inst) {
       getInstID(inst),
       new CoqVariable("TERM_RetVoid")
     );
+  }
+}
+
+ref<CoqExpr> ModuleTranslator::translateReturnInstType(ReturnInst *inst) {
+  Value *v = inst->getReturnValue();
+  if (v) {
+    return translateType(v->getType());
+  } else {
+    assert(false);
+  }
+}
+
+ref<CoqExpr> ModuleTranslator::translateReturnInstExpr(ReturnInst *inst) {
+  Value *v = inst->getReturnValue();
+  if (v) {
+    return translateValue(v);
+  } else {
+    assert(false);
   }
 }
 
