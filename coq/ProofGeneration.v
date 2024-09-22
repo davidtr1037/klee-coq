@@ -233,15 +233,6 @@ Proof.
   { assumption. }
 Qed.
 
-Lemma equiv_smt_store_on_update_same : forall s v se1 se2,
-  Some se1 = Some se2 ->
-  equiv_smt_store (v !-> Some se2; s) (v !-> Some se1; s).
-Proof.
-  intros s v se1 se2 H.
-  inversion H; subst.
-  apply equiv_smt_store_refl.
-Qed.
-
 (* TODO: rename to equiv_smt_store_on_rewriting_update *)
 Lemma equiv_smt_store_on_optimized_update: forall m x se1 se2 se3 l,
   equiv_smt_expr se2 se3 ->
@@ -397,47 +388,6 @@ Proof.
   inversion H.
   apply inj_pair2.
   assumption.
-Qed.
-
-Lemma equiv_smt_expr_via_some_injection : forall se1 se2,
-  Some se1 = Some se2 ->
-  equiv_smt_expr se2 se1.
-Proof.
-  intros se1 se2 Heq.
-  apply injection_some in Heq.
-  subst.
-  apply equiv_smt_expr_refl.
-Qed.
-
-(* helps to avoid subst *)
-Lemma equiv_pc_1 : forall ast1 ast2 ast3 ast4,
-  Some (Expr Sort_BV1 ast1) = Some (Expr Sort_BV1 ast2) ->
-  equiv_smt_expr
-    (Expr Sort_BV1 (AST_BinOp Sort_BV1 SMT_And ast3 ast1))
-    (Expr Sort_BV1 (ast4)) ->
-  equiv_smt_expr
-    (Expr Sort_BV1 (AST_BinOp Sort_BV1 SMT_And ast3 ast2))
-    (Expr Sort_BV1 (ast4)).
-Proof.
-  intros ast1 ast2 ast3 ast4 Heq Hequiv.
-  apply injection_some in Heq.
-  apply injection_expr in Heq.
-  subst.
-  assumption.
-Qed.
-
-Lemma equiv_pc_2 : forall ast1 ast2 ast3 ast4,
-  Some (Expr Sort_BV1 ast1) = Some (Expr Sort_BV1 ast2) ->
-  equiv_smt_expr
-    (Expr Sort_BV1 (AST_BinOp Sort_BV1 SMT_And ast3 ast1))
-    (Expr Sort_BV1 (ast4)) ->
-  equiv_smt_expr
-    (Expr Sort_BV1 (ast4))
-    (Expr Sort_BV1 (AST_BinOp Sort_BV1 SMT_And ast3 ast2)).
-Proof.
-  intros ast1 ast2 ast3 ast4 Heq Hequiv.
-  apply equiv_smt_expr_symmetry.
-  apply equiv_pc_1 with (ast1 := ast1); assumption.
 Qed.
 
 Lemma inversion_instr_op : forall ic cid v e c cs pbid ls stk gs syms pc mdl s,
