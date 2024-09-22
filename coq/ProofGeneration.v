@@ -478,7 +478,6 @@ Proof.
 Qed.
 
 Lemma safe_subtree_instr_op : forall ic cid v e c cs pbid ls stk gs syms pc mdl ls_opt t,
-  equiv_smt_store (v !-> (sym_eval_exp ls gs None e); ls) ls_opt ->
   let s_init :=
     (mk_sym_state
       ic
@@ -492,6 +491,7 @@ Lemma safe_subtree_instr_op : forall ic cid v e c cs pbid ls stk gs syms pc mdl 
       pc
       mdl
     ) in
+  equiv_smt_store (v !-> (sym_eval_exp ls gs None e); ls) ls_opt ->
   (root t =
     (mk_sym_state
       (next_inst_counter ic c)
@@ -510,7 +510,7 @@ Lemma safe_subtree_instr_op : forall ic cid v e c cs pbid ls stk gs syms pc mdl 
   (safe_et_opt (t_subtree s_init [t])).
 Proof.
   intros ic cid v e c cs pbid ls stk gs syms pc mdl ls_opt t.
-  intros Heq s_init Ht Hsafe.
+  intros s_init Heq Ht Hsafe.
   apply Safe_Subtree.
   { apply not_error_instr_op. }
   {
@@ -575,6 +575,69 @@ Proof.
   exists se.
   split; try assumption.
   reflexivity.
+Qed.
+
+Lemma safe_subtree_phi : forall ic cid v argtype args c cs pbid ls stk gs syms pc mdl ls_opt t,
+  let s_init :=
+    (mk_sym_state
+      ic
+      (CMD_Phi cid (Phi v argtype args))
+      (c :: cs)
+      (Some pbid)
+      ls
+      stk
+      gs
+      syms
+      pc
+      mdl
+    ) in
+  equiv_smt_store (v !-> (sym_eval_phi_args ls gs argtype args pbid); ls) ls_opt ->
+  (root t =
+    (mk_sym_state
+      (next_inst_counter ic c)
+      c
+      cs
+      (Some pbid)
+      ls_opt
+      stk
+      gs
+      syms
+      pc
+      mdl
+    )
+  ) ->
+  (safe_et_opt t) ->
+  (safe_et_opt (t_subtree s_init [t])).
+Proof.
+  intros ic cid v argtype args c cs pbid ls stk gs syms pc mdl ls_opt t.
+  intros s_init Heq Ht Hsafe.
+  apply Safe_Subtree.
+  { apply not_error_phi. }
+  {
+    intros s' Hstep.
+    left.
+    exists t.
+    split.
+    { apply in_list_0. }
+    {
+      split.
+      { assumption. }
+      {
+        apply inversion_phi in Hstep.
+        destruct Hstep as [se [Heval Hs]].
+        rewrite Hs.
+        rewrite Ht.
+        apply EquivSymState.
+        {
+          rewrite <- Heval.
+          assumption.
+        }
+        { apply equiv_sym_stack_refl. }
+        { apply equiv_smt_store_refl. }
+        { apply equiv_smt_expr_refl. }
+      }
+    }
+  }
 Qed.
 
 Lemma equiv_sym_state_phi : forall ic cid v t args c cs pbid ls stk gs syms pc mdl ls_opt s,
@@ -662,9 +725,6 @@ Proof.
 Qed.
 
 Lemma safe_subtree_unconditional_br : forall ic cid tbid pbid ls stk gs syms pc mdl d b c cs t,
-  (find_function mdl (ic_fid ic)) = Some d ->
-  (fetch_block d tbid) = Some b ->
-  (blk_cmds b) = c :: cs ->
   let s_init :=
     (mk_sym_state
       ic
@@ -678,6 +738,9 @@ Lemma safe_subtree_unconditional_br : forall ic cid tbid pbid ls stk gs syms pc 
       pc
       mdl
     ) in
+  (find_function mdl (ic_fid ic)) = Some d ->
+  (fetch_block d tbid) = Some b ->
+  (blk_cmds b) = c :: cs ->
   (root t =
     (mk_sym_state
       (mk_inst_counter (ic_fid ic) tbid (get_cmd_id c))
@@ -695,8 +758,8 @@ Lemma safe_subtree_unconditional_br : forall ic cid tbid pbid ls stk gs syms pc 
   (safe_et_opt t) ->
   (safe_et_opt (t_subtree s_init [t])).
 Proof.
-  intros ic cid tbid pbid ls stk gs syms pc mdl d b c cs t Hd Hb Hcs.
-  intros init_s Ht Hsafe.
+  intros ic cid tbid pbid ls stk gs syms pc mdl d b c cs t s_init Hd Hb Hcs.
+  intros Ht Hsafe.
   apply Safe_Subtree.
   { apply not_error_unconditional_br. }
   {
@@ -815,10 +878,6 @@ Definition extract_ast (se : option smt_expr) : (smt_ast Sort_BV1) :=
 .
 
 Lemma safe_subtree_br_sat_unsat : forall ic cid e bid1 bid2 pbid ls stk gs syms pc mdl cond d b1 c1 cs1 pc1 pc2 t,
-  (sym_eval_exp ls gs (Some (TYPE_I 1)) e) = Some (Expr Sort_BV1 cond) ->
-  (find_function mdl (ic_fid ic)) = Some d ->
-  (fetch_block d bid1) = Some b1 ->
-  (blk_cmds b1) = c1 :: cs1 ->
   let s_init :=
     (mk_sym_state
       ic
@@ -832,6 +891,10 @@ Lemma safe_subtree_br_sat_unsat : forall ic cid e bid1 bid2 pbid ls stk gs syms 
       pc
       mdl
     ) in
+  (sym_eval_exp ls gs (Some (TYPE_I 1)) e) = Some (Expr Sort_BV1 cond) ->
+  (find_function mdl (ic_fid ic)) = Some d ->
+  (fetch_block d bid1) = Some b1 ->
+  (blk_cmds b1) = c1 :: cs1 ->
   (root t =
     (mk_sym_state
       (mk_inst_counter (ic_fid ic) bid1 (get_cmd_id c1))
@@ -859,7 +922,7 @@ Lemma safe_subtree_br_sat_unsat : forall ic cid e bid1 bid2 pbid ls stk gs syms 
   (safe_et_opt (t_subtree s_init [t])).
 Proof.
   intros ic cid e bid1 bid2 pbid ls stk gs syms pc mdl cond d b1 c1 cs1 pc1 pc2 t.
-  intros Heval Hd Hb1 Hcs1 s_init Ht Hsafe Heq1 Heq2 Hunsat2.
+  intros s_init Heval Hd Hb1 Hcs1 Ht Hsafe Heq1 Heq2 Hunsat2.
   apply Safe_Subtree.
   { apply not_error_br. }
   {

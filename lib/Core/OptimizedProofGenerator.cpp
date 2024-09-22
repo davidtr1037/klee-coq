@@ -237,6 +237,11 @@ klee::ref<CoqTactic> OptimizedProofGenerator::getTacticForSubtree(StateInfo &si,
   if (isa<BinaryOperator>(si.inst) || isa<CmpInst>(si.inst)) {
     return getTacticForSubtreeAssignment(si, successor);
   }
+
+  if (isa<PHINode>(si.inst)) {
+    return getTacticForSubtreePHI(si, successor);
+  }
+
   if (isa<BranchInst>(si.inst)) {
     return getTacticForSubtreeBranch(si, successor);
   }
@@ -317,6 +322,67 @@ klee::ref<CoqTactic> OptimizedProofGenerator::getTacticForSubtreeAssignment(Stat
   );
 }
 
+klee::ref<CoqTactic> OptimizedProofGenerator::getTacticForSubtreePHI(StateInfo &si,
+                                                                     ExecutionState &successor) {
+  PHINode *phi = dyn_cast<PHINode>(si.inst);
+  assert(phi);
+
+  ref<CoqTactic> t;
+  if (si.wasRegisterUpdated) {
+    t = new Block(
+      {
+        new Apply(
+          "equiv_smt_store_on_optimized_update",
+          {
+            createPlaceHolder(),
+            createPlaceHolder(),
+            createPlaceHolder(),
+            createPlaceHolder(),
+            createPlaceHolder(),
+            createSuffixUpdates(si.suffix),
+          }
+        ),
+        new Apply("equiv_smt_expr_normalize_simplify"),
+      }
+    );
+  } else {
+    t = new Block(
+      {
+        new Apply("equiv_smt_store_on_update"),
+        new Apply("equiv_smt_expr_normalize_simplify"),
+      }
+    );
+  }
+
+  return new Block(
+    {
+      new Apply(
+        "safe_subtree_phi",
+        {
+          getICAlias(si.stepID),
+          createNat(moduleTranslator->getInstID(phi)),
+          moduleTranslator->translatePHINodeName(phi),
+          moduleTranslator->translatePHINodeType(phi),
+          moduleTranslator->translatePHINodeArgs(phi),
+          createPlaceHolder(),
+          createPlaceHolder(),
+          createPlaceHolder(), /* TODO: pass argument */
+          getLocalStoreAlias(si.stepID),
+          getStackAlias(si.stepID),
+          createGlobalStore(),
+          getSymbolicsAlias(si.stepID),
+          getPCAlias(si.stepID),
+          createModule(),
+          getLocalStoreAlias(successor.stepID),
+          getTreeAlias(successor.stepID),
+        }
+      ),
+      t,
+      new Block({new Reflexivity()}),
+      new Block({new Apply("L_" + to_string(successor.stepID))}),
+    }
+  );
+}
 klee::ref<CoqTactic> OptimizedProofGenerator::getTacticForSubtreeBranch(StateInfo &si,
                                                                         ExecutionState &successor) {
   BranchInst *bi = cast<BranchInst>(si.inst);
