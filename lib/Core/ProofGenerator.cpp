@@ -131,7 +131,7 @@ klee::ref<CoqExpr> ProofGenerator::translateState(ExecutionState &es,
         createPrevBID(es),
         createLocalStore(es),
         createStack(es),
-        createGlobalStore(es),
+        createGlobalStore(),
         createSymbolics(es),
         createPC(es),
         createModule(),
@@ -205,7 +205,7 @@ klee::ref<CoqExpr> ProofGenerator::translateState(ExecutionState &es,
       getPrevBIDAlias(es.stepID),
       getLocalStoreAlias(es.stepID),
       getStackAlias(es.stepID),
-      createGlobalStore(es),
+      createGlobalStore(),
       getSymbolicsAlias(es.stepID),
       getPCAlias(es.stepID),
       createModule(),
@@ -329,7 +329,8 @@ klee::ref<CoqExpr> ProofGenerator::createStack(ExecutionState &es) {
   return new CoqList(frames);
 }
 
-klee::ref<CoqExpr> ProofGenerator::createGlobalStore(ExecutionState &es) {
+/* TODO: check if was set? */
+klee::ref<CoqExpr> ProofGenerator::createGlobalStore() {
   return coqGlobalStoreAlias;
 }
 
@@ -447,7 +448,7 @@ klee::ref<CoqTactic> ProofGenerator::getTacticForLeaf(ExecutionState &state) {
       createPlaceHolder(),
       getPrevBIDAlias(state.stepID),
       getLocalStoreAlias(state.stepID),
-      createGlobalStore(state),
+      createGlobalStore(),
       getSymbolicsAlias(state.stepID),
       getPCAlias(state.stepID),
       createModule(),

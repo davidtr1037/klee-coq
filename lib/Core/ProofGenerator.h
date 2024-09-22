@@ -115,7 +115,7 @@ public:
 
   ref<CoqExpr> createStack(ExecutionState &es);
 
-  ref<CoqExpr> createGlobalStore(ExecutionState &es);
+  ref<CoqExpr> createGlobalStore();
 
   ref<CoqExpr> createSymbolics(ExecutionState &es);
 

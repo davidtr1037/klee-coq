@@ -282,7 +282,7 @@ klee::ref<CoqTactic> OptimizedProofGenerator::getTacticForEquivAssignment(StateI
           getPrevBIDAlias(si.stepID),
           getLocalStoreAlias(si.stepID),
           getStackAlias(si.stepID),
-          createPlaceHolder(), /* TODO: pass argument */
+          createGlobalStore(),
           getSymbolicsAlias(si.stepID),
           getPCAlias(si.stepID),
           createModule(),
@@ -342,7 +342,7 @@ klee::ref<CoqTactic> OptimizedProofGenerator::getTacticForEquivPHI(StateInfo &si
           createPlaceHolder(), /* TODO: pass argument */
           getLocalStoreAlias(si.stepID),
           getStackAlias(si.stepID),
-          createPlaceHolder(), /* TODO: pass argument */
+          createGlobalStore(),
           getSymbolicsAlias(si.stepID),
           getPCAlias(si.stepID),
           createModule(),
@@ -443,7 +443,7 @@ klee::ref<CoqTactic> OptimizedProofGenerator::getTacticForEquivBranch(StateInfo 
             getPrevBIDAlias(si.stepID),
             getLocalStoreAlias(si.stepID),
             getStackAlias(si.stepID),
-            createPlaceHolder(), /* TODO: pass argument */
+            createGlobalStore(),
             getSymbolicsAlias(si.stepID),
             getPCAlias(si.stepID),
             createModule(),
@@ -671,7 +671,7 @@ klee::ref<CoqLemma> OptimizedProofGenerator::createLemmaForSubtree(StateInfo &st
         new CoqVariable("sym_eval_exp"),
         {
           getLocalStoreAlias(stateInfo.stepID),
-          new CoqVariable("gs"), /* TODO: replace */
+          createGlobalStore(),
           createSome(moduleTranslator->createTypeI(1)),
           moduleTranslator->translateBranchInstExpr(bi),
         }
@@ -704,7 +704,7 @@ klee::ref<CoqLemma> OptimizedProofGenerator::createLemmaForSubtree(StateInfo &st
             getPrevBIDAlias(stateInfo.stepID),
             getLocalStoreAlias(stateInfo.stepID),
             getStackAlias(stateInfo.stepID),
-            createPlaceHolder(), /* TODO: pass argument */
+            createGlobalStore(),
             getSymbolicsAlias(stateInfo.stepID),
             getPCAlias(stateInfo.stepID),
             createModule(),
@@ -758,7 +758,7 @@ klee::ref<CoqLemma> OptimizedProofGenerator::createLemmaForSubtree(StateInfo &st
             getPrevBIDAlias(stateInfo.stepID),
             getLocalStoreAlias(stateInfo.stepID),
             getStackAlias(stateInfo.stepID),
-            createPlaceHolder(), /* TODO: pass argument */
+            createGlobalStore(),
             getSymbolicsAlias(stateInfo.stepID),
             getPCAlias(stateInfo.stepID),
             createModule(),
