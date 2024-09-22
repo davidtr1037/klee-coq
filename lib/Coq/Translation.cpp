@@ -15,6 +15,8 @@
 using namespace llvm;
 using namespace klee;
 
+/* TODO: define aliases for: types, etc. */
+
 ModuleTranslator::ModuleTranslator(Module &m) :
   m(m), moduleAlias(nullptr), moduleDef(nullptr) {
 
@@ -484,13 +486,6 @@ ref<CoqExpr> ModuleTranslator::translateBranchInst(BranchInst *inst) {
   }
 
   if (inst->isConditional()) {
-    assert(inst->getNumSuccessors() == 2);
-    std::vector<ref<CoqExpr>> bb_ids;
-    for (unsigned i = 0; i < inst->getNumSuccessors(); i++) {
-      BasicBlock *bb = inst->getSuccessor(i);
-      bb_ids.push_back(createName(bb->getName().str()));
-    }
-
     return createCMDTerm(
       getInstID(inst),
       new CoqApplication(
@@ -498,16 +493,26 @@ ref<CoqExpr> ModuleTranslator::translateBranchInst(BranchInst *inst) {
         {
           new CoqPair(
             translateType(inst->getCondition()->getType()),
-            translateValue(inst->getCondition())
+            translateBranchInstExpr(inst)
           ),
-          bb_ids[0],
-          bb_ids[1],
+          translateBranchInstBid(inst, 0),
+          translateBranchInstBid(inst, 1),
         }
       )
     );
   }
 
   assert(false);
+}
+
+ref<CoqExpr> ModuleTranslator::translateBranchInstExpr(BranchInst *inst) {
+  return translateValue(inst->getCondition());
+}
+
+ref<CoqExpr> ModuleTranslator::translateBranchInstBid(BranchInst *inst, unsigned i) {
+  assert(i < inst->getNumSuccessors());
+  BasicBlock *bb = inst->getSuccessor(i);
+  return createName(bb->getName().str());
 }
 
 ref<CoqExpr> ModuleTranslator::translatePHINode(PHINode *inst) {
@@ -728,10 +733,7 @@ ref<CoqExpr> ModuleTranslator::translateValue(Value *value) {
 ref<CoqExpr> ModuleTranslator::translateType(Type *t) {
   if (t->isIntegerTy()) {
     IntegerType *it = dyn_cast<IntegerType>(t);
-    return new CoqApplication(
-      new CoqVariable("TYPE_I"),
-      { new CoqVariable(std::to_string(it->getBitWidth())), }
-    );
+    return createTypeI(it->getBitWidth());
   }
  
   if (t->isVoidTy()) {
@@ -740,6 +742,13 @@ ref<CoqExpr> ModuleTranslator::translateType(Type *t) {
 
   assert(false);
   return nullptr;
+}
+
+ref<CoqExpr> ModuleTranslator::createTypeI(uint64_t width) {
+  return new CoqApplication(
+    new CoqVariable("TYPE_I"),
+    {new CoqVariable(std::to_string(width))}
+  );
 }
 
 ref<CoqExpr> ModuleTranslator::createLocalID(const std::string &name) {

@@ -135,6 +135,8 @@ public:
 
   ref<CoqExpr> translateType(llvm::Type *t);
 
+  ref<CoqExpr> createTypeI(uint64_t width);
+
   ref<CoqExpr> createLocalID(const std::string &name);
 
   ref<CoqExpr> createGlobalID(const std::string &name);
