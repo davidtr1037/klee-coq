@@ -1375,7 +1375,7 @@ Proof.
   reflexivity.
 Qed.
 
-Lemma safe_subtree_ret : forall ic cid rtype e pbid ls ls' ic' pbid' v stk gs syms pc mdl d c' cs' t,
+Lemma safe_subtree_ret : forall ic cid rtype e pbid ls ls' ic' pbid' v stk gs syms pc mdl d c' cs' ls_opt t,
   let s_init :=
     (mk_sym_state
       ic
@@ -1389,6 +1389,7 @@ Lemma safe_subtree_ret : forall ic cid rtype e pbid ls ls' ic' pbid' v stk gs sy
       pc
       mdl
     ) in
+  equiv_smt_store (v !-> (sym_eval_exp ls gs (Some rtype) e); ls') ls_opt ->
   (find_function mdl (ic_fid ic')) = Some d ->
   (get_trailing_cmds d ic') = Some (c' :: cs') ->
   (root t =
@@ -1397,7 +1398,7 @@ Lemma safe_subtree_ret : forall ic cid rtype e pbid ls ls' ic' pbid' v stk gs sy
       c'
       cs'
       pbid'
-      (v !-> (sym_eval_exp ls gs (Some rtype) e); ls')
+      ls_opt
       stk
       gs
       syms
@@ -1408,8 +1409,8 @@ Lemma safe_subtree_ret : forall ic cid rtype e pbid ls ls' ic' pbid' v stk gs sy
   (safe_et_opt t) ->
   (safe_et_opt (t_subtree s_init [t])).
 Proof.
-  intros ic cid rtype e pbid ls ls' ic' pbid' v stk gs syms pc mdl d c' cs' t.
-  intros s_init Hd Hcs Ht Hsafe.
+  intros ic cid rtype e pbid ls ls' ic' pbid' v stk gs syms pc mdl d c' cs' ls_opt t.
+  intros s_init Heq Hd Hcs Ht Hsafe.
   apply Safe_Subtree.
   {
     apply not_error_ret.
@@ -1434,7 +1435,7 @@ Proof.
         inversion Hcs; subst.
         rewrite <- Heval.
         apply EquivSymState.
-        { apply equiv_smt_store_refl. }
+        { assumption. }
         { apply equiv_sym_stack_refl. }
         { apply equiv_smt_store_refl. }
         { apply equiv_smt_expr_refl. }
