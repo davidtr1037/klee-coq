@@ -869,6 +869,103 @@ Proof.
   }
 Qed.
 
+Lemma equiv_sym_state_br_unsat_sat : forall ic cid e bid1 bid2 pbid ls stk gs syms pc mdl cond d b2 c2 cs2 pc2 pc1 t,
+  (sym_eval_exp ls gs (Some (TYPE_I 1)) e) = Some (Expr Sort_BV1 cond) ->
+  (find_function mdl (ic_fid ic)) = Some d ->
+  (fetch_block d bid2) = Some b2 ->
+  (blk_cmds b2) = c2 :: cs2 ->
+  let s_init :=
+    (mk_sym_state
+      ic
+      (CMD_Term cid (TERM_Br ((TYPE_I 1), e) bid1 bid2))
+      []
+      pbid
+      ls
+      stk
+      gs
+      syms
+      pc
+      mdl
+    ) in
+  (root t =
+    (mk_sym_state
+      (mk_inst_counter (ic_fid ic) bid2 (get_cmd_id c2))
+      c2
+      cs2
+      (Some (ic_bid ic))
+      ls
+      stk
+      gs
+      syms
+      pc2
+      mdl
+    )
+  ) ->
+  (safe_et_opt t) ->
+  (equiv_smt_expr
+    (Expr Sort_BV1 (AST_BinOp Sort_BV1 SMT_And pc (AST_Not Sort_BV1 cond)))
+    (Expr Sort_BV1 pc2)
+  ) ->
+  (equiv_smt_expr
+    (Expr Sort_BV1 (AST_BinOp Sort_BV1 SMT_And pc cond))
+    (Expr Sort_BV1 pc1)
+  ) ->
+  unsat pc1 ->
+  (safe_et_opt (t_subtree s_init [t])).
+Proof.
+  intros ic cid e bid1 bid2 pbid ls stk gs syms pc mdl cond d b2 c2 cs2 pc2 pc1 t.
+  intros Heval Hd Hb2 Hcs2 s_init Ht Hsafe Heq2 Heq1 Hunsat1.
+  apply Safe_Subtree.
+  { apply not_error_br. }
+  {
+    intros s' Hstep.
+    apply inversion_br in Hstep.
+    destruct Hstep as [cond' [d' [b' [c' [cs' [Heval' [Hd' H]]]]]]].
+    rewrite Heval' in Heval.
+    apply injection_some in Heval.
+    apply injection_expr in Heval.
+    subst.
+    rewrite Hd' in Hd.
+    inversion Hd; subst.
+    destruct H as [H | H].
+    {
+      right.
+      destruct H as [Hb' [Hcs' Hs]].
+      rewrite Hs.
+      apply Unsat_State.
+      apply equiv_smt_expr_unsat with (ast1 := pc1).
+      {
+        apply equiv_smt_expr_symmetry.
+        assumption.
+      }
+      { assumption. }
+    }
+    {
+      left.
+      destruct H as [Hb' [Hcs' Hs]].
+      rewrite Hb' in Hb2.
+      inversion Hb2; subst.
+      rewrite Hcs' in Hcs2.
+      inversion Hcs2; subst.
+      exists t.
+      split.
+      { apply in_list_0. }
+      {
+        split.
+        { assumption. }
+        {
+          rewrite Ht.
+          apply EquivSymState.
+          { apply equiv_smt_store_refl. }
+          { apply equiv_sym_stack_refl. }
+          { apply equiv_smt_store_refl. }
+          { assumption. }
+        }
+      }
+    }
+  }
+Qed.
+
 Lemma inversion_call : forall ic cid v t f args anns c cs pbid ls stk gs syms pc mdl d s,
   (find_function_by_exp mdl f) = Some d ->
   sym_step
