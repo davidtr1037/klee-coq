@@ -16,6 +16,8 @@ function run_klee {
         -proof-debug-script-path=${debug_output} \
         -decompose-state \
         -cache-pc-expr \
+        -cache-register-expr \
+        -cache-stack-expr \
         -optimize-proof \
         $1 &> /dev/null
     time coqc -Q ${ROOT}/coq SE ${output}
