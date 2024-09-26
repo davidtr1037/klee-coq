@@ -20,6 +20,7 @@ function run_klee {
         $1 &> /dev/null
     time coqc -Q ${ROOT}/coq SE ${output}
     coqc -Q ${ROOT}/coq SE ${debug_output} > ${po_output}
+    ls -lh ${output}
     ls -lh ${po_output}
 }
 
