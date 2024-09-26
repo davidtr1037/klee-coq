@@ -156,6 +156,28 @@ string CoqList::pretty_dump(int indent) const {
   return os.str();
 }
 
+CoqListCons::CoqListCons(const ref<CoqExpr> &head, const ref<CoqExpr> &tail) :
+  head(head), tail(tail) {
+
+}
+
+string CoqListCons::dump() const {
+  ostringstream os;
+
+  os << head->dump() << " :: " << tail->dump();
+
+  return os.str();
+}
+
+string CoqListCons::pretty_dump(int indent) const {
+  ostringstream os;
+
+  os << space(indent);
+  os << head->dump() << " :: " << tail->dump();
+
+  return os.str();
+}
+
 CoqBinOp::CoqBinOp(const string &op,
                    const ref<CoqExpr> &left,
                    const ref<CoqExpr> &right) :

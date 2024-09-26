@@ -100,6 +100,22 @@ public:
 
 };
 
+class CoqListCons : public CoqExpr {
+
+public:
+
+    ref<CoqExpr> head;
+
+    ref<CoqExpr> tail;
+
+    CoqListCons(const ref<CoqExpr> &head, const ref<CoqExpr> &tail);
+
+    std::string dump() const;
+
+    std::string pretty_dump(int indent = 0) const;
+
+};
+
 class CoqList : public CoqExpr {
 
 public:
