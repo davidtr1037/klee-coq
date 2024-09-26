@@ -107,12 +107,15 @@ public:
 
   ref<CoqExpr> createPrevBID(StackFrame &sf);
 
-  ref<CoqExpr> createLocalStore(ExecutionState &es);
+  ref<CoqExpr> createLocalStore(ExecutionState &es,
+                                std::vector<ref<CoqExpr>> &defs);
 
   ref<CoqExpr> translateRegisterUpdates(ExecutionState &es,
-                                        std::list<RegisterUpdate> &updates);
+                                        std::list<RegisterUpdate> &updates,
+                                        std::vector<ref<CoqExpr>> &defs);
 
-  ref<CoqExpr> createStack(ExecutionState &es);
+  ref<CoqExpr> createStack(ExecutionState &es,
+                           std::vector<ref<CoqExpr>> &defs);
 
   ref<CoqExpr> createGlobalStore();
 

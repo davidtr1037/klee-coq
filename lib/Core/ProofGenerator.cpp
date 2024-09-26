@@ -21,8 +21,14 @@ cl::opt<bool> DecomposeState(
   cl::desc("")
 );
 
-cl::opt<bool> CacheCoqExpr(
-  "cache-coq-expr",
+cl::opt<bool> CachePCExpr(
+  "cache-pc-expr",
+  cl::init(false),
+  cl::desc("")
+);
+
+cl::opt<bool> CacheRegisterExpr(
+  "cache-register-expr",
   cl::init(false),
   cl::desc("")
 );
@@ -136,8 +142,8 @@ klee::ref<CoqExpr> ProofGenerator::translateState(ExecutionState &es,
         createCommand(es),
         createTrailingCommands(es),
         createPrevBID(es),
-        createLocalStore(es),
-        createStack(es),
+        createLocalStore(es, defs),
+        createStack(es, defs),
         createGlobalStore(),
         createSymbolics(es),
         createPC(es, defs),
@@ -178,14 +184,14 @@ klee::ref<CoqExpr> ProofGenerator::translateState(ExecutionState &es,
     new CoqDefinition(
       getLocalStoreAliasName(es.stepID),
       "smt_store",
-      createLocalStore(es)
+      createLocalStore(es, defs)
     )
   );
   defs.push_back(
     new CoqDefinition(
       getStackAliasName(es.stepID),
       "list sym_frame",
-      createStack(es)
+      createStack(es, defs)
     )
   );
   defs.push_back(
@@ -274,12 +280,13 @@ klee::ref<CoqExpr> ProofGenerator::createPrevBID(StackFrame &sf) {
   }
 }
 
-klee::ref<CoqExpr> ProofGenerator::createLocalStore(ExecutionState &es) {
-  return translateRegisterUpdates(es, es.stack.back().updates);
+klee::ref<CoqExpr> ProofGenerator::createLocalStore(ExecutionState &es, vector<ref<CoqExpr>> &defs) {
+  return translateRegisterUpdates(es, es.stack.back().updates, defs);
 }
 
 klee::ref<CoqExpr> ProofGenerator::translateRegisterUpdates(ExecutionState &es,
-                                                            list<RegisterUpdate> &updates) {
+                                                            list<RegisterUpdate> &updates,
+                                                            vector<ref<CoqExpr>> &defs) {
   ostringstream output;
 
   output << "(";
@@ -290,7 +297,12 @@ klee::ref<CoqExpr> ProofGenerator::translateRegisterUpdates(ExecutionState &es,
     }
 
     ref<CoqExpr> coqName = moduleTranslator->createName(ru.name);
-    ref<CoqExpr> coqExpr = exprTranslator->translateAsSMTExpr(ru.value, &es.arrayTranslation);
+    ref<CoqExpr> coqExpr;
+    if (CacheRegisterExpr) {
+      coqExpr = exprTranslator->translateAsSMTExprCached(ru.value, &es.arrayTranslation, true, defs);
+    } else {
+      coqExpr = exprTranslator->translateAsSMTExpr(ru.value, &es.arrayTranslation);
+    }
     assert(coqName && coqExpr);
     output << coqName->dump() << " !-> " << "Some (" << coqExpr->dump() << "); ";
   }
@@ -301,7 +313,7 @@ klee::ref<CoqExpr> ProofGenerator::translateRegisterUpdates(ExecutionState &es,
 
 /* TODO: CoqList should receive a list of CoqExpr */
 /* TODO: avoid reversed iteration */
-klee::ref<CoqExpr> ProofGenerator::createStack(ExecutionState &es) {
+klee::ref<CoqExpr> ProofGenerator::createStack(ExecutionState &es, vector<ref<CoqExpr>> &defs) {
   vector<ref<CoqExpr>> frames;
 
   for (int i = es.stack.size() - 2; i >= 0; i--) {
@@ -325,7 +337,7 @@ klee::ref<CoqExpr> ProofGenerator::createStack(ExecutionState &es) {
     ref<CoqExpr> e = new CoqApplication(
       new CoqVariable("Sym_Frame"),
       {
-        translateRegisterUpdates(es, sf.updates),
+        translateRegisterUpdates(es, sf.updates, defs),
         createInstCounter(next),
         createPrevBID(sf),
         v,
@@ -385,7 +397,7 @@ klee::ref<CoqExpr> ProofGenerator::createPC(ExecutionState &es, vector<ref<CoqEx
   for (ref<Expr> e : es.constraints) {
     pc = AndExpr::create(pc, e);
   }
-  if (CacheCoqExpr) {
+  if (CachePCExpr) {
     return exprTranslator->translateCached(pc, &es.arrayTranslation, true, defs);
   } else {
     return exprTranslator->translate(pc, &es.arrayTranslation);
