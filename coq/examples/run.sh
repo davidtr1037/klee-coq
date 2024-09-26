@@ -10,6 +10,10 @@ function run_klee {
     $KLEE \
         -search=dfs \
         -generate-proof \
+        -decompose-state \
+        -cache-pc-expr \
+        -cache-register-expr \
+        -cache-stack-expr \
         -proof-output-path=${output} \
         $1 &> /dev/null
     coqc -Q ${ROOT}/coq SE ${output}
