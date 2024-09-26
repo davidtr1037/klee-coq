@@ -80,6 +80,8 @@ struct StackFrame {
 
   llvm::BasicBlock *incomingBB;
 
+  ref<CoqExpr> alias;
+
   StackFrame(KInstIterator caller, KFunction *kf);
   StackFrame(const StackFrame &s);
   ~StackFrame();

@@ -33,6 +33,12 @@ cl::opt<bool> CacheRegisterExpr(
   cl::desc("")
 );
 
+cl::opt<bool> CacheStackExpr(
+  "cache-stack-expr",
+  cl::init(false),
+  cl::desc("")
+);
+
 /* TODO: decide how to handle assertions */
 /* TODO: add a function for generating names of axioms and lemmas (L_, UNSAT_, etc.) */
 
@@ -311,17 +317,50 @@ klee::ref<CoqExpr> ProofGenerator::translateRegisterUpdates(ExecutionState &es,
   return new CoqVariable(output.str());
 }
 
-/* TODO: CoqList should receive a list of CoqExpr */
-/* TODO: avoid reversed iteration */
+/* TODO: avoid reversed iteration? */
 klee::ref<CoqExpr> ProofGenerator::createStack(ExecutionState &es, vector<ref<CoqExpr>> &defs) {
   vector<ref<CoqExpr>> frames;
 
+  ref<CoqExpr> tail = nullptr;
+
   for (int i = es.stack.size() - 2; i >= 0; i--) {
-    ref<CoqExpr> frame = createFrame(es, i, defs);
-    frames.push_back(frame);
+    StackFrame &sf = es.stack[i];
+    if (sf.alias.isNull()) {
+      ref<CoqExpr> frame = createFrame(es, i, defs);
+      frames.push_back(frame);
+    } else {
+      tail = sf.alias;
+      break;
+    }
   }
 
-  return new CoqList(frames);
+  ref<CoqExpr> stack;
+  if (tail.isNull()) {
+    stack = new CoqList(frames);
+  } else {
+    stack = tail;
+    for (auto i = frames.rbegin(); i != frames.rend(); i++) {
+      ref<CoqExpr> frame = *i;
+      stack = new CoqListCons(frame, stack);
+    }
+  }
+
+  if (CacheStackExpr && es.stack.size() >= 2) {
+    StackFrame &sf = es.stack[es.stack.size() - 2];
+    if (sf.alias.isNull()) {
+      string aliasName = "sf_" + to_string(es.stepID);
+      sf.alias = new CoqVariable(aliasName);
+      ref<CoqExpr> def = new CoqDefinition(
+        aliasName,
+        "list sym_frame",
+        stack
+      );
+      defs.push_back(def);
+    }
+    return sf.alias;
+  }
+
+  return stack;
 }
 
 klee::ref<CoqExpr> ProofGenerator::createFrame(ExecutionState &es,
