@@ -332,6 +332,19 @@ Definition normalize_cmpop op (s : smt_sort) (ast1 ast2 : smt_ast s) : smt_ast S
   end
 .
 
+Definition normalize_not (s : smt_sort) (ast : smt_ast s) : smt_ast s :=
+  let f :=
+    match s with
+    | Sort_BV1 =>
+        AST_CmpOp Sort_BV1 SMT_Eq smt_ast_false
+    | Sort_BV8 => AST_Not Sort_BV8
+    | Sort_BV16 => AST_Not Sort_BV16
+    | Sort_BV32 => AST_Not Sort_BV32
+    | Sort_BV64 => AST_Not Sort_BV64
+    end in
+  f ast
+.
+
 Fixpoint normalize (s : smt_sort) (ast : smt_ast s) : smt_ast s :=
   match ast with
   | AST_Const sort n => AST_Const sort n
@@ -341,16 +354,7 @@ Fixpoint normalize (s : smt_sort) (ast : smt_ast s) : smt_ast s :=
   | AST_CmpOp sort op ast1 ast2 =>
       normalize_cmpop op sort (normalize sort ast1) (normalize sort ast2)
   | AST_Not sort ast =>
-      let f :=
-      match sort with
-      | Sort_BV1 =>
-          AST_CmpOp Sort_BV1 SMT_Eq smt_ast_false
-      | Sort_BV8 => AST_Not Sort_BV8
-      | Sort_BV16 => AST_Not Sort_BV16
-      | Sort_BV32 => AST_Not Sort_BV32
-      | Sort_BV64 => AST_Not Sort_BV64
-      end in
-      f (normalize sort ast)
+      normalize_not sort (normalize sort ast)
   end
 .
 

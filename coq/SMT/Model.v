@@ -467,6 +467,21 @@ Lemma equiv_smt_expr_sge_sle : forall s (ast1 ast2 : smt_ast s),
 Proof.
 Admitted.
 
+Lemma equiv_smt_expr_not_to_eq : forall (ast : smt_ast Sort_BV1),
+  equiv_smt_expr
+    (Expr Sort_BV1 (AST_Not Sort_BV1 ast))
+    (Expr Sort_BV1 (AST_CmpOp Sort_BV1 SMT_Eq smt_ast_false (normalize Sort_BV1 ast))).
+Proof.
+Admitted.
+
+Lemma equiv_smt_expr_ne_to_eq : forall s (ast1 ast2 : smt_ast s),
+  equiv_smt_expr (Expr Sort_BV1 (AST_CmpOp s SMT_Ne ast1 ast2))
+    (Expr Sort_BV1
+       (AST_CmpOp Sort_BV1 SMT_Eq (AST_Const Sort_BV1 Int1.zero)
+          (AST_CmpOp s SMT_Eq ast1 ast2))).
+Proof.
+Admitted.
+
 Lemma equiv_smt_expr_normalize: forall (sort : smt_sort) (ast : smt_ast sort),
   equiv_smt_expr
     (Expr sort ast)
@@ -549,7 +564,12 @@ Proof.
       try assumption;
       apply equiv_smt_expr_refl
     ).
-    { admit. }
+    {
+      apply equiv_smt_expr_normalize_cmpop_args;
+      try assumption.
+      simpl.
+      apply equiv_smt_expr_ne_to_eq.
+    }
     {
       apply equiv_smt_expr_normalize_cmpop_args;
       try assumption.
@@ -575,8 +595,16 @@ Proof.
       apply equiv_smt_expr_sge_sle.
     }
   }
-  { admit. }
-Admitted.
+  {
+    destruct s;
+    try (
+      simpl;
+      apply equiv_smt_expr_not;
+      assumption
+    ).
+    apply equiv_smt_expr_not_to_eq.
+  }
+Qed.
 
 Lemma equiv_smt_expr_normalize_simplify: forall (sort : smt_sort) (ast : smt_ast sort),
   equiv_smt_expr
