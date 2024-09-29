@@ -497,10 +497,10 @@ cl::opt<bool> OptimizeProof(
   cl::desc(""),
   cl::cat(ProofGenerationCat));
 
-cl::opt<std::string> ProofDebugScriptPath(
-  "proof-debug-script-path",
+cl::opt<bool> PrintProofObjects(
+  "print-proof-objects",
+  cl::init(false),
   cl::desc(""),
-  cl::value_desc(""),
   cl::cat(ProofGenerationCat));
 
 } // namespace
@@ -3836,13 +3836,14 @@ void Executor::run(ExecutionState &initialState) {
     proofGenerator->generateLemmaDefs();
     proofGenerator->generateTheorem();
 
-    if (!ProofDebugScriptPath.empty()) {
+    if (PrintProofObjects) {
+      std::string path = interpreterHandler->getOutputFilename("proof_objects.v");
       std::unique_ptr<raw_fd_ostream> os;
       std::string error;
-      os = klee_open_output_file(ProofDebugScriptPath, error);
+      os = klee_open_output_file(path, error);
       if (!os) {
         klee_error("failed to open file '%s' error '%s'",
-                   ProofDebugScriptPath.c_str(),
+                   path.c_str(),
                    error.c_str());
       }
       proofGenerator->generateDebugScript(*os);
