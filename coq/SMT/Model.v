@@ -456,7 +456,21 @@ Lemma equiv_smt_expr_normalize_cmpop : forall s op (ast1 ast2 ast3 ast4 : smt_as
     (Expr Sort_BV1 (normalize_cmpop op s ast1 ast3))
     (Expr Sort_BV1 (normalize_cmpop op s ast2 ast4)).
 Proof.
-Admitted.
+  intros s op ast1 ast2 ast3 ast4 Heq1 Heq2.
+  destruct s; destruct op;
+  (* simpl case *)
+  try (
+    simpl;
+    apply equiv_smt_expr_cmpop; assumption
+  );
+  (* Ne --> Eq 0 ... *)
+  try (
+    simpl;
+    apply equiv_smt_expr_cmpop;
+    try (apply equiv_smt_expr_refl);
+    try (apply equiv_smt_expr_cmpop; assumption)
+  ).
+Qed.
 
 Lemma equiv_smt_expr_normalize_cmpop_args : forall s op (ast1 ast2 : smt_ast s),
   equiv_smt_expr (Expr s ast1) (Expr s (normalize s ast1)) ->
