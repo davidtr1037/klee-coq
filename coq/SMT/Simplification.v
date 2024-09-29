@@ -372,6 +372,41 @@ Lemma equiv_smt_expr_sub_consts : forall (ast : smt_ast Sort_BV32) (n1 n2 : int3
 Proof.
 Admitted.
 
+Lemma equiv_smt_expr_normalize_binop_right : forall s op (ast1 ast2 ast3 : smt_ast s),
+  equiv_smt_expr (Expr s ast2) (Expr s ast3) ->
+  equiv_smt_expr
+    (Expr s (normalize_binop op s ast1 ast2))
+    (Expr s (normalize_binop op s ast1 ast3)).
+Proof.
+  intros s op ast1 ast2 ast3 Heq.
+  destruct s;
+  (* bv1, bv8, bv16, bv64 *)
+  try (
+    apply equiv_smt_expr_binop;
+    try (apply equiv_smt_expr_refl);
+    try (assumption)
+  ).
+  simpl.
+  destruct op;
+  (* all ops except for add/sub *)
+  try (
+    apply equiv_smt_expr_binop;
+    try (apply equiv_smt_expr_refl);
+    try (assumption)
+  ).
+  {
+    dependent destruction ast1; dependent destruction ast2.
+    (* this block should work for other cases *)
+    {
+      dependent destruction ast3;
+      (
+        apply equiv_smt_expr_binop;
+        try (apply equiv_smt_expr_refl);
+        try (assumption)
+      ).
+    }
+Admitted.
+
 Lemma equiv_smt_expr_normalize_binop : forall s op (ast1 ast2 ast3 ast4 : smt_ast s),
   equiv_smt_expr (Expr s ast1) (Expr s ast2) ->
   equiv_smt_expr (Expr s ast3) (Expr s ast4) ->

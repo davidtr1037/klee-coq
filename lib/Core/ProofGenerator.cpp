@@ -484,6 +484,7 @@ vector<klee::ref<CoqExpr>> ProofGenerator::getImports() {
     new CoqRequire("SE", "ProofGeneration"),
     new CoqRequire("SE.SMT", "Expr"),
     new CoqRequire("SE.SMT", "Model"),
+    new CoqRequire("SE.SMT", "Simplification"),
     new CoqRequire("SE.Utils", "Util"),
   };
 }
