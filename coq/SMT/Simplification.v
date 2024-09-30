@@ -376,78 +376,69 @@ Lemma L_1 : forall n ast1 ast2,
     (Expr Sort_BV32 (normalize_binop_bv32 SMT_Add ast1 (AST_Const Sort_BV32 n)))
     (Expr Sort_BV32 (normalize_binop_bv32 SMT_Add ast1 ast2)).
 Proof.
-Admitted.
-(*
-  replace (Expr Sort_BV32 (normalize_binop_bv32 SMT_Add ast1 a3))
-    with (Expr Sort_BV32 (AST_BinOp Sort_BV32 SMT_Add ast1 a3)).
+  intros n ast1 ast2 Heq Hequiv.
+  rewrite Heq.
+  dependent destruction ast1.
   {
-    dependent destruction ast1.
-    {
-      simpl.
-      admit. (* easy *)
-    }
-    {
-      simpl.
-      admit. (* easy *)
-    }
-    {
-      destruct op;
-      try (
-        simpl;
-        eapply equiv_smt_expr_transitivity;
-        [
-          apply equiv_smt_expr_add_comm |
-          (
-            apply equiv_smt_expr_binop;
-            [
-              apply equiv_smt_expr_refl |
-              assumption
-            ]
-          )
-        ]
-      ).
-      {
-        remember ast1_1 as a1_1.
-        dependent destruction ast1_1.
-        {
-          simpl.
-          admit. (* easy *)
-        }
-        {
-          replace
-            (normalize_binop_bv32 SMT_Add
-              (AST_BinOp Sort_BV32 SMT_Add a1_1 ast1_2)
-              (AST_Const Sort_BV32 n)) with
-            (AST_BinOp Sort_BV32 SMT_Add
-              (AST_Const Sort_BV32 n)
-              (AST_BinOp Sort_BV32 SMT_Add a1_1 ast1_2)).
-          {
-            eapply equiv_smt_expr_transitivity.
-            { apply equiv_smt_expr_add_comm. }
-            {
-              apply equiv_smt_expr_binop.
-              { apply equiv_smt_expr_refl. }
-              { assumption. }
-            }
-          }
-          {
-            rewrite Heqa1_1.
-            simpl.
-            reflexivity.
-          }
-        }
-        { admit. } (* same *)
-        { admit. } (* same *)
-      }
-    }
-    { admit. } (* easy *)
-  }
-  {
-    rewrite Heqa3.
     simpl.
-    reflexivity.
+    admit. (* easy *)
   }
-*)
+  {
+    simpl.
+    admit. (* easy *)
+  }
+  {
+    destruct op;
+    try (
+      simpl;
+      eapply equiv_smt_expr_transitivity;
+      [
+        apply equiv_smt_expr_add_comm |
+        (
+          apply equiv_smt_expr_binop;
+          [
+            apply equiv_smt_expr_refl |
+            assumption
+          ]
+        )
+      ]
+    ).
+    {
+      remember ast1_1 as a1_1.
+      dependent destruction ast1_1.
+      {
+        simpl.
+        admit. (* easy *)
+      }
+      {
+        replace
+          (normalize_binop_bv32 SMT_Add
+            (AST_BinOp Sort_BV32 SMT_Add a1_1 ast1_2)
+            (AST_Const Sort_BV32 n)) with
+          (AST_BinOp Sort_BV32 SMT_Add
+            (AST_Const Sort_BV32 n)
+            (AST_BinOp Sort_BV32 SMT_Add a1_1 ast1_2)).
+        {
+          eapply equiv_smt_expr_transitivity.
+          { apply equiv_smt_expr_add_comm. }
+          {
+            apply equiv_smt_expr_binop.
+            { apply equiv_smt_expr_refl. }
+            { assumption. }
+          }
+        }
+        {
+          rewrite Heqa1_1.
+          simpl.
+          reflexivity.
+        }
+      }
+      { admit. } (* same *)
+      { admit. } (* same *)
+    }
+  }
+  { admit. } (* easy *)
+Admitted.
 
 Lemma L_2 : forall ast1 ast2 ast3,
   (normalize_binop_bv32 SMT_Add ast1 ast2) = AST_BinOp Sort_BV32 SMT_Add ast1 ast2 ->
@@ -511,12 +502,11 @@ Proof.
     ).
     (* ast2 : const *)
     {
-      remember ast3 as a3.
       dependent destruction ast3;
       try (
         apply L_1;
         [
-          rewrite Heqa3; reflexivity |
+          reflexivity |
           assumption
         ]
       ).
