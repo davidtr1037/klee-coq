@@ -32,21 +32,18 @@ Definition normalize_binop_bv16 op (ast1 ast2 : smt_ast Sort_BV16) :=
 Definition normalize_binop_bv32 op (ast1 ast2 : smt_ast Sort_BV32) :=
   match op with
   | SMT_Add =>
-    match ast1, ast2 with
-    | AST_Const Sort_BV32 n1, AST_Const Sort_BV32 n2 =>
-        AST_BinOp Sort_BV32 op ast1 ast2
-    | ast1, AST_Const Sort_BV32 n2 =>
+    match ast2 with
+    | AST_Const Sort_BV32 n2 =>
         match ast1 with
+        | AST_Const Sort_BV32 n1 => AST_BinOp Sort_BV32 op ast1 ast2
         | AST_BinOp Sort_BV32 SMT_Add (AST_Const Sort_BV32 n1) ast =>
-            (* (c1 + x) + c2 ~ (c1 + c2) + x *)
             AST_BinOp Sort_BV32 SMT_Add (AST_Const Sort_BV32 (add n1 n2)) ast
         | _ =>
-            (* (x + c1) ~ (c1 + x) *)
             AST_BinOp Sort_BV32 SMT_Add (AST_Const Sort_BV32 n2) ast1
         end
-    | _, _ =>
-        AST_BinOp Sort_BV32 op ast1 ast2
+    | _ => AST_BinOp Sort_BV32 op ast1 ast2
     end
+  (* TOOD: rewrite as above *)
   | SMT_Sub =>
     match ast1, ast2 with
     | AST_Const Sort_BV32 n1, AST_Const Sort_BV32 n2 =>
@@ -372,6 +369,86 @@ Lemma equiv_smt_expr_sub_consts : forall (ast : smt_ast Sort_BV32) (n1 n2 : int3
 Proof.
 Admitted.
 
+Lemma L_1 : forall n ast1 ast2,
+  (normalize_binop_bv32 SMT_Add ast1 ast2) = AST_BinOp Sort_BV32 SMT_Add ast1 ast2 ->
+  equiv_smt_expr (Expr Sort_BV32 (AST_Const Sort_BV32 n)) (Expr Sort_BV32 ast2) ->
+  equiv_smt_expr
+    (Expr Sort_BV32 (normalize_binop_bv32 SMT_Add ast1 (AST_Const Sort_BV32 n)))
+    (Expr Sort_BV32 (normalize_binop_bv32 SMT_Add ast1 ast2)).
+Proof.
+Admitted.
+(*
+        replace (Expr Sort_BV32 (normalize_binop_bv32 SMT_Add ast1 a3))
+          with (Expr Sort_BV32 (AST_BinOp Sort_BV32 SMT_Add ast1 a3)).
+        {
+          dependent destruction ast1.
+          {
+            simpl.
+            admit. (* easy *)
+          }
+          {
+            simpl.
+            admit. (* easy *)
+          }
+          {
+            destruct op;
+            try (
+              simpl;
+              eapply equiv_smt_expr_transitivity;
+              [
+                apply equiv_smt_expr_add_comm |
+                (
+                  apply equiv_smt_expr_binop;
+                  [
+                    apply equiv_smt_expr_refl |
+                    assumption
+                  ]
+                )
+              ]
+            ).
+            {
+              remember ast1_1 as a1_1.
+              dependent destruction ast1_1.
+              {
+                simpl.
+                admit. (* easy *)
+              }
+              {
+                replace
+                  (normalize_binop_bv32 SMT_Add
+                    (AST_BinOp Sort_BV32 SMT_Add a1_1 ast1_2)
+                    (AST_Const Sort_BV32 n)) with
+                  (AST_BinOp Sort_BV32 SMT_Add
+                    (AST_Const Sort_BV32 n)
+                    (AST_BinOp Sort_BV32 SMT_Add a1_1 ast1_2)).
+                {
+                  eapply equiv_smt_expr_transitivity.
+                  { apply equiv_smt_expr_add_comm. }
+                  {
+                    apply equiv_smt_expr_binop.
+                    { apply equiv_smt_expr_refl. }
+                    { assumption. }
+                  }
+                }
+                {
+                  rewrite Heqa1_1. 
+                  simpl.
+                  reflexivity.
+                }
+              }
+              { admit. } (* same *)
+              { admit. } (* same *)
+            }
+          }
+          { admit. } (* easy *)
+        }
+        {
+          rewrite Heqa3.
+          simpl.
+          reflexivity.
+        }
+*)
+
 Lemma equiv_smt_expr_normalize_binop_right : forall s op (ast1 ast2 ast3 : smt_ast s),
   equiv_smt_expr (Expr s ast2) (Expr s ast3) ->
   equiv_smt_expr
@@ -395,16 +472,94 @@ Proof.
     try (assumption)
   ).
   {
-    dependent destruction ast1; dependent destruction ast2.
-    (* this block should work for other cases *)
+    dependent destruction ast2.
+    (* ast2 : const *)
     {
+      remember ast3 as a3.
       dependent destruction ast3;
-      (
-        apply equiv_smt_expr_binop;
-        try (apply equiv_smt_expr_refl);
-        try (assumption)
+      try (
+        apply L_1;
+        [
+          rewrite Heqa3; reflexivity |
+          assumption
+        ]
       ).
+      (* ast3 : const *)
+      { admit. }
     }
+    (* ast2 : var *)
+    {
+      remember ast3 as a3.
+      dependent destruction ast3;
+      (* ast3 : !const *)
+      try (
+        rewrite Heqa3 in *;
+        simpl;
+        apply equiv_smt_expr_binop;
+        [
+          apply equiv_smt_expr_refl |
+          assumption
+        ]
+      ).
+      (* ast3 : const *)
+      {
+        rewrite Heqa3 in *.
+        apply equiv_smt_expr_symmetry.
+        apply L_1.
+        { reflexivity. }
+        { apply equiv_smt_expr_symmetry. assumption. }
+      }
+    }
+    (* TODO: duplicate case *)
+    (* ast2 : binop *)
+    {
+      remember ast3 as a3.
+      dependent destruction ast3;
+      (* ast3 : !const *)
+      try (
+        rewrite Heqa3 in *;
+        simpl;
+        apply equiv_smt_expr_binop;
+        [
+          apply equiv_smt_expr_refl |
+          assumption
+        ]
+      ).
+      (* ast3 : const *)
+      {
+        rewrite Heqa3 in *.
+        apply equiv_smt_expr_symmetry.
+        apply L_1.
+        { reflexivity. }
+        { apply equiv_smt_expr_symmetry. assumption. }
+      }
+    }
+    (* TODO: duplicate case *)
+    (* ast2 : not *)
+    {
+      remember ast3 as a3.
+      dependent destruction ast3;
+      (* ast3 : !const *)
+      try (
+        rewrite Heqa3 in *;
+        simpl;
+        apply equiv_smt_expr_binop;
+        [
+          apply equiv_smt_expr_refl |
+          assumption
+        ]
+      ).
+      (* ast3 : const *)
+      {
+        rewrite Heqa3 in *.
+        apply equiv_smt_expr_symmetry.
+        apply L_1.
+        { reflexivity. }
+        { apply equiv_smt_expr_symmetry. assumption. }
+      }
+    }
+  }
+  { admit. } (* sub *)
 Admitted.
 
 Lemma equiv_smt_expr_normalize_binop : forall s op (ast1 ast2 ast3 ast4 : smt_ast s),
