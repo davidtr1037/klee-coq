@@ -418,14 +418,21 @@ Lemma L_2 : forall n ast1 ast2,
 Proof.
   intros n ast1 ast2 Heq Hequiv.
   rewrite Heq.
-  dependent destruction ast1.
+  dependent destruction ast1;
+  (* var, not *)
+  try (
+    eapply equiv_smt_expr_transitivity;
+    [
+      apply equiv_smt_expr_add_comm |
+      apply equiv_smt_expr_binop;
+      [ apply equiv_smt_expr_refl | assumption ]
+    ]
+  ).
   {
     simpl.
-    admit. (* easy *)
-  }
-  {
-    simpl.
-    admit. (* easy *)
+    apply equiv_smt_expr_binop.
+    { apply equiv_smt_expr_refl. }
+    { assumption. }
   }
   {
     destruct op;
@@ -453,11 +460,29 @@ Proof.
           assumption
         ]
       ).
-      { admit. } (* easy *)
+      (* normalize (c1 + a1) c2 ~ (c1 + a1) + a2 *)
+      {
+        rewrite Heqa1_1.
+        simpl.
+        apply equiv_smt_expr_transitivity with
+          (e2 :=
+            (Expr Sort_BV32
+              (AST_BinOp Sort_BV32 SMT_Add
+                (AST_BinOp Sort_BV32 SMT_Add (AST_Const Sort_BV32 n0) ast1_2)
+                (AST_Const Sort_BV32 n)))).
+        {
+          apply equiv_smt_expr_symmetry.
+          apply equiv_smt_expr_add_consts.
+        }
+        {
+          apply equiv_smt_expr_binop.
+          { apply equiv_smt_expr_refl. }
+          { assumption. }
+        }
+      }
     }
   }
-  { admit. } (* easy *)
-Admitted.
+Qed.
 
 (*
   all the cases:
