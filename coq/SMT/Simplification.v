@@ -396,37 +396,6 @@ Proof.
   reflexivity.
 Qed.
 
-(* TODO: remove? *)
-Lemma L_injection_consts : forall s (n1 n2 : smt_sort_to_int_type s),
-  equiv_smt_expr (Expr s (AST_Const s n1)) (Expr s (AST_Const s n2)) ->
-  n1 = n2.
-Proof.
-  intros s n1 n2 Heq.
-  inversion Heq; subst.
-  apply inj_pair2 in H1.
-  apply inj_pair2 in H2.
-  rewrite H1, H2 in *.
-  specialize (H0 default_model).
-  simpl in H0.
-  assumption.
-Qed.
-
-(* TODO: remove? *)
-(* TODO: make generic *)
-Lemma L_repr_unsigned : forall n1 n2,
-  equiv_smt_expr
-    (Expr Sort_BV32 (AST_Const Sort_BV32 n1))
-    (Expr Sort_BV32 (AST_Const Sort_BV32 n2)) ->
-  equiv_smt_expr
-    (Expr Sort_BV32 (AST_Const Sort_BV32 (repr (unsigned n1))))
-    (Expr Sort_BV32 (AST_Const Sort_BV32 (repr (unsigned n2)))).
-Proof.
-  intros n1 n2 Heq.
-  apply L_injection_consts in Heq.
-  subst.
-  apply equiv_smt_expr_refl.
-Qed.
-
 Lemma equiv_smt_expr_normalize_binop_bv32 : forall op (ast1 ast2 : smt_ast Sort_BV32),
   equiv_smt_expr
     (Expr Sort_BV32 (normalize_binop_bv32 op ast1 ast2))
@@ -613,28 +582,44 @@ Lemma equiv_smt_expr_ugt_ult : forall s (ast1 ast2 : smt_ast s),
     (Expr Sort_BV1 (AST_CmpOp s SMT_Ugt ast1 ast2))
     (Expr Sort_BV1 (AST_CmpOp s SMT_Ult ast2 ast1)).
 Proof.
-Admitted.
+  intros s ast1 ast2.
+  apply EquivExpr.
+  intros m.
+  destruct s; reflexivity.
+Qed.
 
 Lemma equiv_smt_expr_uge_ule : forall s (ast1 ast2 : smt_ast s),
   equiv_smt_expr
     (Expr Sort_BV1 (AST_CmpOp s SMT_Uge ast1 ast2))
     (Expr Sort_BV1 (AST_CmpOp s SMT_Ule ast2 ast1)).
 Proof.
-Admitted.
+  intros s ast1 ast2.
+  apply EquivExpr.
+  intros m.
+  destruct s; reflexivity.
+Qed.
 
 Lemma equiv_smt_expr_sgt_slt : forall s (ast1 ast2 : smt_ast s),
   equiv_smt_expr
     (Expr Sort_BV1 (AST_CmpOp s SMT_Sgt ast1 ast2))
     (Expr Sort_BV1 (AST_CmpOp s SMT_Slt ast2 ast1)).
 Proof.
-Admitted.
+  intros s ast1 ast2.
+  apply EquivExpr.
+  intros m.
+  destruct s; reflexivity.
+Qed.
 
 Lemma equiv_smt_expr_sge_sle : forall s (ast1 ast2 : smt_ast s),
   equiv_smt_expr
     (Expr Sort_BV1 (AST_CmpOp s SMT_Sge ast1 ast2))
     (Expr Sort_BV1 (AST_CmpOp s SMT_Sle ast2 ast1)).
 Proof.
-Admitted.
+  intros s ast1 ast2.
+  apply EquivExpr.
+  intros m.
+  destruct s; reflexivity.
+Qed.
 
 Lemma equiv_smt_expr_not_to_eq : forall (ast : smt_ast Sort_BV1),
   equiv_smt_expr
