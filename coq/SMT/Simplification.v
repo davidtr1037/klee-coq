@@ -326,17 +326,34 @@ Lemma equiv_smt_expr_add_comm : forall s (ast1 ast2 : smt_ast s),
     (Expr s (AST_BinOp s SMT_Add ast1 ast2))
     (Expr s (AST_BinOp s SMT_Add ast2 ast1)).
 Proof.
-Admitted.
+  intros s ast1 ast2.
+  apply EquivExpr.
+  intros m.
+  destruct s; simpl.
+  { apply Int1.add_commut. }
+  { apply Int8.add_commut. }
+  { apply Int16.add_commut. }
+  { apply Int32.add_commut. }
+  { apply Int64.add_commut. }
+Qed.
 
 (* TODO: make generic *)
 Lemma equiv_smt_expr_sub_add : forall (n : int32) (ast : smt_ast Sort_BV32),
   equiv_smt_expr
-    (Expr Sort_BV32 (AST_BinOp Sort_BV32 SMT_Sub ast (AST_Const Sort_BV32 n)))
+    (Expr
+      Sort_BV32
+      (AST_BinOp Sort_BV32 SMT_Sub ast (AST_Const Sort_BV32 n)))
     (Expr
       Sort_BV32
       (AST_BinOp Sort_BV32 SMT_Add (AST_Const Sort_BV32 (repr (unsigned (sub zero n)))) ast)).
 Proof.
-Admitted.
+  intros n ast.
+  apply EquivExpr.
+  intros m.
+  simpl.
+  rewrite Int32.add_commut.
+  apply int32_sub_add.
+Qed.
 
 (* TODO: make generic *)
 Lemma equiv_smt_expr_add_consts : forall (ast : smt_ast Sort_BV32) (n1 n2 : int32),
@@ -348,21 +365,36 @@ Lemma equiv_smt_expr_add_consts : forall (ast : smt_ast Sort_BV32) (n1 n2 : int3
     (Expr Sort_BV32
        (AST_BinOp Sort_BV32 SMT_Add (AST_Const Sort_BV32 (Int32.add n1 n2)) ast)).
 Proof.
-Admitted.
+  intros ast n1 n2.
+  apply EquivExpr.
+  intros m.
+  simpl.
+  rewrite (Int32.add_assoc n1 _ n2).
+  rewrite (Int32.add_commut _ n2).
+  rewrite <- (Int32.add_assoc n1 n2 _).
+  reflexivity.
+Qed.
 
 (* TODO: make generic *)
 Lemma equiv_smt_expr_sub_consts : forall (ast : smt_ast Sort_BV32) (n1 n2 : int32),
   equiv_smt_expr
     (Expr Sort_BV32
-       (AST_BinOp Sort_BV32 SMT_Sub
-          (AST_BinOp Sort_BV32 SMT_Add (AST_Const Sort_BV32 n1) ast)
-          (AST_Const Sort_BV32 n2)))
+      (AST_BinOp Sort_BV32 SMT_Sub
+        (AST_BinOp Sort_BV32 SMT_Add (AST_Const Sort_BV32 n1) ast)
+        (AST_Const Sort_BV32 n2)))
     (Expr Sort_BV32
-       (AST_BinOp Sort_BV32 SMT_Add
-          (AST_Const Sort_BV32 (Int32.repr (Int32.unsigned (Int32.sub n1 n2))))
+      (AST_BinOp Sort_BV32 SMT_Add
+        (AST_Const Sort_BV32 (Int32.repr (Int32.unsigned (Int32.sub n1 n2))))
           ast)).
 Proof.
-Admitted.
+  intros ast n1 n2.
+  apply EquivExpr.
+  intros m.
+  simpl.
+  rewrite Int32.sub_add_l.
+  rewrite Int32.repr_unsigned.
+  reflexivity.
+Qed.
 
 (* TODO: remove? *)
 Lemma L_injection_consts : forall s (n1 n2 : smt_sort_to_int_type s),
