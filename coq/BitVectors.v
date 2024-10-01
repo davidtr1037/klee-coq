@@ -381,4 +381,8 @@ Qed.
 Lemma int32_sub_add : forall (n1 n2 : int32),
   sub n1 n2 = add n1 (repr (unsigned (sub zero n2))).
 Proof.
-Admitted.
+  intros n1 n2.
+  rewrite Int32.repr_unsigned.
+  rewrite Int.sub_zero_r.
+  apply Int32.sub_add_opp.
+Qed.
