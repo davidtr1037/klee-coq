@@ -629,6 +629,7 @@ Lemma equiv_smt_expr_ne_to_eq : forall s (ast1 ast2 : smt_ast s),
 Proof.
 Admitted.
 
+(* TODO: fix lemma *)
 Lemma equiv_smt_expr_not_to_eq : forall (ast : smt_ast Sort_BV1),
   equiv_smt_expr
     (Expr Sort_BV1 (AST_Not Sort_BV1 ast))
@@ -750,6 +751,7 @@ Proof.
     }
   }
   {
+    (* TODO: add a lemma similar to equiv_smt_expr_normalize_binop *)
     destruct s;
     try (
       simpl;
@@ -772,6 +774,30 @@ Proof.
   { admit. }
   { admit. }
   { admit. }
+Admitted.
+
+Lemma equiv_smt_expr_simplify_cmpop_bv32 : forall op (ast1 ast2 : smt_ast Sort_BV32),
+  equiv_smt_expr
+    (Expr Sort_BV1 (simplify_cmpop_bv32 op ast1 ast2))
+    (Expr Sort_BV1 (AST_CmpOp Sort_BV32 op ast1 ast2)).
+Proof.
+  intros op ast1 ast2.
+  dependent destruction ast1; dependent destruction ast2;
+  try apply equiv_smt_expr_refl.
+  {
+    simpl.
+    destruct op;
+    try apply equiv_smt_expr_refl.
+    { admit. }
+    { simpl.
+      apply EquivExpr.
+      intros m.
+      simpl.
+      unfold smt_eval_cmpop_by_sort.
+      simpl.
+      unfold make_smt_ast_bool.
+      admit.
+    }
 Admitted.
 
 Lemma equiv_smt_expr_simplify_cmpop : forall s op (ast1 ast2 : smt_ast s),
@@ -819,7 +845,7 @@ Proof.
     apply equiv_smt_expr_not.
     assumption.
   }
-Admitted.
+Qed.
 
 Lemma equiv_smt_expr_normalize_simplify: forall s (ast : smt_ast s),
   equiv_smt_expr
