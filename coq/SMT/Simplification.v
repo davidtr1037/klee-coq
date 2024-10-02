@@ -729,6 +729,117 @@ Proof.
   }
 Qed.
 
+Definition sort_to_add s : (smt_sort_to_int_type s) -> (smt_sort_to_int_type s) -> (smt_sort_to_int_type s) :=
+  match s with
+  | Sort_BV1 => Int1.add
+  | Sort_BV8 => Int8.add
+  | Sort_BV16 => Int16.add
+  | Sort_BV32 => Int32.add
+  | Sort_BV64 => Int64.add
+  end
+.
+
+Lemma equiv_smt_expr_add_fold_consts : forall s (n1 n2 : smt_sort_to_int_type s),
+  equiv_smt_expr
+    (Expr s (AST_Const s ((sort_to_add s) n1 n2)))
+    (Expr
+      s
+      (AST_BinOp s SMT_Add (AST_Const s n1)
+      (AST_Const s n2))).
+Proof.
+  intros s n1 n2.
+  destruct s;
+  try (
+    apply EquivExpr;
+    intros m;
+    simpl;
+    reflexivity
+  ).
+Qed.
+
+Lemma equiv_smt_expr_simplify_binop_bv1 : forall op (ast1 ast2 : smt_ast Sort_BV1),
+  equiv_smt_expr
+    (Expr Sort_BV1 (simplify_binop_bv1 op ast1 ast2))
+    (Expr Sort_BV1 (AST_BinOp Sort_BV1 op ast1 ast2)).
+Proof.
+  intros op ast1 ast2.
+  dependent destruction ast1.
+  {
+    dependent destruction ast2.
+    {
+      simpl.
+      destruct op;
+      try apply equiv_smt_expr_refl.
+      { apply equiv_smt_expr_add_fold_consts. }
+      { admit. }
+      { admit. }
+      { admit. }
+    }
+    {
+      destruct op;
+      try apply equiv_smt_expr_refl.
+      {
+        simpl.
+        apply EquivExpr.
+        intros m.
+        simpl.
+        assert(L: n = Int1.zero \/ n = Int1.one).
+        { apply int1_destruct. }
+        destruct L as [L | L]; subst; simpl.
+        {
+          rewrite Int1.and_zero_l.
+          reflexivity.
+        }
+        {
+          replace Int1.one with Int1.mone.
+          {
+            rewrite Int1.and_mone_l.
+            reflexivity.
+          }
+          { apply int1_eqb_eq. reflexivity. }
+        }
+      }
+    }
+    { admit. } (* same *)
+    { admit. } (* same *)
+    { admit. } (* same *)
+  }
+  {
+    dependent destruction ast2;
+    try apply equiv_smt_expr_refl.
+    {
+      destruct op;
+      try apply equiv_smt_expr_refl.
+      {
+        simpl.
+        apply EquivExpr.
+        intros m.
+        simpl.
+        assert(L: n = Int1.zero \/ n = Int1.one).
+        { apply int1_destruct. }
+        destruct L as [L | L]; subst; simpl.
+        {
+          rewrite Int1.and_commut.
+          rewrite Int1.and_zero_l.
+          reflexivity.
+        }
+        {
+          replace Int1.one with Int1.mone.
+          {
+            rewrite Int1.and_commut.
+            rewrite Int1.and_mone_l.
+            reflexivity.
+          }
+          { apply int1_eqb_eq. reflexivity. }
+        }
+      }
+    }
+  }
+  { admit. } (* same *)
+  { admit. } (* same *)
+  { admit. } (* same *)
+Admitted.
+
 Lemma equiv_smt_expr_simplify_binop : forall s op (ast1 ast2 : smt_ast s),
   equiv_smt_expr
     (Expr s (simplify_binop op s ast1 ast2))
