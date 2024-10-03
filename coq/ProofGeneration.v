@@ -233,7 +233,6 @@ Proof.
   { assumption. }
 Qed.
 
-(* TODO: rename to equiv_smt_store_on_rewriting_update *)
 Lemma equiv_smt_store_on_optimized_update: forall m x se1 se2 se3 l,
   equiv_smt_expr se2 se3 ->
   equiv_smt_store
