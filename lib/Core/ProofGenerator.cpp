@@ -39,6 +39,12 @@ cl::opt<bool> CacheStackExpr(
   cl::desc("")
 );
 
+cl::opt<bool> klee::CacheSymNames(
+  "cache-sym-names",
+  cl::init(false),
+  cl::desc("")
+);
+
 /* TODO: decide how to handle assertions */
 /* TODO: add a function for generating names of axioms and lemmas (L_, UNSAT_, etc.) */
 
@@ -155,7 +161,7 @@ klee::ref<CoqExpr> ProofGenerator::translateState(ExecutionState &es,
         createLocalStore(es, defs),
         createStack(es, defs),
         createGlobalStore(),
-        createSymbolics(es),
+        createSymbolics(es, defs),
         createPC(es, defs),
         createModule(),
       }
@@ -208,7 +214,7 @@ klee::ref<CoqExpr> ProofGenerator::translateState(ExecutionState &es,
     new CoqDefinition(
       getSymbolicsAliasName(es.stepID),
       "list string",
-      createSymbolics(es)
+      createSymbolics(es, defs)
     )
   );
   defs.push_back(
@@ -404,8 +410,28 @@ klee::ref<CoqExpr> ProofGenerator::createGlobalStore() {
   return coqGlobalStoreAlias;
 }
 
-klee::ref<CoqExpr> ProofGenerator::createSymbolics(ExecutionState &es) {
-  return createSymbolicNames(es.symbolics.size());
+klee::ref<CoqExpr> ProofGenerator::createSymbolics(ExecutionState &es,
+                                                   vector<ref<CoqExpr>> &defs) {
+  if (CacheSymNames) {
+    return createSymbolicNamesCached(es.symbolics.size(), defs);
+  } else {
+    return createSymbolicNames(es.symbolics.size());
+  }
+}
+
+klee::ref<CoqExpr> ProofGenerator::createSymbolicNameCached(unsigned index) {
+  auto i = symbolicNameCache.find(index);
+  if (i != symbolicNameCache.end()) {
+    return i->second;
+  }
+
+  ref<CoqExpr> e = createSymbolicName(index);
+  string aliasName = "sym_name_" + to_string(index);
+  ref<CoqExpr> def = new CoqDefinition(aliasName, "string", e);
+  ref<CoqExpr> alias = new CoqVariable(aliasName);
+  symbolicNameCache[index] = alias;
+  symbolicNameDefs.push_back(def);
+  return alias;
 }
 
 /* TODO: add an alias */
@@ -414,12 +440,28 @@ klee::ref<CoqExpr> ProofGenerator::createSymbolicName(unsigned index) {
   if (index == 0) {
     arg = createEmptyList();
   } else {
-    arg = createSymbolicNames(index - 1);
+    arg = createSymbolicNames(index);
   }
   return new CoqApplication(
     new CoqVariable("fresh_name"),
     {arg}
   );
+}
+
+klee::ref<CoqExpr> ProofGenerator::createSymbolicNamesCached(unsigned size,
+                                                             vector<ref<CoqExpr>> &defs) {
+  auto i = symbolicNamesCache.find(size);
+  if (i != symbolicNamesCache.end()) {
+    return i->second;
+  }
+
+  ref<CoqExpr> e = createSymbolicNames(size);
+  string aliasName = "sym_names_" + to_string(size);
+  ref<CoqExpr> def = new CoqDefinition(aliasName, "list string", e);
+  ref<CoqExpr> alias = new CoqVariable(aliasName);
+  symbolicNamesCache[size] = alias;
+  defs.push_back(def);
+  return alias;
 }
 
 /* TODO: add an alias */
@@ -1317,6 +1359,13 @@ void ProofGenerator::generateLemmaDefs() {
   for (ref<CoqExpr> def : lemmaDefs) {
     output << def->dump() << "\n";
   }
+}
+
+void ProofGenerator::generateSymbolicNameDefs() {
+  for (ref<CoqExpr> def : symbolicNameDefs) {
+    output << def->dump() << "\n";
+  }
+  symbolicNameDefs.clear();
 }
 
 void ProofGenerator::generateTheorem() {

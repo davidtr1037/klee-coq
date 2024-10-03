@@ -17,6 +17,8 @@
 
 namespace klee {
 
+extern llvm::cl::opt<bool> CacheSymNames;
+
 struct StateInfo {
 
   uint64_t stepID;
@@ -81,6 +83,12 @@ public:
 
   std::list<ref<CoqLemma>> lemmaDefs;
 
+  std::map<unsigned, ref<CoqExpr>> symbolicNameCache;
+
+  std::map<unsigned, ref<CoqExpr>> symbolicNamesCache;
+
+  std::list<ref<CoqExpr>> symbolicNameDefs;
+
   ProofGenerator(llvm::Module &m, llvm::raw_ostream &output);
 
   virtual void generate();
@@ -123,9 +131,15 @@ public:
 
   ref<CoqExpr> createGlobalStore();
 
-  ref<CoqExpr> createSymbolics(ExecutionState &es);
+  ref<CoqExpr> createSymbolics(ExecutionState &es,
+                               std::vector<ref<CoqExpr>> &defs);
+
+  ref<CoqExpr> createSymbolicNameCached(unsigned index);
 
   ref<CoqExpr> createSymbolicName(unsigned index);
+
+  ref<CoqExpr> createSymbolicNamesCached(unsigned size,
+                                         std::vector<ref<CoqExpr>> &defs);
 
   ref<CoqExpr> createSymbolicNames(unsigned size);
 
@@ -266,6 +280,8 @@ public:
   void generateUnsatAxioms();
 
   void generateLemmaDefs();
+
+  void generateSymbolicNameDefs();
 
   void generateTheorem();
 
