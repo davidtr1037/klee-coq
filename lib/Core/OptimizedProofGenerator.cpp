@@ -295,7 +295,15 @@ klee::ref<CoqTactic> OptimizedProofGenerator::getTacticForSubtreeAssignment(Stat
   } else {
     t = new Block(
       {
-        new Apply("equiv_smt_store_on_update"),
+        new Apply(
+          "equiv_smt_store_on_update",
+          {
+            getLocalStoreAlias(si.stepID),
+            createPlaceHolder(),
+            createPlaceHolder(),
+            createPlaceHolder(),
+          }
+        ),
         new Apply("equiv_smt_expr_normalize_simplify"),
       }
     );
@@ -371,7 +379,15 @@ klee::ref<CoqTactic> OptimizedProofGenerator::getTacticForSubtreePHI(StateInfo &
   } else {
     t = new Block(
       {
-        new Apply("equiv_smt_store_on_update"),
+        new Apply(
+          "equiv_smt_store_on_update",
+          {
+            getLocalStoreAlias(si.stepID),
+            createPlaceHolder(),
+            createPlaceHolder(),
+            createPlaceHolder(),
+          }
+        ),
         new Apply("equiv_smt_expr_normalize_simplify"),
       }
     );
