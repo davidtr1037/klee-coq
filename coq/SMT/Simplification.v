@@ -112,7 +112,6 @@ Definition normalize_cmpop_bv32 op (ast1 ast2 : smt_ast Sort_BV32) : smt_ast Sor
   | SMT_Sgt => AST_CmpOp Sort_BV32 SMT_Slt ast2 ast1
   | SMT_Uge => AST_CmpOp Sort_BV32 SMT_Ule ast2 ast1
   | SMT_Ugt => AST_CmpOp Sort_BV32 SMT_Ult ast2 ast1
-(*
   | SMT_Eq =>
       match ast2 with
       | AST_Const Sort_BV32 n2 =>
@@ -122,7 +121,6 @@ Definition normalize_cmpop_bv32 op (ast1 ast2 : smt_ast Sort_BV32) : smt_ast Sor
           end
       | _ => AST_CmpOp Sort_BV32 op ast1 ast2
       end
-*)
   | SMT_Ne =>
       AST_CmpOp Sort_BV1 SMT_Eq (AST_Const Sort_BV1 zero) (AST_CmpOp Sort_BV32 SMT_Eq ast1 ast2)
   | _ => AST_CmpOp Sort_BV32 op ast1 ast2
@@ -408,6 +406,23 @@ Proof.
   { apply Int64.mul_commut. }
 Qed.
 
+Lemma equiv_smt_expr_eq_comm : forall s (ast1 ast2 : smt_ast s),
+  equiv_smt_expr
+    (Expr Sort_BV1 (AST_CmpOp s SMT_Eq ast1 ast2))
+    (Expr Sort_BV1 (AST_CmpOp s SMT_Eq ast2 ast1)).
+Proof.
+  intros s ast1 ast2.
+  apply EquivExpr.
+  intros m.
+  destruct s;
+  simpl; unfold smt_eval_cmpop_by_sort, smt_eval_cmpop_generic; simpl.
+  { rewrite Int1.eq_sym. reflexivity. }
+  { rewrite Int8.eq_sym. reflexivity. }
+  { rewrite Int16.eq_sym. reflexivity. }
+  { rewrite Int32.eq_sym. reflexivity. }
+  { rewrite Int64.eq_sym. reflexivity. }
+Qed.
+
 Lemma equiv_smt_expr_normalize_binop_bv32 : forall op (ast1 ast2 : smt_ast Sort_BV32),
   equiv_smt_expr
     (Expr Sort_BV32 (normalize_binop_bv32 op ast1 ast2))
@@ -674,6 +689,15 @@ Proof.
     try apply equiv_smt_expr_sgt_slt;
     try apply equiv_smt_expr_sge_sle
   ).
+  {
+    dependent destruction ast2;
+    try apply equiv_smt_expr_refl.
+    {
+      dependent destruction ast1;
+      try apply equiv_smt_expr_refl;
+      try apply equiv_smt_expr_eq_comm.
+    }
+  }
 Qed.
 
 Lemma equiv_smt_expr_normalize_cmpop : forall s op (ast1 ast2 : smt_ast s),
@@ -693,12 +717,9 @@ Lemma equiv_smt_expr_normalize_cmpop_args : forall s op (ast1 ast2 : smt_ast s),
   equiv_smt_expr (Expr s ast2) (Expr s (normalize s ast2)) ->
   equiv_smt_expr
     (Expr Sort_BV1 (AST_CmpOp s op ast1 ast2))
-    (Expr Sort_BV1 (normalize_cmpop op s ast1 ast2)) ->
-  equiv_smt_expr
-    (Expr Sort_BV1 (AST_CmpOp s op ast1 ast2))
     (Expr Sort_BV1 (normalize_cmpop op s (normalize s ast1) (normalize s ast2))).
 Proof.
-  intros s op ast1 ast2 H1 H2 H3.
+  intros s op ast1 ast2 H1 H2.
   apply equiv_smt_expr_symmetry.
   eapply equiv_smt_expr_transitivity.
   { apply equiv_smt_expr_normalize_cmpop. }
@@ -815,8 +836,9 @@ Proof.
     }
   }
   {
+    (* TODO: avoid duplicate blocks *)
     destruct s.
-    { admit. }
+    { apply equiv_smt_expr_normalize_cmpop_args; try assumption. }
     {
       simpl.
       unfold normalize_cmpop_bv8.
@@ -827,45 +849,7 @@ Proof.
       unfold normalize_cmpop_bv16.
       apply equiv_smt_expr_cmpop with (ast1 := ast1) (ast3 := ast2); assumption.
     }
-    {
-      dependent destruction ast1; dependent destruction ast2; destruct op;
-      (* trivial cases *)
-      try (
-        apply equiv_smt_expr_normalize_cmpop_args;
-        try assumption;
-        apply equiv_smt_expr_refl
-      );
-      try (
-        apply equiv_smt_expr_normalize_cmpop_args;
-        try assumption;
-        simpl;
-        apply equiv_smt_expr_ne_to_eq
-      );
-      try (
-        apply equiv_smt_expr_normalize_cmpop_args;
-        try assumption;
-        simpl;
-        apply equiv_smt_expr_ugt_ult
-      );
-      try (
-        apply equiv_smt_expr_normalize_cmpop_args;
-        try assumption;
-        simpl;
-        apply equiv_smt_expr_uge_ule
-      );
-      try (
-        apply equiv_smt_expr_normalize_cmpop_args;
-        try assumption;
-        simpl;
-        apply equiv_smt_expr_sgt_slt
-      );
-      try (
-        apply equiv_smt_expr_normalize_cmpop_args;
-        try assumption;
-        simpl;
-        apply equiv_smt_expr_sge_sle
-      ).
-    }
+    { apply equiv_smt_expr_normalize_cmpop_args; try assumption. }
     {
       simpl.
       unfold normalize_cmpop_bv64.
@@ -892,7 +876,7 @@ Proof.
       }
     }
   }
-Admitted.
+Qed.
 
 Definition sort_to_add s : (smt_sort_to_int_type s) -> (smt_sort_to_int_type s) -> (smt_sort_to_int_type s) :=
   match s with
