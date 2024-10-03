@@ -127,7 +127,7 @@ public:
 
   ref<CoqExpr> createSymbolicName(unsigned index);
 
-  ref<CoqExpr> createSymbolicNames(unsigned index);
+  ref<CoqExpr> createSymbolicNames(unsigned size);
 
   ref<CoqExpr> createPC(ExecutionState &es, std::vector<ref<CoqExpr>> &defs);
 

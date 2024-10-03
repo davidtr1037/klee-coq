@@ -405,11 +405,7 @@ klee::ref<CoqExpr> ProofGenerator::createGlobalStore() {
 }
 
 klee::ref<CoqExpr> ProofGenerator::createSymbolics(ExecutionState &es) {
-  if (es.symbolics.empty()) {
-    return createEmptyList();
-  } else {
-    return createSymbolicNames(es.symbolics.size() - 1);
-  }
+  return createSymbolicNames(es.symbolics.size());
 }
 
 /* TODO: add an alias */
@@ -427,13 +423,19 @@ klee::ref<CoqExpr> ProofGenerator::createSymbolicName(unsigned index) {
 }
 
 /* TODO: add an alias */
-klee::ref<CoqExpr> ProofGenerator::createSymbolicNames(unsigned index) {
+klee::ref<CoqExpr> ProofGenerator::createSymbolicNames(unsigned size) {
   ref<CoqExpr> arg;
-  if (index == 0) {
+  switch (size) {
+  case 0:
+    return createEmptyList();
+  case 1:
     arg = createEmptyList();
-  } else {
-    arg = createSymbolicNames(index - 1);
+    break;
+  default:
+    arg = createSymbolicNames(size - 1);
+    break;
   }
+
   return new CoqApplication(
     new CoqVariable("extend_names"),
     {arg}
