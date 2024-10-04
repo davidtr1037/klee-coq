@@ -239,6 +239,14 @@ ref<CoqTactic> ModuleSupport::getTacticForBinaryOperator(BinaryOperator *inst) {
     constructor = "IS_Mul";
     break;
 
+  case Instruction::URem:
+    constructor = "IS_URem";
+    break;
+
+  case Instruction::SRem:
+    constructor = "IS_SRem";
+    break;
+
   default:
       assert(false);
   }
