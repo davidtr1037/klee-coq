@@ -156,6 +156,10 @@ Definition normalize_not (s : smt_sort) (ast : smt_ast s) : smt_ast s :=
   f ast
 .
 
+Definition normalize_zext (s : smt_sort) (ast : smt_ast s) (cast_sort : smt_sort) : smt_ast cast_sort :=
+  AST_ZExt s ast cast_sort
+.
+
 Fixpoint normalize (s : smt_sort) (ast : smt_ast s) : smt_ast s :=
   match ast with
   | AST_Const sort n => AST_Const sort n
@@ -166,6 +170,8 @@ Fixpoint normalize (s : smt_sort) (ast : smt_ast s) : smt_ast s :=
       normalize_cmpop op sort (normalize sort ast1) (normalize sort ast2)
   | AST_Not sort ast =>
       normalize_not sort (normalize sort ast)
+  | AST_ZExt sort ast cast_sort =>
+      normalize_zext sort (normalize sort ast) cast_sort
   end
 .
 
@@ -312,6 +318,8 @@ Fixpoint simplify (s : smt_sort) (ast : smt_ast s) : smt_ast s :=
   | AST_CmpOp sort op ast1 ast2 =>
       simplify_cmpop op sort (simplify sort ast1) (simplify sort ast2)
   | AST_Not sort ast => AST_Not sort (simplify sort ast)
+  | AST_ZExt sort ast cast_sort =>
+      AST_ZExt sort (simplify sort ast) cast_sort
   end
 .
 
@@ -469,6 +477,7 @@ Proof.
         { apply equiv_smt_expr_add_comm. }
         { apply equiv_smt_expr_refl. }
       }
+      { admit. } (* zext *)
     }
   }
   (* sub *)
@@ -525,6 +534,7 @@ Proof.
         }
         { apply equiv_smt_expr_refl. }
       }
+      { admit. } (* zext*)
     }
   }
   (* mul *)
@@ -537,7 +547,7 @@ Proof.
       { apply equiv_smt_expr_refl. }
     }
   }
-Qed.
+Admitted.
 
 Lemma equiv_smt_expr_normalize_binop : forall s op (ast1 ast2 : smt_ast s),
   equiv_smt_expr
@@ -822,7 +832,8 @@ Proof.
       }
     }
   }
-Qed.
+  { admit. } (* zext *)
+Admitted.
 
 Definition sort_to_add s : (smt_sort_to_int_type s) -> (smt_sort_to_int_type s) -> (smt_sort_to_int_type s) :=
   match s with
@@ -970,6 +981,7 @@ Proof.
     { admit. } (* same *)
     { admit. } (* same *)
     { admit. } (* same *)
+    { admit. } (* same / zext *)
   }
   {
     dependent destruction ast2;
@@ -1049,6 +1061,7 @@ Proof.
     }
     { admit. } (* same *)
     { admit. } (* same *)
+    { admit. } (* same / zext *)
   }
   { admit. } (* same *)
   { admit. } (* same *)
@@ -1131,9 +1144,10 @@ Proof.
           }
         }
       }
+      { admit. } (* zext *)
     }
   }
-Qed.
+Admitted.
 
 Lemma equiv_smt_expr_simplify_cmpop_bv32 : forall op (ast1 ast2 : smt_ast Sort_BV32),
   equiv_smt_expr
@@ -1206,7 +1220,8 @@ Proof.
     apply equiv_smt_expr_not.
     assumption.
   }
-Qed.
+  { admit. } (* zext *)
+Admitted.
 
 Lemma equiv_smt_expr_normalize_simplify: forall s (ast : smt_ast s),
   equiv_smt_expr

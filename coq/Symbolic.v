@@ -163,6 +163,21 @@ Definition sym_eval_icmp (op : icmp) (e1 e2 : smt_expr) : option smt_expr :=
   end
 .
 
+Definition sym_eval_convert (conv : conversion_type) t1 (e : smt_expr) t2 : option smt_expr :=
+  match conv with
+  | Zext =>
+      match t1, t2 with
+      | TYPE_I w1, TYPE_I w2 =>
+          match w1, e, w2 with
+          | 32%positive, (Expr Sort_BV32 ast), 64%positive => Some (Expr Sort_BV64 (AST_ZExt Sort_BV32 ast Sort_BV64))
+          | _, _, _ => None
+          end
+      | _, _ => None
+      end
+  | _ => None
+  end
+.
+
 Fixpoint sym_eval_exp (s : smt_store) (g : smt_store) (t : option typ) (e : llvm_exp) : option smt_expr :=
   match e with
   | EXP_Ident id => sym_lookup_ident s g id
@@ -186,7 +201,11 @@ Fixpoint sym_eval_exp (s : smt_store) (g : smt_store) (t : option typ) (e : llvm
       | (Some e1, Some e2) => sym_eval_icmp op e1 e2
       | (_, _) => None
       end
-  | OP_Conversion conv t1 v t2 => None
+  | OP_Conversion conv t1 v t2 =>
+      match (sym_eval_exp s g (Some t1) v) with
+      | Some e => sym_eval_convert conv t1 e t2
+      | _ => None
+      end
   | OP_Select _ _ _ => None
   end
 .

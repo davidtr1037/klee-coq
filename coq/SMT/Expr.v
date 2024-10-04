@@ -65,6 +65,8 @@ Inductive smt_ast : smt_sort -> Type :=
       forall (s : smt_sort) (op : smt_cmpop) (e1 e2 : smt_ast s), smt_ast Sort_BV1
   | AST_Not :
       forall (s : smt_sort) (e : smt_ast s), smt_ast s
+  | AST_ZExt :
+      forall (s : smt_sort) (e : smt_ast s) (cast_sort : smt_sort), smt_ast cast_sort
 .
 
 Definition smt_ast_bool := smt_ast Sort_BV1.
@@ -133,6 +135,9 @@ Inductive subexpr : smt_expr -> smt_expr -> Prop :=
   | SubExpr_Not : forall e sort (a : (smt_ast sort)),
       subexpr e (Expr sort a) ->
       subexpr e (Expr sort (AST_Not sort a))
+  | SubExpr_ZExt : forall e sort (a : (smt_ast sort)) cast_sort,
+      subexpr e (Expr sort a) ->
+      subexpr e (Expr cast_sort (AST_ZExt sort a cast_sort))
 .
 
 Inductive contains_var : smt_expr -> string -> Prop :=
@@ -246,5 +251,28 @@ Proof.
   inversion Hc; subst.
   apply ContainsVar with (sort := sort0).
   apply SubExpr_Not.
+  assumption.
+Qed.
+
+Lemma contains_var_zext : forall sort (ast : smt_ast sort) cast_sort x,
+  contains_var (Expr cast_sort (AST_ZExt sort ast cast_sort)) x ->
+  contains_var (Expr sort ast) x.
+Proof.
+  intros sort ast cast_sort x Hc.
+  inversion Hc; subst.
+  inversion H; subst.
+  apply inj_pair2 in H4; subst.
+  apply ContainsVar with (sort := sort0).
+  assumption.
+Qed.
+
+Lemma contains_var_zext_intro : forall sort (ast : smt_ast sort) cast_sort x,
+  contains_var (Expr sort ast) x ->
+  contains_var (Expr cast_sort (AST_ZExt sort ast cast_sort)) x.
+Proof.
+  intros sort ast cast_sort x Hc.
+  inversion Hc; subst.
+  apply ContainsVar with (sort := sort0).
+  apply SubExpr_ZExt.
   assumption.
 Qed.

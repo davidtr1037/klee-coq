@@ -94,6 +94,30 @@ Proof.
   ).
 Qed.
 
+Lemma contains_var_convert : forall x conv t1 e1 t2 e2,
+  (sym_eval_convert conv t1 e1 t2) = Some e2 ->
+  contains_var e2 x ->
+  contains_var e1 x.
+Proof.
+  intros x conv t1 e1 t2 e2 Heq Hc.
+  destruct e1 as [s1 ast1].
+  destruct conv;
+  try discriminate Heq.
+  (* zext *)
+  {
+    simpl in Heq.
+    destruct t1, t2;
+    try discriminate Heq.
+    rename w into w1, w0 into w2.
+    repeat (destruct w1; try discriminate Heq).
+    destruct s1; try discriminate Heq.
+    repeat (destruct w2; try discriminate Heq).
+    inversion Heq; subst.
+    apply contains_var_zext with (cast_sort := Sort_BV64).
+    assumption.
+  }
+Qed.
+
 Lemma well_defined_smt_expr_extended_syms : forall se sym syms,
   well_defined_smt_expr se syms ->
   well_defined_smt_expr se (sym :: syms).
@@ -310,7 +334,22 @@ Proof.
     }
     { discriminate Heq. }
   }
-  { discriminate Heq. }
+  {
+    specialize (IHe (Some t1)).
+    destruct (sym_eval_exp ls gs (Some t1) e) as [se' | ] eqn:E.
+    {
+      apply WD_Expr.
+      intros n Hse.
+      apply (contains_var_convert n conv t1 se' t2) in Hse;
+      try assumption.
+      assert(L : well_defined_smt_expr se' syms).
+      { apply IHe. reflexivity. }
+      inversion L; subst.
+      apply H.
+      assumption.
+    }
+    { discriminate Heq. }
+  }
   { discriminate Heq. }
 Qed.
 

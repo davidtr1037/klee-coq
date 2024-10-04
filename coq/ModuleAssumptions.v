@@ -18,6 +18,10 @@ Inductive is_supported_ibinop : ibinop -> Prop :=
   | IS_SRem : is_supported_ibinop SRem
 .
 
+Inductive is_supported_conv : conversion_type -> Prop :=
+  | IS_ZExt : is_supported_conv Zext
+.
+
 Inductive is_supported_exp : llvm_exp -> Prop :=
   | IS_EXP_Ident : forall id,
       is_supported_exp (EXP_Ident id)
@@ -32,6 +36,10 @@ Inductive is_supported_exp : llvm_exp -> Prop :=
       is_supported_exp e1 ->
       is_supported_exp e2 ->
       is_supported_exp (OP_ICmp op t e1 e2)
+  | IS_OP_Conversion : forall conv t1 e t2,
+      is_supported_conv conv ->
+      is_supported_exp e ->
+      is_supported_exp (OP_Conversion conv t1 e t2)
 .
 
 Inductive is_supported_function_arg : function_arg -> Prop :=

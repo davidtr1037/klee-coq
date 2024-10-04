@@ -122,6 +122,32 @@ Definition smt_eval_not_by_sort s (x : (smt_sort_to_int_type s)) : (smt_sort_to_
   smt_eval_binop_by_sort SMT_Xor s x (create_mone_by_sort s)
 .
 
+Definition unsigned_predicate (s : smt_sort) :=
+  (smt_sort_to_int_type s) -> Z
+.
+
+Definition unsigned_by_sort s (x : (smt_sort_to_int_type s)) : Z :=
+  let f :=
+    match s return (unsigned_predicate s) with
+    | Sort_BV1 => Int1.unsigned
+    | Sort_BV8 => Int8.unsigned
+    | Sort_BV16 => Int16.unsigned
+    | Sort_BV32 => Int32.unsigned
+    | Sort_BV64 => Int64.unsigned
+    end in
+  f x
+.
+
+Definition smt_eval_zext_by_sort s (x : (smt_sort_to_int_type s)) cast_sort : (smt_sort_to_int_type cast_sort) :=
+    match cast_sort with
+    | Sort_BV1 => (Int1.repr (unsigned_by_sort s x))
+    | Sort_BV8 => (Int8.repr (unsigned_by_sort s x))
+    | Sort_BV16 => (Int16.repr (unsigned_by_sort s x))
+    | Sort_BV32 => (Int32.repr (unsigned_by_sort s x))
+    | Sort_BV64 => (Int64.repr (unsigned_by_sort s x))
+    end
+.
+
 Fixpoint smt_eval_ast (m : smt_model) (s : smt_sort) (ast : smt_ast s) : (smt_sort_to_int_type s) :=
   match ast with
   | AST_Const arg_sort n => n
@@ -140,6 +166,8 @@ Fixpoint smt_eval_ast (m : smt_model) (s : smt_sort) (ast : smt_ast s) : (smt_so
         (smt_eval_ast m arg_sort ast2)
   | AST_Not arg_sort ast =>
       smt_eval_not_by_sort arg_sort (smt_eval_ast m arg_sort ast)
+  | AST_ZExt arg_sort ast cast_sort =>
+      smt_eval_zext_by_sort arg_sort (smt_eval_ast m arg_sort ast) cast_sort
   end
 .
 
@@ -222,6 +250,13 @@ Proof.
   {
     assert(L : ~ contains_var (Expr s ast) x).
     { intros Hse. apply H. apply contains_var_not_intro. assumption. }
+    apply IHast in L.
+    rewrite L.
+    reflexivity.
+  }
+  {
+    assert(L : ~ contains_var (Expr s ast) x).
+    { intros Hse. apply H. apply contains_var_zext_intro. assumption. }
     apply IHast in L.
     rewrite L.
     reflexivity.
@@ -350,6 +385,24 @@ Lemma equiv_smt_expr_not : forall s (ast1 ast2 : smt_ast s),
   equiv_smt_expr (Expr s (AST_Not s ast1)) (Expr s (AST_Not s ast2)).
 Proof.
   intros s ast1 ast2 H.
+  apply EquivExpr.
+  intros m.
+  simpl.
+  inversion H; subst.
+  apply inj_pair2 in H2, H3.
+  subst.
+  specialize (H1 m).
+  rewrite H1.
+  reflexivity.
+Qed.
+
+Lemma equiv_smt_expr_zext : forall s (ast1 ast2 : smt_ast s) cast_sort,
+  equiv_smt_expr (Expr s ast1) (Expr s ast2) ->
+  equiv_smt_expr
+    (Expr cast_sort (AST_ZExt s ast1 cast_sort))
+    (Expr cast_sort (AST_ZExt s ast2 cast_sort)).
+Proof.
+  intros s ast1 ast2 cast_sort H.
   apply EquivExpr.
   intros m.
   simpl.

@@ -273,6 +273,30 @@ Proof.
       apply equiv_smt_expr_cmpop; assumption
     ).
   }
+  {
+    destruct (sym_eval_exp ls1 gs1 (Some t1) e) as [se | ] eqn:E; try discriminate Heval.
+    apply IHe with (ot := Some t1) (se1 := se) in H4; try assumption.
+    destruct H4 as [se' [H4_1 H4_2]].
+    simpl.
+    rewrite H4_1.
+    destruct se as [sort ast].
+    destruct se' as [sort' ast'].
+    assert(L1 : sort = sort').
+    { apply sort_injection in H4_2. assumption. }
+    subst.
+    destruct conv; try discriminate Heval.
+    destruct t1; try discriminate Heval.
+    destruct t2; try discriminate Heval.
+    rename w into w1, w0 into w2.
+    repeat (destruct w1; try discriminate Heval).
+    destruct sort'; try discriminate Heval.
+    repeat (destruct w2; try discriminate Heval).
+    inversion Heval; subst.
+    eexists.
+    split.
+    { reflexivity. }
+    { apply equiv_smt_expr_zext; assumption. }
+  }
 Qed.
 
 Lemma equiv_sym_eval_phi_args : forall ls1 gs1 ls2 gs2 t args pbid se1,
