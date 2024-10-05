@@ -103,6 +103,14 @@ public:
 
   ref<CoqExpr> translateCmpInstExpr(llvm::CmpInst *inst);
 
+  ref<CoqExpr> translateCastInst(llvm::CastInst *inst);
+
+  ref<CoqExpr> translateCastInstName(llvm::CastInst *inst);
+
+  ref<CoqExpr> translateCastInstOpcode(llvm::CastInst *inst);
+
+  ref<CoqExpr> translateCastInstExpr(llvm::CastInst *inst);
+
   ref<CoqExpr> translateBranchInst(llvm::BranchInst *inst);
 
   ref<CoqExpr> translateBranchInstExpr(llvm::BranchInst *inst);

@@ -295,6 +295,10 @@ ref<CoqExpr> ModuleTranslator::translateInst(Instruction &inst) {
     return translateCmpInst(dyn_cast<CmpInst>(&inst));
   }
 
+  if (isa<CastInst>(&inst)) {
+    return translateCastInst(dyn_cast<CastInst>(&inst));
+  }
+
   if (isa<BranchInst>(&inst)) {
     return translateBranchInst(dyn_cast<BranchInst>(&inst));
   }
@@ -477,6 +481,46 @@ ref<CoqExpr> ModuleTranslator::translateCmpInstExpr(CmpInst *inst) {
       translateType(operandType),
       translateValue(v1),
       translateValue(v2),
+    }
+  );
+}
+
+ref<CoqExpr> ModuleTranslator::translateCastInst(CastInst *inst) {
+  return createCMDInst(
+    getInstID(inst),
+    createInstrOp(
+      translateCastInstName(inst),
+      translateCastInstExpr(inst)
+    )
+  );
+}
+
+ref<CoqExpr> ModuleTranslator::translateCastInstName(CastInst *inst) {
+  return createName(inst->getName().str());
+}
+
+ref<CoqExpr> ModuleTranslator::translateCastInstOpcode(CastInst *inst) {
+  std::string conversion_type;
+  switch (inst->getOpcode()) {
+  case Instruction::ZExt:
+    conversion_type = "ZExt";
+    break;
+
+  default:
+    assert(false);
+  }
+
+  return new CoqVariable(conversion_type);
+}
+
+ref<CoqExpr> ModuleTranslator::translateCastInstExpr(CastInst *inst) {
+  return new CoqApplication(
+    new CoqVariable("OP_Conversion"),
+    {
+      translateCastInstOpcode(inst),
+      translateType(inst->getSrcTy()),
+      translateValue(inst->getOperand(0)),
+      translateType(inst->getDestTy()),
     }
   );
 }
