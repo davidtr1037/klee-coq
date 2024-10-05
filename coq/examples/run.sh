@@ -20,13 +20,21 @@ function run_klee {
     coqc -Q ${ROOT}/coq SE ${output}
 }
 
-run_klee test_1.bc &&
-run_klee test_2.bc &&
-run_klee test_3.bc &&
-run_klee test_4.bc &&
-run_klee test_5.bc &&
-run_klee test_6.bc &&
-run_klee test_7.bc &&
-run_klee test_8.bc &&
-run_klee test_9.bc &&
-run_klee test_10.bc
+files=(\
+    test_1.bc \
+    test_2.bc \
+    test_3.bc \
+    test_4.bc \
+    test_5.bc \
+    test_6.bc \
+    test_7.bc \
+    test_8.bc \
+    test_9.bc \
+    test_10.bc \
+    test_11.bc \
+    test_12.bc \
+    test_13.bc \
+)
+for f in "${files[@]}"; do
+    run_klee $f
+done
