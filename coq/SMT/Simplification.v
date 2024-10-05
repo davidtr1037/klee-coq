@@ -486,7 +486,12 @@ Proof.
         { apply equiv_smt_expr_add_comm. }
         { apply equiv_smt_expr_refl. }
       }
-      { admit. } (* zext *)
+      {
+        simpl.
+        eapply equiv_smt_expr_transitivity.
+        { apply equiv_smt_expr_add_comm. }
+        { apply equiv_smt_expr_refl. }
+      }
     }
   }
   (* sub *)
@@ -543,7 +548,15 @@ Proof.
         }
         { apply equiv_smt_expr_refl. }
       }
-      { admit. } (* zext*)
+      {
+        simpl.
+        eapply equiv_smt_expr_transitivity.
+        {
+          apply equiv_smt_expr_symmetry.
+          apply equiv_smt_expr_sub_add.
+        }
+        { apply equiv_smt_expr_refl. }
+      }
     }
   }
   (* mul *)
@@ -556,7 +569,7 @@ Proof.
       { apply equiv_smt_expr_refl. }
     }
   }
-Admitted.
+Qed.
 
 Lemma equiv_smt_expr_normalize_binop : forall s op (ast1 ast2 : smt_ast s),
   equiv_smt_expr
@@ -841,8 +854,12 @@ Proof.
       }
     }
   }
-  { admit. } (* zext *)
-Admitted.
+  {
+    unfold normalize_zext.
+    apply equiv_smt_expr_zext.
+    assumption.
+  }
+Qed.
 
 Definition sort_to_add s : (smt_sort_to_int_type s) -> (smt_sort_to_int_type s) -> (smt_sort_to_int_type s) :=
   match s with
