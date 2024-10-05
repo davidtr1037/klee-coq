@@ -243,7 +243,7 @@ klee::ref<CoqLemma> OptimizedProofGenerator::createLemmaForSubtree(StateInfo &si
 
 klee::ref<CoqTactic> OptimizedProofGenerator::getTacticForSubtree(StateInfo &si,
                                                                   ExecutionState &successor) {
-  if (isa<BinaryOperator>(si.inst) || isa<CmpInst>(si.inst)) {
+  if (moduleTranslator->isAssignment(*si.inst)) {
     return getTacticForSubtreeAssignment(si, successor);
   }
 
@@ -321,6 +321,12 @@ klee::ref<CoqTactic> OptimizedProofGenerator::getTacticForSubtreeAssignment(Stat
     CmpInst *ci = cast<CmpInst>(si.inst);
     var = moduleTranslator->translateCmpInstName(ci);
     expr = moduleTranslator->translateCmpInstExpr(ci);
+  }
+
+  if (isa<CastInst>(si.inst)) {
+    CastInst *ci = cast<CastInst>(si.inst);
+    var = moduleTranslator->translateCastInstName(ci);
+    expr = moduleTranslator->translateCastInstExpr(ci);
   }
 
   assert(var && expr);

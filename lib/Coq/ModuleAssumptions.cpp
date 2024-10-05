@@ -201,6 +201,10 @@ ref<CoqTactic> ModuleSupport::getTacticForInst(Instruction &inst) {
     return getTacticForCmpInst(dyn_cast<CmpInst>(&inst));
   }
 
+  if (isa<CastInst>(&inst)) {
+    return getTacticForCastInst(dyn_cast<CastInst>(&inst));
+  }
+
   if (isa<BranchInst>(&inst)) {
     return getTacticForBranchInst(dyn_cast<BranchInst>(&inst));
   }
@@ -270,6 +274,28 @@ ref<CoqTactic> ModuleSupport::getTacticForCmpInst(CmpInst *inst) {
       new Apply("IS_OP_ICmp"),
       getTacticForValue(inst->getOperand(0)),
       getTacticForValue(inst->getOperand(1)),
+    }
+  );
+}
+
+ref<CoqTactic> ModuleSupport::getTacticForCastInst(CastInst *inst) {
+  std::string constructor;
+  switch (inst->getOpcode()) {
+    case Instruction::ZExt:
+    constructor = "IS_ZExt";
+    break;
+
+  default:
+      assert(false);
+  }
+
+  ref<CoqTactic> opTactic = new Block({new Apply(constructor)});
+  return new Block(
+    {
+      new Apply("IS_INSTR_Op"),
+      new Apply("IS_OP_Conversion"),
+      opTactic,
+      getTacticForValue(inst->getOperand(0)),
     }
   );
 }

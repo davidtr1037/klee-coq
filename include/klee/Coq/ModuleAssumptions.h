@@ -50,6 +50,8 @@ public:
 
   ref<CoqTactic> getTacticForCmpInst(llvm::CmpInst *inst);
 
+  ref<CoqTactic> getTacticForCastInst(llvm::CastInst *inst);
+
   ref<CoqTactic> getTacticForBranchInst(llvm::BranchInst *inst);
 
   ref<CoqTactic> getTacticForPHINode(llvm::PHINode *inst);

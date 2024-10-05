@@ -167,6 +167,8 @@ public:
 
   uint64_t getInstID(llvm::Instruction *inst);
 
+  bool isAssignment(llvm::Instruction &inst);
+
   ~ModuleTranslator();
 };
 

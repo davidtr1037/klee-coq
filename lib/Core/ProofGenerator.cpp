@@ -524,6 +524,7 @@ vector<klee::ref<CoqExpr>> ProofGenerator::getImports() {
     new CoqRequire("SE", "ModuleAssumptions"),
     new CoqRequire("SE", "Symbolic"),
     new CoqRequire("SE", "ProofGeneration"),
+    new CoqRequire("SE.Numeric", "Integers"),
     new CoqRequire("SE.SMT", "Expr"),
     new CoqRequire("SE.SMT", "Model"),
     new CoqRequire("SE.SMT", "Simplification"),
@@ -603,7 +604,7 @@ klee::ref<CoqLemma> ProofGenerator::createLemmaForSubtree(StateInfo &si,
 }
 
 klee::ref<CoqTactic> ProofGenerator::getTacticForSafety(StateInfo &si) {
-  if (isa<BinaryOperator>(si.inst) || isa<CmpInst>(si.inst)) {
+  if (moduleTranslator->isAssignment(*si.inst)) {
     return new Block(
       {new Apply("not_error_instr_op")}
     );
@@ -727,7 +728,7 @@ klee::ref<CoqTactic> ProofGenerator::getTacticForSat(StateInfo &si,
 klee::ref<CoqTactic> ProofGenerator::getTacticForEquiv(StateInfo &si,
                                                        ExecutionState &successor,
                                                        ProofHint *hint) {
-  if (isa<BinaryOperator>(si.inst) || isa<CmpInst>(si.inst)) {
+  if (moduleTranslator->isAssignment(*si.inst)) {
     return getTacticForEquivAssignment(si, successor);
   }
 

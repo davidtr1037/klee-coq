@@ -503,7 +503,7 @@ ref<CoqExpr> ModuleTranslator::translateCastInstOpcode(CastInst *inst) {
   std::string conversion_type;
   switch (inst->getOpcode()) {
   case Instruction::ZExt:
-    conversion_type = "ZExt";
+    conversion_type = "Zext";
     break;
 
   default:
@@ -903,6 +903,10 @@ uint64_t ModuleTranslator::getInstID(Instruction *inst) {
   }
 
   return id;
+}
+
+bool ModuleTranslator::isAssignment(Instruction &inst) {
+  return isa<BinaryOperator>(&inst) || isa<CmpInst>(&inst) || isa<CastInst>(&inst);
 }
 
 ModuleTranslator::~ModuleTranslator() {
