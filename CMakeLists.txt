@@ -123,7 +123,11 @@ set(LLVMCXX "${LLVM_TOOLS_BINARY_DIR}/clang++"
   PATH
   "Path to C++ bitcode compiler"
 )
-
+set(LLVMOPT "${LLVM_TOOLS_BINARY_DIR}/opt"
+  CACHE
+  PATH
+  "Path to opt bitcode compiler"
+)
 if (LLVM_ENABLE_ASSERTIONS)
   # Certain LLVM debugging macros only work when LLVM was built with asserts
   set(ENABLE_KLEE_DEBUG 1) # for config.h

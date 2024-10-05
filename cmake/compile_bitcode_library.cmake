@@ -18,12 +18,14 @@ function(compile_bitcode_library library_name source_files compile_cc_flags comp
             add_custom_command(
                     OUTPUT ${bc_file}
                     COMMAND ${LLVMCXX} -c "-emit-llvm" ${compile_cxx_flags} "${source_file}" -o ${bc_file}
+                    COMMAND ${LLVMOPT} -mem2reg ${bc_file} -o ${bc_file}
                     DEPENDS ${source_file}
             )
         else()
             add_custom_command(
                     OUTPUT ${bc_file}
                     COMMAND ${LLVMCC} -c "-emit-llvm" ${compile_cc_flags} "${source_file}" -o ${bc_file}
+                    COMMAND ${LLVMOPT} -mem2reg ${bc_file} -o ${bc_file}
                     DEPENDS ${source_file}
             )
         endif()
