@@ -145,13 +145,12 @@ void ExecutionState::pushFrame(KInstIterator caller, KFunction *kf) {
 
 void ExecutionState::popFrame() {
   const StackFrame &sf = stack.back();
-  Function *f = stack.back().kf->function;
   for (const auto *memoryObject : sf.allocas) {
     deallocate(memoryObject);
     addressSpace.unbindObject(memoryObject);
   }
   stack.pop_back();
-  if (!stack.empty() && !f->getReturnType()->isVoidTy()) {
+  if (!stack.empty()) {
     stack.back().alias = nullptr;
   }
 }
