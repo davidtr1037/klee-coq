@@ -375,7 +375,7 @@ ref<CoqExpr> ModuleTranslator::translateBinaryOperatorOpcode(BinaryOperator *ins
     break;
 
   case Instruction::SRem:
-    op = new CoqVariable("LLVMAst.URem");
+    op = new CoqVariable("LLVMAst.SRem");
     break;
 
   default:
