@@ -1199,10 +1199,13 @@ Proof.
           }
         }
       }
-      { admit. } (* zext *)
+      {
+        destruct cast_sort;
+        try apply equiv_smt_expr_refl.
+      }
     }
   }
-Admitted.
+Qed.
 
 Lemma equiv_smt_expr_simplify_cmpop_bv32 : forall op (ast1 ast2 : smt_ast Sort_BV32),
   equiv_smt_expr
@@ -1244,6 +1247,21 @@ Proof.
   { apply equiv_smt_expr_refl. }
 Qed.
 
+Lemma equiv_smt_expr_simplify_zext : forall s (ast : smt_ast s) cast_sort,
+  equiv_smt_expr
+    (Expr cast_sort (simplify_zext s ast cast_sort))
+    (Expr cast_sort (AST_ZExt s ast cast_sort)).
+Proof.
+  intros s ast cast_sort.
+  dependent destruction ast;
+  try apply equiv_smt_expr_refl.
+  simpl.
+  apply EquivExpr.
+  intros m.
+  simpl.
+  reflexivity.
+Qed.
+
 Lemma equiv_smt_expr_simplify: forall s (ast : smt_ast s),
   equiv_smt_expr
     (Expr s ast)
@@ -1275,8 +1293,17 @@ Proof.
     apply equiv_smt_expr_not.
     assumption.
   }
-  { admit. } (* zext *)
-Admitted.
+  {
+    apply equiv_smt_expr_symmetry.
+    eapply equiv_smt_expr_transitivity.
+    { apply equiv_smt_expr_simplify_zext. }
+    {
+      apply equiv_smt_expr_zext.
+      apply equiv_smt_expr_symmetry.
+      assumption.
+    }
+  }
+Qed.
 
 Lemma equiv_smt_expr_normalize_simplify: forall s (ast : smt_ast s),
   equiv_smt_expr
