@@ -109,12 +109,18 @@ Proof.
     destruct t1, t2;
     try discriminate Heq.
     rename w into w1, w0 into w2.
-    repeat (destruct w1; try discriminate Heq).
-    destruct s1; try discriminate Heq.
-    repeat (destruct w2; try discriminate Heq).
+    repeat (destruct w1; try discriminate Heq);
+    destruct s1; try discriminate Heq;
+    repeat (destruct w2; try discriminate Heq);
     inversion Heq; subst.
-    apply contains_var_zext with (cast_sort := Sort_BV64).
-    assumption.
+    {
+      apply contains_var_zext with (cast_sort := Sort_BV64).
+      assumption.
+    }
+    {
+      apply contains_var_zext with (cast_sort := Sort_BV32).
+      assumption.
+    }
   }
   {
     simpl in Heq.

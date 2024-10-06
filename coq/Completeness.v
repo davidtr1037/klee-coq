@@ -276,16 +276,15 @@ Proof.
         ).
         {
           rename w into w1, w0 into w2.
-          repeat (destruct w1; try apply OA_None).
-          {
-            simpl.
-            destruct sort; try apply OA_None.
-            repeat (destruct w2; try apply OA_None).
-            simpl.
-            eapply OA_Some.
-            { reflexivity. }
-            { simpl. reflexivity. }
-          }
+          repeat (destruct w1; try apply OA_None);
+          (
+            simpl;
+            destruct sort; try apply OA_None;
+            repeat (destruct w2; try apply OA_None);
+            simpl;
+            eapply OA_Some;
+            [ reflexivity | reflexivity ]
+          ).
         }
       }
       {
