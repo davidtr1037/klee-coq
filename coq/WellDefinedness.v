@@ -112,15 +112,11 @@ Proof.
     repeat (destruct w1; try discriminate Heq);
     destruct s1; try discriminate Heq;
     repeat (destruct w2; try discriminate Heq);
-    inversion Heq; subst.
-    {
-      apply contains_var_zext with (cast_sort := Sort_BV64).
-      assumption.
-    }
-    {
-      apply contains_var_zext with (cast_sort := Sort_BV32).
-      assumption.
-    }
+    inversion Heq; subst;
+    (
+      eapply contains_var_zext;
+      eassumption
+    ).
   }
   {
     simpl in Heq.

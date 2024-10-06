@@ -28,7 +28,7 @@ Inductive is_supported_exp : llvm_exp -> Prop :=
       is_supported_exp (EXP_Ident id)
   | IS_EXP_Integer : forall x,
       is_supported_exp (EXP_Integer x)
-  | IS_OP_IBinop : forall  op t e1 e2,
+  | IS_OP_IBinop : forall op t e1 e2,
       is_supported_exp e1 ->
       is_supported_exp e2 ->
       is_supported_ibinop op ->
