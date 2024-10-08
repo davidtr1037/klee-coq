@@ -213,6 +213,10 @@ Definition normalize_zext (s : smt_sort) (ast : smt_ast s) (cast_sort : smt_sort
   AST_ZExt s ast cast_sort
 .
 
+Definition normalize_sext (s : smt_sort) (ast : smt_ast s) (cast_sort : smt_sort) : smt_ast cast_sort :=
+  AST_SExt s ast cast_sort
+.
+
 Fixpoint normalize (s : smt_sort) (ast : smt_ast s) : smt_ast s :=
   match ast with
   | AST_Const sort n => AST_Const sort n
@@ -225,6 +229,8 @@ Fixpoint normalize (s : smt_sort) (ast : smt_ast s) : smt_ast s :=
       normalize_not sort (normalize sort ast)
   | AST_ZExt sort ast cast_sort =>
       normalize_zext sort (normalize sort ast) cast_sort
+  | AST_SExt sort ast cast_sort =>
+      normalize_sext sort (normalize sort ast) cast_sort
   end
 .
 
@@ -385,6 +391,15 @@ Definition simplify_zext (s : smt_sort) (ast : smt_ast s) (cast_sort : smt_sort)
   end
 .
 
+Definition simplify_sext (s : smt_sort) (ast : smt_ast s) (cast_sort : smt_sort) : smt_ast cast_sort :=
+  match ast with
+  | AST_Const sort n =>
+      AST_Const cast_sort (smt_eval_sext_by_sort sort n cast_sort)
+  | _ =>
+      AST_SExt s ast cast_sort
+  end
+.
+
 Fixpoint simplify (s : smt_sort) (ast : smt_ast s) : smt_ast s :=
   match ast with
   | AST_Const sort n => AST_Const sort n
@@ -396,6 +411,8 @@ Fixpoint simplify (s : smt_sort) (ast : smt_ast s) : smt_ast s :=
   | AST_Not sort ast => AST_Not sort (simplify sort ast)
   | AST_ZExt sort ast cast_sort =>
       simplify_zext sort (simplify sort ast) cast_sort
+  | AST_SExt sort ast cast_sort =>
+      simplify_sext sort (simplify sort ast) cast_sort
   end
 .
 
@@ -520,14 +537,14 @@ Proof.
     dependent destruction ast2;
     try apply equiv_smt_expr_refl.
     {
-      dependent destruction ast1.
-      { apply equiv_smt_expr_refl. }
-      {
-        simpl.
-        eapply equiv_smt_expr_transitivity.
-        { apply equiv_smt_expr_add_comm. }
-        { apply equiv_smt_expr_refl. }
-      }
+      dependent destruction ast1;
+      try apply equiv_smt_expr_refl;
+      (* not, zext, sext *)
+      try (
+        simpl;
+        eapply equiv_smt_expr_transitivity;
+        [ apply equiv_smt_expr_add_comm | apply equiv_smt_expr_refl ]
+      ).
       {
         destruct op;
         try (
@@ -547,18 +564,6 @@ Proof.
           }
         }
       }
-      {
-        simpl.
-        eapply equiv_smt_expr_transitivity.
-        { apply equiv_smt_expr_add_comm. }
-        { apply equiv_smt_expr_refl. }
-      }
-      {
-        simpl.
-        eapply equiv_smt_expr_transitivity.
-        { apply equiv_smt_expr_add_comm. }
-        { apply equiv_smt_expr_refl. }
-      }
     }
   }
   (* sub *)
@@ -566,17 +571,16 @@ Proof.
     dependent destruction ast2;
     try apply equiv_smt_expr_refl.
     {
-      dependent destruction ast1.
-      { apply equiv_smt_expr_refl. }
-      {
-        simpl.
-        eapply equiv_smt_expr_transitivity.
-        {
-          apply equiv_smt_expr_symmetry.
-          apply equiv_smt_expr_sub_add.
-        }
-        { apply equiv_smt_expr_refl. }
-      }
+      dependent destruction ast1;
+      try apply equiv_smt_expr_refl;
+      try (
+        simpl;
+        eapply equiv_smt_expr_transitivity;
+        [
+          apply equiv_smt_expr_symmetry; apply equiv_smt_expr_sub_add |
+          apply equiv_smt_expr_refl
+        ]
+      ).
       {
         destruct op;
         try (
@@ -605,24 +609,6 @@ Proof.
             { apply equiv_smt_expr_refl. }
           }
         }
-      }
-      {
-        simpl.
-        eapply equiv_smt_expr_transitivity.
-        {
-          apply equiv_smt_expr_symmetry.
-          apply equiv_smt_expr_sub_add.
-        }
-        { apply equiv_smt_expr_refl. }
-      }
-      {
-        simpl.
-        eapply equiv_smt_expr_transitivity.
-        {
-          apply equiv_smt_expr_symmetry.
-          apply equiv_smt_expr_sub_add.
-        }
-        { apply equiv_smt_expr_refl. }
       }
     }
   }
@@ -1009,6 +995,11 @@ Proof.
     apply equiv_smt_expr_zext.
     assumption.
   }
+  {
+    unfold normalize_sext.
+    apply equiv_smt_expr_sext.
+    assumption.
+  }
 Qed.
 
 Definition sort_to_add s : (smt_sort_to_int_type s) -> (smt_sort_to_int_type s) -> (smt_sort_to_int_type s) :=
@@ -1209,6 +1200,7 @@ Proof.
     { admit. } (* same *)
     { admit. } (* same *)
     { admit. } (* same / zext *)
+    { admit. } (* same / sext *)
   }
   {
     dependent destruction ast2;
@@ -1244,6 +1236,8 @@ Proof.
   { admit. } (* same *)
   { admit. } (* same *)
   { admit. } (* same *)
+  { admit. } (* same / zext *)
+  { admit. } (* same / sext *)
 Admitted.
 
 Lemma equiv_smt_expr_simplify_binop_bv32 : forall op (ast1 ast2 : smt_ast Sort_BV32),
@@ -1291,10 +1285,13 @@ Proof.
     { admit. } (* same *)
     { admit. } (* same *)
     { admit. } (* same / zext *)
+    { admit. } (* same / sext *)
   }
   { admit. } (* same *)
   { admit. } (* same *)
   { admit. } (* same *)
+  { admit. } (* same / zext *)
+  { admit. } (* same / sext *)
 Admitted.
 
 Lemma equiv_smt_expr_simplify_binop : forall s op (ast1 ast2 : smt_ast s),
@@ -1340,7 +1337,12 @@ Proof.
     try (destruct s; apply equiv_smt_expr_refl).
     {
       dependent destruction ast2_1;
-      try (destruct s; apply equiv_smt_expr_refl).
+      try (destruct s; apply equiv_smt_expr_refl);
+      (* zext/sext *)
+      try (
+        destruct cast_sort;
+        try apply equiv_smt_expr_refl
+      ).
       {
         destruct op;
         try (destruct s; apply equiv_smt_expr_refl).
@@ -1372,10 +1374,6 @@ Proof.
             }
           }
         }
-      }
-      {
-        destruct cast_sort;
-        try apply equiv_smt_expr_refl.
       }
     }
   }
@@ -1463,6 +1461,21 @@ Proof.
   reflexivity.
 Qed.
 
+Lemma equiv_smt_expr_simplify_sext : forall s (ast : smt_ast s) cast_sort,
+  equiv_smt_expr
+    (Expr cast_sort (simplify_sext s ast cast_sort))
+    (Expr cast_sort (AST_SExt s ast cast_sort)).
+Proof.
+  intros s ast cast_sort.
+  dependent destruction ast;
+  try apply equiv_smt_expr_refl.
+  simpl.
+  apply EquivExpr.
+  intros m.
+  simpl.
+  reflexivity.
+Qed.
+
 Lemma equiv_smt_expr_simplify: forall s (ast : smt_ast s),
   equiv_smt_expr
     (Expr s ast)
@@ -1500,6 +1513,16 @@ Proof.
     { apply equiv_smt_expr_simplify_zext. }
     {
       apply equiv_smt_expr_zext.
+      apply equiv_smt_expr_symmetry.
+      assumption.
+    }
+  }
+  {
+    apply equiv_smt_expr_symmetry.
+    eapply equiv_smt_expr_transitivity.
+    { apply equiv_smt_expr_simplify_sext. }
+    {
+      apply equiv_smt_expr_sext.
       apply equiv_smt_expr_symmetry.
       assumption.
     }

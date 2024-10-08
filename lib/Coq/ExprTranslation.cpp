@@ -259,18 +259,28 @@ ref<CoqExpr> ExprTranslator::translateCmpExpr(ref<CmpExpr> e,
 
 ref<CoqExpr> ExprTranslator::translateCastExpr(ref<CastExpr> e,
                                                ArrayTranslation *m) {
-  if (isa<ZExtExpr>(e)) {
-    return new CoqApplication(
-      new CoqVariable("AST_ZExt"),
-      {
-        createBVSort(e->src->getWidth()),
-        translate(e->src, m),
-        createBVSort(e->getWidth()),
-      }
-    );
+  std::string constructor;
+  switch (e->getKind()) {
+  case Expr::ZExt:
+    constructor = "AST_ZExt";
+    break;
+
+  case Expr::SExt:
+    constructor = "AST_SExt";
+    break;
+
+  default:
+    assert(false);
   }
 
-  return nullptr;
+  return new CoqApplication(
+    new CoqVariable(constructor),
+    {
+      createBVSort(e->src->getWidth()),
+      translate(e->src, m),
+      createBVSort(e->getWidth()),
+    }
+  );
 }
 
 ref<CoqExpr> ExprTranslator::translateConcatExpr(ref<ConcatExpr> e,

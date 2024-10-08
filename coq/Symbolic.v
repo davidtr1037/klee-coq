@@ -175,6 +175,16 @@ Definition sym_eval_convert (conv : conversion_type) t1 (e : smt_expr) t2 : opti
           end
       | _, _ => None
       end
+  | Sext =>
+      match t1, t2 with
+      | TYPE_I w1, TYPE_I w2 =>
+          match w1, e, w2 with
+          | 8%positive, (Expr Sort_BV8 ast), 32%positive => Some (Expr Sort_BV32 (AST_SExt Sort_BV8 ast Sort_BV32))
+          | 32%positive, (Expr Sort_BV32 ast), 64%positive => Some (Expr Sort_BV64 (AST_SExt Sort_BV32 ast Sort_BV64))
+          | _, _, _ => None
+          end
+      | _, _ => None
+      end
   | Bitcast =>
       match t1, t2 with
       | TYPE_I w1, TYPE_I w2 =>

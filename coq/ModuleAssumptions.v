@@ -20,6 +20,7 @@ Inductive is_supported_ibinop : ibinop -> Prop :=
 
 Inductive is_supported_conv : conversion_type -> Prop :=
   | IS_ZExt : is_supported_conv Zext
+  | IS_SExt : is_supported_conv Sext
   | IS_Bitcast : is_supported_conv Bitcast
 .
 

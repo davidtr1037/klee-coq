@@ -203,6 +203,14 @@ Definition convert conv x t1 t2 : option dynamic_value :=
         Some (DV_Int (DI_I64 (repr (unsigned i1))))
       | _, _, _ => None
       end
+  | Sext =>
+      match t1, x, t2 with
+      | TYPE_I 8, DV_Int (DI_I8 i1), TYPE_I 32 =>
+        Some (DV_Int (DI_I32 (repr (signed i1))))
+      | TYPE_I 32, DV_Int (DI_I32 i1), TYPE_I 64 =>
+        Some (DV_Int (DI_I64 (repr (signed i1))))
+      | _, _, _ => None
+      end
   | Bitcast =>
       match t1, x, t2 with
       | TYPE_I bits1, x, TYPE_I bits2 =>

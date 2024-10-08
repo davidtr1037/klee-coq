@@ -123,6 +123,20 @@ Proof.
     destruct t1, t2;
     try discriminate Heq.
     rename w into w1, w0 into w2.
+    repeat (destruct w1; try discriminate Heq);
+    destruct s1; try discriminate Heq;
+    repeat (destruct w2; try discriminate Heq);
+    inversion Heq; subst;
+    (
+      eapply contains_var_sext;
+      eassumption
+    ).
+  }
+  {
+    simpl in Heq.
+    destruct t1, t2;
+    try discriminate Heq.
+    rename w into w1, w0 into w2.
     {
       destruct (w1 =? w2)%positive eqn:E.
       {

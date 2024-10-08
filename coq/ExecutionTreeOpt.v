@@ -301,6 +301,20 @@ Proof.
       ).
     }
     {
+      destruct t1; try discriminate Heval.
+      destruct t2; try discriminate Heval.
+      rename w into w1, w0 into w2.
+      repeat (destruct w1; try discriminate Heval);
+      (
+        destruct sort'; try discriminate Heval;
+        repeat (destruct w2; try discriminate Heval);
+        inversion Heval; subst;
+        eexists;
+        split;
+        [ reflexivity | apply equiv_smt_expr_sext; assumption ]
+      ).
+    }
+    {
       destruct t1, t2; try discriminate Heval.
       rename w into w1, w0 into w2.
       simpl in Heval.

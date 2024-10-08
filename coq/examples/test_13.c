@@ -13,7 +13,16 @@ void f1() {
     a = y;
 }
 
+void f2() {
+    int32_t x = 0;
+    int32_t y = klee_make_symbolic_int32();
+    int64_t a;
+    a = x;
+    a = y;
+}
+
 int main() {
     f1();
+    f2();
     return 0;
 }
