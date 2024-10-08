@@ -541,6 +541,22 @@ Proof.
   { rewrite Int64.eq_sym. reflexivity. }
 Qed.
 
+Lemma equiv_smt_expr_and_comm : forall s (ast1 ast2 : smt_ast s),
+  equiv_smt_expr
+    (Expr s (AST_BinOp s SMT_And ast1 ast2))
+    (Expr s (AST_BinOp s SMT_And ast2 ast1)).
+Proof.
+  intros s ast1 ast2.
+  apply EquivExpr.
+  intros m.
+  destruct s; simpl.
+  { apply Int1.and_commut. }
+  { apply Int8.and_commut. }
+  { apply Int16.and_commut. }
+  { apply Int32.and_commut. }
+  { apply Int64.and_commut. }
+Qed.
+
 Lemma equiv_smt_expr_normalize_binop_bv32 : forall op (ast1 ast2 : smt_ast Sort_BV32),
   equiv_smt_expr
     (Expr Sort_BV32 (normalize_binop_bv32 op ast1 ast2))
@@ -1174,15 +1190,64 @@ Proof.
   ).
 Qed.
 
+Lemma equiv_smt_expr_simplify_and_bv1 : forall n ast,
+  equiv_smt_expr
+    (Expr Sort_BV1
+       (if Int1.eq n Int1.zero then smt_ast_false else ast))
+    (Expr Sort_BV1
+       (AST_BinOp Sort_BV1 SMT_And (AST_Const Sort_BV1 n) ast)).
+Proof.
+  intros n ast.
+  apply EquivExpr.
+  intros m.
+  simpl.
+  assert(L: n = Int1.zero \/ n = Int1.one).
+  { apply int1_destruct. }
+  destruct L as [L | L]; subst; simpl.
+  {
+    rewrite Int1.and_zero_l.
+    reflexivity.
+  }
+  {
+    replace Int1.one with Int1.mone.
+    {
+      rewrite Int1.and_mone_l.
+      reflexivity.
+    }
+    { apply int1_eqb_eq. reflexivity. }
+  }
+Qed.
+
 Lemma equiv_smt_expr_simplify_binop_bv1 : forall op (ast1 ast2 : smt_ast Sort_BV1),
   equiv_smt_expr
     (Expr Sort_BV1 (simplify_binop_bv1 op ast1 ast2))
     (Expr Sort_BV1 (AST_BinOp Sort_BV1 op ast1 ast2)).
 Proof.
   intros op ast1 ast2.
-  dependent destruction ast1.
+  dependent destruction ast1;
+  try (
+    dependent destruction ast2;
+    try apply equiv_smt_expr_refl;
+    (
+      destruct op;
+      try apply equiv_smt_expr_refl;
+      (
+        simpl;
+        eapply equiv_smt_expr_transitivity;
+        [ apply equiv_smt_expr_simplify_and_bv1 | apply equiv_smt_expr_and_comm ]
+      )
+    )
+  ).
+  (* const *)
   {
-    dependent destruction ast2.
+    dependent destruction ast2;
+    try (
+      simpl;
+      destruct op;
+      try apply equiv_smt_expr_refl;
+      apply equiv_smt_expr_simplify_and_bv1
+    ).
+    (* const *)
     {
       simpl.
       destruct op;
@@ -1193,76 +1258,8 @@ Proof.
       { apply equiv_smt_expr_urem_fold_consts. }
       { apply equiv_smt_expr_and_fold_consts. }
     }
-    {
-      destruct op;
-      try apply equiv_smt_expr_refl.
-      {
-        simpl.
-        apply EquivExpr.
-        intros m.
-        simpl.
-        assert(L: n = Int1.zero \/ n = Int1.one).
-        { apply int1_destruct. }
-        destruct L as [L | L]; subst; simpl.
-        {
-          rewrite Int1.and_zero_l.
-          reflexivity.
-        }
-        {
-          replace Int1.one with Int1.mone.
-          {
-            rewrite Int1.and_mone_l.
-            reflexivity.
-          }
-          { apply int1_eqb_eq. reflexivity. }
-        }
-      }
-    }
-    { admit. } (* same *)
-    { admit. } (* same *)
-    { admit. } (* same *)
-    { admit. } (* same / zext *)
-    { admit. } (* same / sext *)
-    { admit. } (* same / extract *)
   }
-  {
-    dependent destruction ast2;
-    try apply equiv_smt_expr_refl.
-    {
-      destruct op;
-      try apply equiv_smt_expr_refl.
-      {
-        simpl.
-        apply EquivExpr.
-        intros m.
-        simpl.
-        assert(L: n = Int1.zero \/ n = Int1.one).
-        { apply int1_destruct. }
-        destruct L as [L | L]; subst; simpl.
-        {
-          rewrite Int1.and_commut.
-          rewrite Int1.and_zero_l.
-          reflexivity.
-        }
-        {
-          replace Int1.one with Int1.mone.
-          {
-            rewrite Int1.and_commut.
-            rewrite Int1.and_mone_l.
-            reflexivity.
-          }
-          { apply int1_eqb_eq. reflexivity. }
-        }
-      }
-    }
-  }
-  { admit. } (* same *)
-  { admit. } (* same *)
-  { admit. } (* same *)
-  { admit. } (* same / zext *)
-  { admit. } (* same / sext *)
-  { admit. } (* same / extract *)
-Admitted.
+Qed.
 
 Lemma equiv_smt_expr_simplify_binop_bv32 : forall op (ast1 ast2 : smt_ast Sort_BV32),
   equiv_smt_expr
