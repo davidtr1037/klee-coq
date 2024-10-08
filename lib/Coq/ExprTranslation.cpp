@@ -90,6 +90,10 @@ ref<CoqExpr> ExprTranslator::translate(ref<Expr> e,
     return translateCastExpr(dyn_cast<CastExpr>(e), m);
   }
 
+  if (isa<ExtractExpr>(e)) {
+    return translateExtractExpr(dyn_cast<ExtractExpr>(e), m);
+  }
+
   if (isa<BinaryExpr>(e)) {
     ref<BinaryExpr> be = dyn_cast<BinaryExpr>(e);
     ref<Expr> left = be->left;
@@ -118,7 +122,7 @@ ref<CoqExpr> ExprTranslator::translate(ref<Expr> e,
     return translateConcatExpr(dyn_cast<ConcatExpr>(e), m);
   }
 
-  return nullptr;
+  assert(false);
 }
 
 ref<CoqExpr> ExprTranslator::translateConstantExpr(ref<ConstantExpr> e) {
@@ -146,7 +150,7 @@ ref<CoqExpr> ExprTranslator::translateConstantExpr(ref<ConstantExpr> e) {
     break;
 
   default:
-    return nullptr;
+    assert(false);
   }
 
   return new CoqApplication(
@@ -233,7 +237,7 @@ ref<CoqExpr> ExprTranslator::translateCmpExpr(ref<CmpExpr> e,
     break;
 
   default:
-    return nullptr;
+    assert(false);
   }
 
   ref<CoqExpr> coqLeft = translate(e->left, m);
@@ -283,6 +287,18 @@ ref<CoqExpr> ExprTranslator::translateCastExpr(ref<CastExpr> e,
   );
 }
 
+ref<CoqExpr> ExprTranslator::translateExtractExpr(ref<ExtractExpr> e,
+                                                  ArrayTranslation *m) {
+  return new CoqApplication(
+    new CoqVariable("AST_Extract"),
+    {
+      createBVSort(e->expr->getWidth()),
+      translate(e->expr, m),
+      createBVSort(e->getWidth()),
+    }
+  );
+}
+
 ref<CoqExpr> ExprTranslator::translateConcatExpr(ref<ConcatExpr> e,
                                                  ArrayTranslation *m) {
   if (!m) {
@@ -291,17 +307,28 @@ ref<CoqExpr> ExprTranslator::translateConcatExpr(ref<ConcatExpr> e,
   }
 
   if (isa<ReadExpr>(e->getLeft())) {
-    ReadExpr *re = dyn_cast<ReadExpr>(e->getLeft());
-    const Array *array = re->updates.root;
-    if (array && array->isSymbolicArray()) {
-      auto i = m->find(array);
-      if (i != m->end()) {
-        return i->second;
-      }
+    return translateReadExpr(dyn_cast<ReadExpr>(e->getLeft()), m);
+  }
+
+  assert(false);
+}
+
+ref<CoqExpr> ExprTranslator::translateReadExpr(ref<ReadExpr> e,
+                                               ArrayTranslation *m) {
+  if (!m) {
+    /* must provide an array translation map */
+    return nullptr;
+  }
+
+  const Array *array = e->updates.root;
+  if (array && array->isSymbolicArray()) {
+    auto i = m->find(array);
+    if (i != m->end()) {
+      return i->second;
     }
   }
 
-  return nullptr;
+  assert(false);
 }
 
 ref<CoqExpr> ExprTranslator::createSMTVar(unsigned width,

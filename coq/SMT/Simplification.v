@@ -217,6 +217,10 @@ Definition normalize_sext (s : smt_sort) (ast : smt_ast s) (cast_sort : smt_sort
   AST_SExt s ast cast_sort
 .
 
+Definition normalize_extract (s : smt_sort) (ast : smt_ast s) (cast_sort : smt_sort) : smt_ast cast_sort :=
+  AST_Extract s ast cast_sort
+.
+
 Fixpoint normalize (s : smt_sort) (ast : smt_ast s) : smt_ast s :=
   match ast with
   | AST_Const sort n => AST_Const sort n
@@ -231,6 +235,8 @@ Fixpoint normalize (s : smt_sort) (ast : smt_ast s) : smt_ast s :=
       normalize_zext sort (normalize sort ast) cast_sort
   | AST_SExt sort ast cast_sort =>
       normalize_sext sort (normalize sort ast) cast_sort
+  | AST_Extract sort ast cast_sort =>
+      normalize_extract sort (normalize sort ast) cast_sort
   end
 .
 
@@ -400,6 +406,15 @@ Definition simplify_sext (s : smt_sort) (ast : smt_ast s) (cast_sort : smt_sort)
   end
 .
 
+Definition simplify_extract (s : smt_sort) (ast : smt_ast s) (cast_sort : smt_sort) : smt_ast cast_sort :=
+  match ast with
+  | AST_Const sort n =>
+      AST_Const cast_sort (smt_eval_extract_by_sort sort n cast_sort)
+  | _ =>
+      AST_Extract s ast cast_sort
+  end
+.
+
 Fixpoint simplify (s : smt_sort) (ast : smt_ast s) : smt_ast s :=
   match ast with
   | AST_Const sort n => AST_Const sort n
@@ -413,6 +428,8 @@ Fixpoint simplify (s : smt_sort) (ast : smt_ast s) : smt_ast s :=
       simplify_zext sort (simplify sort ast) cast_sort
   | AST_SExt sort ast cast_sort =>
       simplify_sext sort (simplify sort ast) cast_sort
+  | AST_Extract sort ast cast_sort =>
+      simplify_extract sort (simplify sort ast) cast_sort
   end
 .
 
@@ -1000,6 +1017,11 @@ Proof.
     apply equiv_smt_expr_sext.
     assumption.
   }
+  {
+    unfold normalize_extract.
+    apply equiv_smt_expr_extract.
+    assumption.
+  }
 Qed.
 
 Definition sort_to_add s : (smt_sort_to_int_type s) -> (smt_sort_to_int_type s) -> (smt_sort_to_int_type s) :=
@@ -1201,6 +1223,7 @@ Proof.
     { admit. } (* same *)
     { admit. } (* same / zext *)
     { admit. } (* same / sext *)
+    { admit. } (* same / extract *)
   }
   {
     dependent destruction ast2;
@@ -1238,6 +1261,7 @@ Proof.
   { admit. } (* same *)
   { admit. } (* same / zext *)
   { admit. } (* same / sext *)
+  { admit. } (* same / extract *)
 Admitted.
 
 Lemma equiv_smt_expr_simplify_binop_bv32 : forall op (ast1 ast2 : smt_ast Sort_BV32),
@@ -1286,12 +1310,14 @@ Proof.
     { admit. } (* same *)
     { admit. } (* same / zext *)
     { admit. } (* same / sext *)
+    { admit. } (* same / extract *)
   }
   { admit. } (* same *)
   { admit. } (* same *)
   { admit. } (* same *)
   { admit. } (* same / zext *)
   { admit. } (* same / sext *)
+  { admit. } (* same / extract *)
 Admitted.
 
 Lemma equiv_smt_expr_simplify_binop : forall s op (ast1 ast2 : smt_ast s),
@@ -1476,6 +1502,21 @@ Proof.
   reflexivity.
 Qed.
 
+Lemma equiv_smt_expr_simplify_extract : forall s (ast : smt_ast s) cast_sort,
+  equiv_smt_expr
+    (Expr cast_sort (simplify_extract s ast cast_sort))
+    (Expr cast_sort (AST_Extract s ast cast_sort)).
+Proof.
+  intros s ast cast_sort.
+  dependent destruction ast;
+  try apply equiv_smt_expr_refl.
+  simpl.
+  apply EquivExpr.
+  intros m.
+  simpl.
+  reflexivity.
+Qed.
+
 Lemma equiv_smt_expr_simplify: forall s (ast : smt_ast s),
   equiv_smt_expr
     (Expr s ast)
@@ -1523,6 +1564,16 @@ Proof.
     { apply equiv_smt_expr_simplify_sext. }
     {
       apply equiv_smt_expr_sext.
+      apply equiv_smt_expr_symmetry.
+      assumption.
+    }
+  }
+  {
+    apply equiv_smt_expr_symmetry.
+    eapply equiv_smt_expr_transitivity.
+    { apply equiv_smt_expr_simplify_extract. }
+    {
+      apply equiv_smt_expr_extract.
       apply equiv_smt_expr_symmetry.
       assumption.
     }

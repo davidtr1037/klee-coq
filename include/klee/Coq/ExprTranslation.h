@@ -54,8 +54,14 @@ public:
   ref<CoqExpr> translateCastExpr(ref<CastExpr> e,
                                  ArrayTranslation *m);
 
+  ref<CoqExpr> translateExtractExpr(ref<ExtractExpr> e,
+                                    ArrayTranslation *m);
+
   ref<CoqExpr> translateConcatExpr(ref<ConcatExpr> e,
                                    ArrayTranslation *m);
+
+  ref<CoqExpr> translateReadExpr(ref<ReadExpr> e,
+                                 ArrayTranslation *m);
 
   ref<CoqExpr> createSMTVar(unsigned width,
                             ref<CoqExpr> name);

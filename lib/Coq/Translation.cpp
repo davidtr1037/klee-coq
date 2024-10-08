@@ -510,6 +510,10 @@ ref<CoqExpr> ModuleTranslator::translateCastInstOpcode(CastInst *inst) {
     conversion_type = "Sext";
     break;
 
+  case Instruction::Trunc:
+    conversion_type = "Trunc";
+    break;
+
   case Instruction::BitCast:
     conversion_type = "Bitcast";
     break;

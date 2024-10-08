@@ -103,6 +103,21 @@ Proof.
   destruct e1 as [s1 ast1].
   destruct conv;
   try discriminate Heq.
+  (* trunc *)
+  {
+    simpl in Heq.
+    destruct t1, t2;
+    try discriminate Heq.
+    rename w into w1, w0 into w2.
+    repeat (destruct w1; try discriminate Heq);
+    destruct s1; try discriminate Heq;
+    repeat (destruct w2; try discriminate Heq);
+    inversion Heq; subst;
+    (
+      eapply contains_var_extract;
+      eassumption
+    ).
+  }
   (* zext *)
   {
     simpl in Heq.
@@ -118,6 +133,7 @@ Proof.
       eassumption
     ).
   }
+  (* sext *)
   {
     simpl in Heq.
     destruct t1, t2;

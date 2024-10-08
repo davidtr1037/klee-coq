@@ -51,6 +51,13 @@ cl::opt<bool> SimplifyExtExpr(
   cl::init(false),
   cl::desc(""),
   cl::cat(klee::ExprCat));
+
+cl::opt<bool> SimplifyExtractExpr(
+  "simplify-extract-expr",
+  cl::init(false),
+  cl::desc(""),
+  cl::cat(klee::ExprCat));
+
 }
 
 /***/
@@ -692,7 +699,7 @@ ref<Expr> ExtractExpr::create(ref<Expr> expr, unsigned off, Width w) {
     return expr;
   } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(expr)) {
     return CE->Extract(off, w);
-  } else {
+  } else if (SimplifyExtractExpr) {
     // Extract(Concat)
     if (ConcatExpr *ce = dyn_cast<ConcatExpr>(expr)) {
       // if the extract skips the right side of the concat

@@ -185,13 +185,21 @@ Definition sym_eval_convert (conv : conversion_type) t1 (e : smt_expr) t2 : opti
           end
       | _, _ => None
       end
+  | Trunc =>
+      match t1, t2 with
+      | TYPE_I w1, TYPE_I w2 =>
+          match w1, e, w2 with
+          | 32%positive, (Expr Sort_BV32 ast), 8%positive => Some (Expr Sort_BV8 (AST_Extract Sort_BV32 ast Sort_BV8))
+          | _, _, _ => None
+          end
+      | _, _ => None
+      end
   | Bitcast =>
       match t1, t2 with
       | TYPE_I w1, TYPE_I w2 =>
         if (w1 =? w2)%positive then Some e else None
       | _, _ => None
       end
-  | _ => None
   end
 .
 

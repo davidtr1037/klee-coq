@@ -289,6 +289,10 @@ ref<CoqTactic> ModuleSupport::getTacticForCastInst(CastInst *inst) {
     constructor = "IS_SExt";
     break;
 
+  case Instruction::Trunc:
+    constructor = "IS_Trunc";
+    break;
+
   case Instruction::BitCast:
     constructor = "IS_Bitcast";
     break;
