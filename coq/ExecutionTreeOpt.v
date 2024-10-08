@@ -307,11 +307,15 @@ Proof.
       repeat (destruct w1; try discriminate Heval);
       (
         destruct sort'; try discriminate Heval;
-        repeat (destruct w2; try discriminate Heval);
-        inversion Heval; subst;
-        eexists;
-        split;
-        [ reflexivity | apply equiv_smt_expr_zext; assumption ]
+        (
+          repeat (destruct w2; try discriminate Heval);
+          (
+            inversion Heval; subst;
+            eexists;
+            split;
+            [ reflexivity | apply equiv_smt_expr_zext; assumption ]
+          )
+        )
       ).
     }
     {
