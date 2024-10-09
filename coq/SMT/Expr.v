@@ -54,6 +54,16 @@ Definition smt_sort_to_int_type (s : smt_sort) :=
   end
 .
 
+Definition smt_sort_to_width (s : smt_sort) : positive :=
+  match s with
+  | Sort_BV1 => 1
+  | Sort_BV8 => 8
+  | Sort_BV16 => 16
+  | Sort_BV32 => 32
+  | Sort_BV64 => 64
+  end
+.
+
 Inductive smt_ast : smt_sort -> Type :=
   | AST_Const :
       forall (s : smt_sort) (n : (smt_sort_to_int_type s)), smt_ast s

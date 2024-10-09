@@ -1,4 +1,7 @@
+From Coq Require Import Bool.
+From Coq Require Import Lia.
 From Coq Require Import List.
+From Coq Require Import Logic.Eqdep.
 From Coq Require Import String.
 From Coq Require Import ZArith.
 
@@ -24,6 +27,82 @@ From SE.SMT Require Import Model.
 From SE.Utils Require Import IDMap.
 From SE.Utils Require StringMap.
 From SE.Utils Require ListUtil.
+
+Lemma infer_width : forall s (ast : smt_ast s) w n,
+  Some (Expr s ast) = make_smt_const w n -> w = (smt_sort_to_width s).
+Proof.
+  intros s ast w n H.
+  destruct s;
+  (
+    repeat (destruct w; try (simpl in H; discriminate H));
+    reflexivity
+  ).
+Qed.
+
+Lemma eval_shl_correspondence_bv1 : forall m ast n,
+  (n >= 0)%Z ->
+  (n < 1)%Z ->
+  over_approx_via_model
+    (eval_ibinop (Shl false false)
+       (DV_Int (DI_I1 (smt_eval_ast m Sort_BV1 ast)))
+       (DV_Int (DI_I1 (Int1.repr n))))
+    (Some
+       (Expr Sort_BV1
+          (AST_BinOp Sort_BV1 SMT_Shl ast (AST_Const Sort_BV1 (Int1.repr n)))))
+    m.
+Proof.
+  intros m ast n Hn1 Hn2.
+  unfold eval_ibinop, eval_ibinop_generic.
+  rewrite andb_false_l, andb_false_l.
+  simpl.
+  rewrite Int1.Z_mod_modulus_eq.
+  assert(L1 : (n = 0)%Z).
+  { lia. }
+  subst.
+  simpl.
+  eapply OA_Some.
+  { reflexivity. }
+  {
+    simpl.
+    f_equal.
+    apply Int1.shl_zero.
+  }
+Qed.
+
+Lemma eval_shl_correspondence_bv32 : forall m ast n,
+  (n >= 0)%Z ->
+  (n < 32)%Z ->
+  over_approx_via_model
+    (eval_ibinop (Shl false false)
+       (DV_Int (DI_I32 (smt_eval_ast m Sort_BV32 ast)))
+       (DV_Int (DI_I32 (repr n))))
+    (Some
+       (Expr Sort_BV32
+          (AST_BinOp Sort_BV32 SMT_Shl ast (AST_Const Sort_BV32 (Int32.repr n)))))
+    m.
+Proof.
+  intros m ast n Hn1 Hn2.
+  unfold eval_ibinop, eval_ibinop_generic.
+  rewrite andb_false_l, andb_false_l.
+  simpl.
+  rewrite Int.unsigned_repr_eq.
+  assert(L1: (n mod Int.modulus)%Z = n).
+  {
+    apply Z.mod_small.
+    split.
+    { lia. }
+    {
+      unfold Int.modulus, Int.wordsize, Wordsize_32.wordsize, two_power_nat.
+      simpl.
+      lia.
+    }
+  }
+  rewrite L1.
+  assert(L2 : (n >=? 32)%Z = false).
+  { lia. }
+  rewrite L2.
+  eapply OA_Some; reflexivity.
+Qed.
 
 (* TODO: rename correspondence to over_approx? *)
 Lemma eval_exp_correspondence : forall c_ls s_ls c_gs s_gs ot e m,
@@ -83,6 +162,53 @@ Proof.
     }
     {
       inversion H2; subst.
+      apply OA_None.
+    }
+  }
+  {
+    apply IHe1 with (ot := (Some (TYPE_I w))) in H4.
+    assert(L: is_supported_exp (EXP_Integer n)).
+    { apply IS_EXP_Integer. }
+    apply IHe2 with (ot := (Some (TYPE_I w))) in L.
+    destruct (eval_exp c_ls c_gs (Some (TYPE_I w)) e1) as [dv1 | ] eqn:E1.
+    {
+      destruct (eval_exp c_ls c_gs (Some (TYPE_I w)) (EXP_Integer n)) as [dv2 | ] eqn:E2.
+      {
+        simpl.
+        inversion H4; subst.
+        inversion L; subst.
+        rename sort into sort1, ast into ast1, sort0 into sort2, ast0 into ast2.
+        inversion H3; subst.
+        assert(Lw : w = (smt_sort_to_width sort2)).
+        { apply infer_width in H1. assumption. }
+        {
+          destruct sort1, sort2; try (apply OA_None);
+          subst;
+          simpl in H1;
+          inversion H1;
+          apply inj_pair2 in H2;
+          subst.
+          {
+            apply eval_shl_correspondence_bv1; assumption.
+          }
+          { admit. }
+          { admit. }
+          {
+            apply eval_shl_correspondence_bv32; assumption.
+          }
+          { admit. }
+        }
+      }
+      {
+        inversion H4; subst.
+        inversion L; subst.
+        simpl.
+        rewrite <- H.
+        apply OA_None.
+      }
+    }
+    {
+      inversion H4; subst.
       apply OA_None.
     }
   }
@@ -361,7 +487,7 @@ Proof.
       apply OA_None.
     }
   }
-Qed.
+Admitted.
 
 Lemma empty_store_correspondence : forall m,
   over_approx_store_via empty_smt_store empty_dv_store m.

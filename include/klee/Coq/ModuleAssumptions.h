@@ -48,6 +48,8 @@ public:
 
   ref<CoqTactic> getTacticForBinaryOperator(llvm::BinaryOperator *inst);
 
+  ref<CoqTactic> getTacticForShiftOperator(llvm::BinaryOperator *inst);
+
   ref<CoqTactic> getTacticForCmpInst(llvm::CmpInst *inst);
 
   ref<CoqTactic> getTacticForCastInst(llvm::CastInst *inst);
@@ -63,6 +65,8 @@ public:
   ref<CoqTactic> getTacticForUnreachableInst(llvm::UnreachableInst *inst);
 
   ref<CoqTactic> getTacticForValue(llvm::Value *value);
+
+  bool isShitOperator(llvm::BinaryOperator *inst);
 
   ~ModuleSupport();
 };

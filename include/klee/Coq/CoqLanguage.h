@@ -380,6 +380,14 @@ public:
 
 };
 
+class LIA : public BasicTactic {
+
+public:
+
+  LIA() : BasicTactic("lia") {}
+
+};
+
 class Simpl : public BasicTactic {
 
 public:

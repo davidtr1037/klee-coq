@@ -511,6 +511,7 @@ vector<klee::ref<CoqExpr>> ProofGenerator::getImports() {
   return {
     new CoqRequire("Coq", "ZArith"),
     new CoqRequire("Coq", "Strings.String"),
+    new CoqRequire("Coq", "Lia"),
     new CoqRequire("Coq", "List"),
     new CoqImport("ListNotations"),
     new CoqRequire("SE", "BitVectors"),

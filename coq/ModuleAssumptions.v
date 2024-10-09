@@ -1,4 +1,6 @@
 From Coq Require Import List.
+From Coq Require Import PArith.BinPos.
+From Coq Require Import ZArith.
 
 Import ListNotations.
 
@@ -18,6 +20,10 @@ Inductive is_supported_ibinop : ibinop -> Prop :=
   | IS_SRem : is_supported_ibinop SRem
 .
 
+Inductive is_supported_shift : ibinop -> Prop :=
+  | IS_Shl : is_supported_shift (Shl false false)
+.
+
 Inductive is_supported_conv : conversion_type -> Prop :=
   | IS_ZExt : is_supported_conv Zext
   | IS_SExt : is_supported_conv Sext
@@ -35,6 +41,12 @@ Inductive is_supported_exp : llvm_exp -> Prop :=
       is_supported_exp e2 ->
       is_supported_ibinop op ->
       is_supported_exp (OP_IBinop op t e1 e2)
+  | IS_OP_Shift : forall op w e n,
+      is_supported_shift op ->
+      is_supported_exp e ->
+      (n >= 0)%Z ->
+      (n < (Zpos w))%Z ->
+      is_supported_exp (OP_IBinop op (TYPE_I w) e (EXP_Integer n))
   | IS_OP_ICmp : forall op t e1 e2,
       is_supported_exp e1 ->
       is_supported_exp e2 ->

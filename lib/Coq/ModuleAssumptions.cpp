@@ -229,6 +229,10 @@ ref<CoqTactic> ModuleSupport::getTacticForInst(Instruction &inst) {
 }
 
 ref<CoqTactic> ModuleSupport::getTacticForBinaryOperator(BinaryOperator *inst) {
+  if (isShitOperator(inst)) {
+    return getTacticForShiftOperator(inst);
+  }
+
   std::string constructor;
   switch (inst->getOpcode()) {
   case Instruction::Add:
@@ -263,6 +267,30 @@ ref<CoqTactic> ModuleSupport::getTacticForBinaryOperator(BinaryOperator *inst) {
       getTacticForValue(inst->getOperand(0)),
       getTacticForValue(inst->getOperand(1)),
       opTactic,
+    }
+  );
+}
+
+ref<CoqTactic> ModuleSupport::getTacticForShiftOperator(BinaryOperator *inst) {
+  std::string constructor;
+  switch (inst->getOpcode()) {
+  case Instruction::Shl:
+    constructor = "IS_Shl";
+    break;
+
+  default:
+    assert(false);
+  }
+
+  ref<CoqTactic> opTactic = new Block({new Apply(constructor)});
+  return new Block(
+    {
+      new Apply("IS_INSTR_Op"),
+      new Apply("IS_OP_Shift"),
+      opTactic,
+      getTacticForValue(inst->getOperand(0)),
+      new Block({new LIA()}),
+      new Block({new LIA()}),
     }
   );
 }
@@ -425,6 +453,18 @@ ref<CoqTactic> ModuleSupport::getTacticForValue(Value *value) {
   }
 
   assert(false);
+}
+
+bool ModuleSupport::isShitOperator(BinaryOperator *inst) {
+  switch (inst->getOpcode()) {
+  case Instruction::Shl:
+  case Instruction::LShr:
+  case Instruction::AShr:
+    return true;
+
+  default:
+    return false;
+  }
 }
 
 ModuleSupport::~ModuleSupport() {
