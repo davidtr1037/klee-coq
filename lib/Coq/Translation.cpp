@@ -388,6 +388,13 @@ ref<CoqExpr> ModuleTranslator::translateBinaryOperatorOpcode(BinaryOperator *ins
     );
     break;
 
+  case Instruction::LShr:
+    op = new CoqApplication(
+      new CoqVariable("LLVMAst.LShr"),
+      {createFalse()}
+    );
+    break;
+
   default:
     assert(false);
   }

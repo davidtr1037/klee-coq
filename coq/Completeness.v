@@ -104,6 +104,71 @@ Proof.
   eapply OA_Some; reflexivity.
 Qed.
 
+Lemma eval_lshr_correspondence_bv1 : forall m ast n,
+  (n >= 0)%Z ->
+  (n < 1)%Z ->
+  over_approx_via_model
+    (eval_ibinop (LShr false)
+       (DV_Int (DI_I1 (smt_eval_ast m Sort_BV1 ast)))
+       (DV_Int (DI_I1 (Int1.repr n))))
+    (Some
+       (Expr Sort_BV1
+          (AST_BinOp Sort_BV1 SMT_LShr ast (AST_Const Sort_BV1 (Int1.repr n)))))
+    m.
+Proof.
+  intros m ast n Hn1 Hn2.
+  unfold eval_ibinop, eval_ibinop_generic.
+  rewrite andb_false_l.
+  simpl.
+  rewrite Int1.Z_mod_modulus_eq.
+  assert(L1 : (n = 0)%Z).
+  { lia. }
+  subst.
+  simpl.
+  eapply OA_Some.
+  { reflexivity. }
+  {
+    simpl.
+    f_equal.
+    apply Int1.shru_zero.
+  }
+Qed.
+
+Lemma eval_lshr_correspondence_bv32 : forall m ast n,
+  (n >= 0)%Z ->
+  (n < 32)%Z ->
+  over_approx_via_model
+    (eval_ibinop (LShr false)
+       (DV_Int (DI_I32 (smt_eval_ast m Sort_BV32 ast)))
+       (DV_Int (DI_I32 (repr n))))
+    (Some
+       (Expr Sort_BV32
+          (AST_BinOp Sort_BV32 SMT_LShr ast (AST_Const Sort_BV32 (Int32.repr n)))))
+    m.
+Proof.
+  intros m ast n Hn1 Hn2.
+  unfold eval_ibinop, eval_ibinop_generic.
+  rewrite andb_false_l.
+  simpl.
+  rewrite Int.unsigned_repr_eq.
+  assert(L1: (n mod Int.modulus)%Z = n).
+  {
+    apply Z.mod_small.
+    split.
+    { lia. }
+    {
+      unfold Int.modulus, Int.wordsize, Wordsize_32.wordsize, two_power_nat.
+      simpl.
+      lia.
+    }
+  }
+  rewrite L1.
+  assert(L2 : (n >=? 32)%Z = false).
+  { lia. }
+  rewrite L2.
+  eapply OA_Some; reflexivity.
+Qed.
+
 (* TODO: rename correspondence to over_approx? *)
 Lemma eval_exp_correspondence : forall c_ls s_ls c_gs s_gs ot e m,
   is_supported_exp e ->
@@ -174,29 +239,56 @@ Proof.
     {
       destruct (eval_exp c_ls c_gs (Some (TYPE_I w)) (EXP_Integer n)) as [dv2 | ] eqn:E2.
       {
-        simpl.
-        inversion H4; subst.
-        inversion L; subst.
-        rename sort into sort1, ast into ast1, sort0 into sort2, ast0 into ast2.
         inversion H3; subst.
-        assert(Lw : w = (smt_sort_to_width sort2)).
-        { apply infer_width in H1. assumption. }
         {
-          destruct sort1, sort2; try (apply OA_None);
-          subst;
-          simpl in H1;
-          inversion H1;
-          apply inj_pair2 in H2;
-          subst.
+          simpl.
+          inversion H4; subst.
+          inversion L; subst.
+          rename sort into sort1, ast into ast1, sort0 into sort2, ast0 into ast2.
+          assert(Lw : w = (smt_sort_to_width sort2)).
+          { apply infer_width in H1. assumption. }
           {
-            apply eval_shl_correspondence_bv1; assumption.
+            destruct sort1, sort2; try (apply OA_None);
+            subst;
+            simpl in H1;
+            inversion H1;
+            apply inj_pair2 in H2;
+            subst.
+            {
+              apply eval_shl_correspondence_bv1; assumption.
+            }
+            { admit. }
+            { admit. }
+            {
+              apply eval_shl_correspondence_bv32; assumption.
+            }
+            { admit. }
           }
-          { admit. }
-          { admit. }
+        }
+        {
+          simpl.
+          inversion H4; subst.
+          inversion L; subst.
+          rename sort into sort1, ast into ast1, sort0 into sort2, ast0 into ast2.
+          assert(Lw : w = (smt_sort_to_width sort2)).
+          { apply infer_width in H1. assumption. }
           {
-            apply eval_shl_correspondence_bv32; assumption.
+            destruct sort1, sort2; try (apply OA_None);
+            subst;
+            simpl in H1;
+            inversion H1;
+            apply inj_pair2 in H2;
+            subst.
+            {
+              apply eval_lshr_correspondence_bv1; assumption.
+            }
+            { admit. }
+            { admit. }
+            {
+              apply eval_lshr_correspondence_bv32; assumption.
+            }
+            { admit. }
           }
-          { admit. }
         }
       }
       {

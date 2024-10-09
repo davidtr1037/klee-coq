@@ -278,6 +278,10 @@ ref<CoqTactic> ModuleSupport::getTacticForShiftOperator(BinaryOperator *inst) {
     constructor = "IS_Shl";
     break;
 
+  case Instruction::LShr:
+    constructor = "IS_LShr";
+    break;
+
   default:
     assert(false);
   }
