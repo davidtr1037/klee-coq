@@ -37,6 +37,9 @@ files=(\
     test_13.bc \
     test_14.bc \
     test_15.bc \
+    test_16.bc \
+    test_17.bc \
+    test_18.bc \
 )
 for f in "${files[@]}"; do
     run_klee $f

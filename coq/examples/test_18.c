@@ -6,17 +6,17 @@
 #include <klee/klee.h>
 
 void f1(unsigned x) {
-    unsigned y = x ^ 2;
+    unsigned y = x & 10;
 }
 
 void f2() {
     unsigned x = klee_make_symbolic_int32();
-    unsigned y = x ^ 7;
+    unsigned y = x & 10;
 }
 
 void f3() {
     unsigned x = klee_make_symbolic_int32();
-    unsigned y = 7 ^ x;
+    unsigned y = 10 & x;
 }
 
 int main() {
