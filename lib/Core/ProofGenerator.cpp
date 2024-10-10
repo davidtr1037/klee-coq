@@ -315,7 +315,7 @@ klee::ref<CoqExpr> ProofGenerator::translateRegisterUpdates(ExecutionState &es,
     ref<CoqExpr> coqName = moduleTranslator->createName(ru.name);
     ref<CoqExpr> coqExpr;
     if (CacheRegisterExpr) {
-      coqExpr = exprTranslator->translateAsSMTExprCached(ru.value, &es.arrayTranslation, true, defs);
+      coqExpr = exprTranslator->translateAsSMTExpr(ru.value, &es.arrayTranslation, true, true, defs);
     } else {
       coqExpr = exprTranslator->translateAsSMTExpr(ru.value, &es.arrayTranslation);
     }
@@ -490,8 +490,9 @@ klee::ref<CoqExpr> ProofGenerator::createPC(ExecutionState &es, vector<ref<CoqEx
   for (ref<Expr> e : es.constraints) {
     pc = AndExpr::create(pc, e);
   }
+
   if (CachePCExpr) {
-    return exprTranslator->translateCached(pc, &es.arrayTranslation, true, defs);
+    return exprTranslator->translate(pc, &es.arrayTranslation, true, true, defs);
   } else {
     return exprTranslator->translate(pc, &es.arrayTranslation);
   }
@@ -1143,7 +1144,7 @@ void ProofGenerator::getTacticsForBranches(StateInfo &stateInfo,
   if (!si1.isSat || !si2.isSat) {
     uint64_t axiomID = allocateAxiomID();
     if (!si1.isSat) {
-      ref<CoqExpr> e = exprTranslator->translate(si1.unsatPC, &si2.state->arrayTranslation);
+      ref<CoqExpr> e = exprTranslator->translate(si1.unsatPC, &si2.state->arrayTranslation, true);
       ref<CoqLemma> lemma = getUnsatAxiom(e, axiomID);
       unsatAxioms.push_front(lemma);
 
@@ -1152,7 +1153,7 @@ void ProofGenerator::getTacticsForBranches(StateInfo &stateInfo,
       tactic2 = getTacticForSat(stateInfo, *si2.state, 0, &hint);
     }
     if (!si2.isSat) {
-      ref<CoqExpr> e = exprTranslator->translate(si2.unsatPC, &si1.state->arrayTranslation);
+      ref<CoqExpr> e = exprTranslator->translate(si2.unsatPC, &si1.state->arrayTranslation, true);
       ref<CoqLemma> lemma = getUnsatAxiom(e, axiomID);
       unsatAxioms.push_front(lemma);
 

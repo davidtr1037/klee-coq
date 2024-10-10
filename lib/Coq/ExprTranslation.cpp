@@ -13,28 +13,19 @@ ExprTranslator::ExprTranslator() {
 
 }
 
-ref<CoqExpr> ExprTranslator::translateAsSMTExprCached(ref<Expr> e,
-                                                      ArrayTranslation *m,
-                                                      bool useCache,
-                                                      std::vector<ref<CoqExpr>> &defs) {
-  ref<CoqExpr> coqAST = translateCached(e, m, useCache, defs);
-  if (coqAST.isNull()) {
-    return nullptr;
-  }
-
-  /* TODO: create a method */
-  return new CoqApplication(
-    createExpr(),
-    {
-      createBVSort(e->getWidth()),
-      coqAST,
-    }
-  );
+ref<CoqExpr> ExprTranslator::translateAsSMTExpr(ref<Expr> e,
+                                                ArrayTranslation *m,
+                                                bool useCache) {
+  std::vector<ref<CoqExpr>> defs;
+  return translateAsSMTExpr(e, m, useCache, false, defs);
 }
 
 ref<CoqExpr> ExprTranslator::translateAsSMTExpr(ref<Expr> e,
-                                                ArrayTranslation *m) {
-  ref<CoqExpr> coqAST = translate(e, m);
+                                                ArrayTranslation *m,
+                                                bool useCache,
+                                                bool updateCache,
+                                                std::vector<ref<CoqExpr>> &defs) {
+  ref<CoqExpr> coqAST = translate(e, m, useCache, updateCache, defs);
   if (coqAST.isNull()) {
     return nullptr;
   }
@@ -47,30 +38,20 @@ ref<CoqExpr> ExprTranslator::translateAsSMTExpr(ref<Expr> e,
       coqAST,
     }
   );
-}
-
-ref<CoqExpr> ExprTranslator::translateCached(ref<Expr> e,
-                                             ArrayTranslation *m,
-                                             bool useCache,
-                                             std::vector<ref<CoqExpr>> &defs) {
-  auto i = exprCache.find(e);
-  if (i != exprCache.end()) {
-    return i->second;
-  }
-
-  ref<CoqExpr> coqExpr = translate(e, m, useCache);
-  std::string aliasName = allocateAliasName();
-  ref<CoqExpr> def = new CoqDefinition(aliasName, coqExpr);
-  defs.push_back(def);
-  ref<CoqExpr> alias = new CoqVariable(aliasName);
-  exprCache.insert(std::make_pair(e, alias));
-
-  return alias;
 }
 
 ref<CoqExpr> ExprTranslator::translate(ref<Expr> e,
                                        ArrayTranslation *m,
                                        bool useCache) {
+  std::vector<ref<CoqExpr>> defs;
+  return translate(e, m, useCache, false, defs);
+}
+
+ref<CoqExpr> ExprTranslator::translate(ref<Expr> e,
+                                       ArrayTranslation *m,
+                                       bool useCache,
+                                       bool updateCache,
+                                       std::vector<ref<CoqExpr>> &defs) {
   if (useCache) {
     auto i = exprCache.find(e);
     if (i != exprCache.end()) {
@@ -78,31 +59,35 @@ ref<CoqExpr> ExprTranslator::translate(ref<Expr> e,
     }
   }
 
+  ref<CoqExpr> coqExpr = nullptr;
   if (isa<ConstantExpr>(e)) {
-    return translateConstantExpr(dyn_cast<ConstantExpr>(e));
+    coqExpr = translateConstantExpr(dyn_cast<ConstantExpr>(e));
   }
 
   if (isa<CmpExpr>(e)) {
-    return translateCmpExpr(dyn_cast<CmpExpr>(e), m);
+    coqExpr = translateCmpExpr(dyn_cast<CmpExpr>(e), m, useCache, updateCache, defs);
+  } else if (isa<CastExpr>(e)) {
+    coqExpr = translateCastExpr(dyn_cast<CastExpr>(e), m, useCache, updateCache, defs);
+  } else if (isa<ExtractExpr>(e)) {
+    coqExpr = translateExtractExpr(dyn_cast<ExtractExpr>(e), m, useCache, updateCache, defs);
+  } else if (isa<BinaryExpr>(e)) {
+    coqExpr = translateBinaryExpr(dyn_cast<BinaryExpr>(e), m, useCache, updateCache, defs);
+  } else if (isa<ConcatExpr>(e)) {
+    coqExpr = translateConcatExpr(dyn_cast<ConcatExpr>(e), m);
   }
 
-  if (isa<CastExpr>(e)) {
-    return translateCastExpr(dyn_cast<CastExpr>(e), m);
-  }
+  assert(coqExpr);
 
-  if (isa<ExtractExpr>(e)) {
-    return translateExtractExpr(dyn_cast<ExtractExpr>(e), m);
+  if (updateCache) {
+    std::string aliasName = allocateAliasName();
+    ref<CoqExpr> def = new CoqDefinition(aliasName, coqExpr);
+    defs.push_back(def);
+    ref<CoqExpr> alias = new CoqVariable(aliasName);
+    exprCache.insert(std::make_pair(e, alias));
+    return alias;
+  } else {
+    return coqExpr;
   }
-
-  if (isa<BinaryExpr>(e)) {
-    return translateBinaryExpr(dyn_cast<BinaryExpr>(e), m, useCache);
-  }
-
-  if (isa<ConcatExpr>(e)) {
-    return translateConcatExpr(dyn_cast<ConcatExpr>(e), m);
-  }
-
-  assert(false);
 }
 
 ref<CoqExpr> ExprTranslator::translateConstantExpr(ref<ConstantExpr> e) {
@@ -120,34 +105,11 @@ ref<CoqExpr> ExprTranslator::translateConstantExpr(ref<ConstantExpr> e) {
   );
 }
 
-ref<CoqExpr> ExprTranslator::createSMTBinOp(ref<CoqExpr> op,
-                                            ref<Expr> left,
-                                            ref<Expr> right,
-                                            ArrayTranslation *m,
-                                            bool useCache) {
-  ref<CoqExpr> coqLeft = translate(left, m, useCache);
-  if (!coqLeft) {
-    return nullptr;
-  }
-
-  ref<CoqExpr> coqRight = translate(right, m, useCache);
-  if (!coqRight) {
-    return nullptr;
-  }
-
-  return new CoqApplication(
-    createASTBinOp(),
-    {
-      createBVSort(left->getWidth()),
-      op,
-      coqLeft,
-      coqRight,
-    }
-  );
-}
-
 ref<CoqExpr> ExprTranslator::translateCmpExpr(ref<CmpExpr> e,
-                                              ArrayTranslation *m) {
+                                              ArrayTranslation *m,
+                                              bool useCache,
+                                              bool updateCache,
+                                              std::vector<ref<CoqExpr>> &defs) {
   ref<CoqExpr> op;
 
   switch (e->getKind()) {
@@ -195,12 +157,12 @@ ref<CoqExpr> ExprTranslator::translateCmpExpr(ref<CmpExpr> e,
     assert(false);
   }
 
-  ref<CoqExpr> coqLeft = translate(e->left, m);
+  ref<CoqExpr> coqLeft = translate(e->left, m, useCache, updateCache, defs);
   if (coqLeft.isNull()) {
     return nullptr;
   }
 
-  ref<CoqExpr> coqRight = translate(e->right, m);
+  ref<CoqExpr> coqRight = translate(e->right, m, useCache, updateCache, defs);
   if (coqRight.isNull()) {
     return nullptr;
   }
@@ -217,7 +179,10 @@ ref<CoqExpr> ExprTranslator::translateCmpExpr(ref<CmpExpr> e,
 }
 
 ref<CoqExpr> ExprTranslator::translateCastExpr(ref<CastExpr> e,
-                                               ArrayTranslation *m) {
+                                               ArrayTranslation *m,
+                                               bool useCache,
+                                               bool updateCache,
+                                               std::vector<ref<CoqExpr>> &defs) {
   ref<CoqExpr> constructor;
   switch (e->getKind()) {
   case Expr::ZExt:
@@ -236,19 +201,22 @@ ref<CoqExpr> ExprTranslator::translateCastExpr(ref<CastExpr> e,
     constructor,
     {
       createBVSort(e->src->getWidth()),
-      translate(e->src, m),
+      translate(e->src, m, useCache, updateCache, defs),
       createBVSort(e->getWidth()),
     }
   );
 }
 
 ref<CoqExpr> ExprTranslator::translateExtractExpr(ref<ExtractExpr> e,
-                                                  ArrayTranslation *m) {
+                                                  ArrayTranslation *m,
+                                                  bool useCache,
+                                                  bool updateCache,
+                                                  std::vector<ref<CoqExpr>> &defs) {
   return new CoqApplication(
     createASTExtract(),
     {
       createBVSort(e->expr->getWidth()),
-      translate(e->expr, m),
+      translate(e->expr, m, useCache, updateCache, defs),
       createBVSort(e->getWidth()),
     }
   );
@@ -256,7 +224,9 @@ ref<CoqExpr> ExprTranslator::translateExtractExpr(ref<ExtractExpr> e,
 
 ref<CoqExpr> ExprTranslator::translateBinaryExpr(ref<BinaryExpr> e,
                                                  ArrayTranslation *m,
-                                                 bool useCache) {
+                                                 bool useCache,
+                                                 bool updateCache,
+                                                 std::vector<ref<CoqExpr>> &defs) {
   ref<Expr> left = e->left;
   ref<Expr> right = e->right;
 
@@ -302,7 +272,35 @@ ref<CoqExpr> ExprTranslator::translateBinaryExpr(ref<BinaryExpr> e,
     assert(false);
   }
 
-  return createSMTBinOp(op, left, right, m, useCache);
+  return createSMTBinOp(op, left, right, m, useCache, updateCache, defs);
+}
+
+ref<CoqExpr> ExprTranslator::createSMTBinOp(ref<CoqExpr> op,
+                                            ref<Expr> left,
+                                            ref<Expr> right,
+                                            ArrayTranslation *m,
+                                            bool useCache,
+                                            bool updateCache,
+                                            std::vector<ref<CoqExpr>> &defs) {
+  ref<CoqExpr> coqLeft = translate(left, m, useCache, updateCache, defs);
+  if (!coqLeft) {
+    return nullptr;
+  }
+
+  ref<CoqExpr> coqRight = translate(right, m, useCache, updateCache, defs);
+  if (!coqRight) {
+    return nullptr;
+  }
+
+  return new CoqApplication(
+    createASTBinOp(),
+    {
+      createBVSort(left->getWidth()),
+      op,
+      coqLeft,
+      coqRight,
+    }
+  );
 }
 
 ref<CoqExpr> ExprTranslator::translateConcatExpr(ref<ConcatExpr> e,

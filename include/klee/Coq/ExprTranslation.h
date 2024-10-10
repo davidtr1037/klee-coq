@@ -22,44 +22,59 @@ public:
 
   ExprTranslator();
 
-  ref<CoqExpr> translateAsSMTExprCached(ref<Expr> e,
-                                        ArrayTranslation *m,
-                                        bool useCache,
-                                        std::vector<ref<CoqExpr>> &defs);
+  ref<CoqExpr> translateAsSMTExpr(ref<Expr> e,
+                                  ArrayTranslation *m,
+                                  bool useCache = false);
 
   ref<CoqExpr> translateAsSMTExpr(ref<Expr> e,
-                                  ArrayTranslation *m);
+                                  ArrayTranslation *m,
+                                  bool useCache,
+                                  bool updateCache,
+                                  std::vector<ref<CoqExpr>> &defs);
 
-  ref<CoqExpr> translateCached(ref<Expr> e,
-                               ArrayTranslation *m,
-                               bool useCache,
-                               std::vector<ref<CoqExpr>> &defs);
-
-  /* TODO: is the default argument necessary? */
   ref<CoqExpr> translate(ref<Expr> e,
                          ArrayTranslation *m,
                          bool useCache = false);
 
+  ref<CoqExpr> translate(ref<Expr> e,
+                         ArrayTranslation *m,
+                         bool useCache,
+                         bool updateCache,
+                         std::vector<ref<CoqExpr>> &defs);
+
   ref<CoqExpr> translateConstantExpr(ref<ConstantExpr> e);
+
+  ref<CoqExpr> translateCmpExpr(ref<CmpExpr> e,
+                                ArrayTranslation *m,
+                                bool useCache,
+                                bool updateCache,
+                                std::vector<ref<CoqExpr>> &defs);
+
+  ref<CoqExpr> translateCastExpr(ref<CastExpr> e,
+                                 ArrayTranslation *m,
+                                 bool useCache,
+                                 bool updateCache,
+                                 std::vector<ref<CoqExpr>> &defs);
+
+  ref<CoqExpr> translateExtractExpr(ref<ExtractExpr> e,
+                                    ArrayTranslation *m,
+                                    bool useCache,
+                                    bool updateCache,
+                                    std::vector<ref<CoqExpr>> &defs);
+
+  ref<CoqExpr> translateBinaryExpr(ref<BinaryExpr> e,
+                                   ArrayTranslation *m,
+                                   bool useCache,
+                                   bool updateCache,
+                                   std::vector<ref<CoqExpr>> &defs);
 
   ref<CoqExpr> createSMTBinOp(ref<CoqExpr> op,
                               ref<Expr> left,
                               ref<Expr> right,
                               ArrayTranslation *m,
-                              bool useCache);
-
-  ref<CoqExpr> translateCmpExpr(ref<CmpExpr> e,
-                                ArrayTranslation *m);
-
-  ref<CoqExpr> translateCastExpr(ref<CastExpr> e,
-                                 ArrayTranslation *m);
-
-  ref<CoqExpr> translateExtractExpr(ref<ExtractExpr> e,
-                                    ArrayTranslation *m);
-
-  ref<CoqExpr> translateBinaryExpr(ref<BinaryExpr> e,
-                                   ArrayTranslation *m,
-                                   bool useCache);
+                              bool useCache,
+                              bool updateCache,
+                              std::vector<ref<CoqExpr>> &defs);
 
   ref<CoqExpr> translateConcatExpr(ref<ConcatExpr> e,
                                    ArrayTranslation *m);
