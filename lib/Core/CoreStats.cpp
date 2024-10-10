@@ -30,7 +30,7 @@ Statistic stats::solverTime("SolverTime", "Stime");
 Statistic stats::states("States", "States");
 Statistic stats::trueBranches("TrueBranches", "Bt");
 Statistic stats::uncoveredInstructions("UncoveredInstructions", "Iuncov");
-
+Statistic stats::proofTime("ProofTime", "Ptime");
 
 // branch stats and setter
 

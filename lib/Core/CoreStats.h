@@ -28,6 +28,7 @@ namespace stats {
   extern Statistic falseBranches;
   extern Statistic forkTime;
   extern Statistic solverTime;
+  extern Statistic proofTime;
 
   /// The number of external calls.
   extern Statistic externalCalls;

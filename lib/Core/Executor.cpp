@@ -2292,6 +2292,7 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
         transferToBasicBlock(bi->getSuccessor(1), bi->getParent(), *branches.second);
 
       if (isInProofMode()) {
+        TimerStatIncrementer timer(stats::proofTime);
         if (branches.first) {
           branches.first->setStepID(allocateStepID());
         }
@@ -3795,6 +3796,7 @@ void Executor::run(ExecutionState &initialState) {
     stepInstruction(state);
 
     if (isInProofMode()) {
+      TimerStatIncrementer timer(stats::proofTime);
       if (proofGenerator->moduleTranslator->isSupportedInst(*state.prevPC->inst)) {
         proofGenerator->generateState(state);
       }
@@ -3804,6 +3806,7 @@ void Executor::run(ExecutionState &initialState) {
 
     /* TODO: add docs */
     if (isInProofMode()) {
+      TimerStatIncrementer timer(stats::proofTime);
       if (state.isTerminated) {
         /* no step was executed */
         proofGenerator->handleTerminatedState(state);
@@ -3831,6 +3834,7 @@ void Executor::run(ExecutionState &initialState) {
   }
 
   if (isInProofMode()) {
+    TimerStatIncrementer timer(stats::proofTime);
     proofGenerator->generateTreeDefs();
     proofGenerator->generateUnsatAxioms();
     proofGenerator->generateLemmaDefs();
@@ -4948,6 +4952,10 @@ void Executor::runFunctionAsMain(Function *f,
 
   if (statsTracker)
     statsTracker->done();
+
+  if (isInProofMode()) {
+    klee_message("Proof time: %f%%", 100 * statsTracker->getTimeRatio(stats::proofTime));
+  }
 }
 
 unsigned Executor::getPathStreamID(const ExecutionState &state) {
