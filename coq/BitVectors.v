@@ -1,3 +1,4 @@
+From Coq Require Import Lia.
 From Coq Require Import ZArith.
 
 From SE.Numeric Require Import Integers.
@@ -359,7 +360,28 @@ Qed.
 Lemma int1_destruct : forall (n : Int1.int),
   n = Int1.zero \/ n = Int1.one.
 Proof.
-Admitted.
+  intros n.
+  destruct n as [x Hr].
+  destruct (x =? 0)%Z eqn:E.
+  {
+    rewrite Z.eqb_eq in E.
+    left.
+    apply Int1.mkint_eq.
+    subst.
+    reflexivity.
+  }
+  {
+    rewrite Z.eqb_neq in E.
+    unfold Int1.modulus, Int1.wordsize, Wordsize_1.wordsize, two_power_nat in Hr.
+    simpl in Hr.
+    assert(L : (x = 1)%Z).
+    { lia. }
+    right.
+    apply Int1.mkint_eq.
+    subst.
+    reflexivity.
+  }
+Qed.
 
 (* TOOD: rename to int1_and_one_l *)
 Lemma int1_and_one : forall (n1 n2 : Int1.int),
