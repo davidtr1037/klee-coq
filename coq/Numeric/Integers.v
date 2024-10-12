@@ -4049,6 +4049,8 @@ Strategy opaque [Wordsize_16.wordsize].
 
 Module Int16 := Make(Wordsize_16).
 
+Strategy 0 [Wordsize_16.wordsize].
+
 Module Wordsize_64.
   Definition wordsize := 64%nat.
   Remark wordsize_not_zero: wordsize <> 0%nat.
