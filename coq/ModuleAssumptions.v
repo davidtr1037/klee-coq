@@ -22,6 +22,7 @@ Inductive is_supported_ibinop : ibinop -> Prop :=
 
 Inductive is_supported_div : ibinop -> Prop :=
   | IS_UDiv : is_supported_div (UDiv false)
+  | IS_SDiv : is_supported_div (SDiv false)
 .
 
 Inductive is_supported_shift : ibinop -> Prop :=

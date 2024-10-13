@@ -307,6 +307,7 @@ Definition simplify_binop_bv32 op (ast1 ast2 : smt_ast Sort_BV32) :=
       | SMT_Sub => AST_Const Sort_BV32 (sub n1 n2)
       | SMT_Mul => AST_Const Sort_BV32 (mul n1 n2)
       | SMT_UDiv => AST_Const Sort_BV32 (divu n1 n2)
+      | SMT_SDiv => AST_Const Sort_BV32 (divs n1 n2)
       | SMT_URem => AST_Const Sort_BV32 (modu n1 n2)
       | SMT_SRem => AST_Const Sort_BV32 (mods n1 n2)
       | SMT_And => AST_Const Sort_BV32 (and n1 n2)
@@ -315,7 +316,6 @@ Definition simplify_binop_bv32 op (ast1 ast2 : smt_ast Sort_BV32) :=
       | SMT_Shl => AST_Const Sort_BV32 (shl n1 n2)
       | SMT_LShr => AST_Const Sort_BV32 (shru n1 n2)
       | SMT_AShr => AST_Const Sort_BV32 (shr n1 n2)
-      | _ => AST_BinOp Sort_BV32 op ast1 ast2
       end
   | AST_Const Sort_BV32 n1, ast =>
       match op with
@@ -1172,6 +1172,16 @@ Definition sort_to_udiv s : (smt_sort_to_int_type s) -> (smt_sort_to_int_type s)
   end
 .
 
+Definition sort_to_sdiv s : (smt_sort_to_int_type s) -> (smt_sort_to_int_type s) -> (smt_sort_to_int_type s) :=
+  match s with
+  | Sort_BV1 => Int1.divs
+  | Sort_BV8 => Int8.divs
+  | Sort_BV16 => Int16.divs
+  | Sort_BV32 => Int32.divs
+  | Sort_BV64 => Int64.divs
+  end
+.
+
 Definition sort_to_urem s : (smt_sort_to_int_type s) -> (smt_sort_to_int_type s) -> (smt_sort_to_int_type s) :=
   match s with
   | Sort_BV1 => Int1.modu
@@ -1300,6 +1310,21 @@ Lemma equiv_smt_expr_udiv_fold_consts : forall s (n1 n2 : smt_sort_to_int_type s
   equiv_smt_expr
     (Expr s (AST_Const s ((sort_to_udiv s) n1 n2)))
     (Expr s (AST_BinOp s SMT_UDiv (AST_Const s n1) (AST_Const s n2))).
+Proof.
+  intros s n1 n2.
+  destruct s;
+  try (
+    apply EquivExpr;
+    intros m;
+    simpl;
+    reflexivity
+  ).
+Qed.
+
+Lemma equiv_smt_expr_sdiv_fold_consts : forall s (n1 n2 : smt_sort_to_int_type s),
+  equiv_smt_expr
+    (Expr s (AST_Const s ((sort_to_sdiv s) n1 n2)))
+    (Expr s (AST_BinOp s SMT_SDiv (AST_Const s n1) (AST_Const s n2))).
 Proof.
   intros s n1 n2.
   destruct s;
@@ -1554,6 +1579,7 @@ Proof.
       { apply equiv_smt_expr_sub_fold_consts. }
       { apply equiv_smt_expr_mul_fold_consts. }
       { apply equiv_smt_expr_udiv_fold_consts. }
+      { apply equiv_smt_expr_sdiv_fold_consts. }
       { apply equiv_smt_expr_urem_fold_consts. }
       { apply equiv_smt_expr_srem_fold_consts. }
       { apply equiv_smt_expr_and_fold_consts. }

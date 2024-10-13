@@ -73,6 +73,18 @@ Lemma eval_udiv_correspondence : forall m s (ast : smt_ast s) n,
 Proof.
 Admitted.
 
+Lemma eval_sdiv_correspondence : forall m s (ast : smt_ast s) n,
+  (n <> 0)%Z ->
+  over_approx_via_model
+    (eval_ibinop
+      (SDiv false)
+      (DV_Int (dynamic_int_by_sort s (smt_eval_ast m s ast)))
+      (DV_Int (dynamic_int_by_sort s (repr_by_sort s n))))
+    (Some (Expr s (AST_BinOp s SMT_SDiv ast (AST_Const s (repr_by_sort s n)))))
+    m.
+Proof.
+Admitted.
+
 Lemma eval_shl_correspondence : forall m s (ast : smt_ast s) n,
   (n >= 0)%Z ->
   (n < Zpos (smt_sort_to_width s))%Z ->
@@ -463,26 +475,24 @@ Proof.
     {
       destruct (eval_exp c_ls c_gs (Some t) (EXP_Integer n)) as [dv2 | ] eqn:E2.
       {
-        inversion H2; subst.
-        {
-          simpl.
-          inversion H4; subst.
-          inversion L; subst.
-          rename sort into sort1, ast into ast1, sort0 into sort2, ast0 into ast2.
-          destruct t; try discriminate H1.
-          assert(Lw : w = (smt_sort_to_width sort2)).
-          { apply infer_width in H1. assumption. }
-          destruct sort1, sort2; try (apply OA_None);
-          (
-            subst;
-            simpl in H1;
-            inversion H1; subst;
-            apply inj_pair2 in H3;
-            subst;
-            apply eval_udiv_correspondence;
-            assumption
-          ).
-        }
+        simpl.
+        inversion H4; subst.
+        inversion L; subst.
+        rename sort into sort1, ast into ast1, sort0 into sort2, ast0 into ast2.
+        destruct t; try discriminate H1.
+        assert(Lw : w = (smt_sort_to_width sort2)).
+        { apply infer_width in H1. assumption. }
+        destruct sort1, sort2; try (apply OA_None);
+        (
+          subst;
+          simpl in H1;
+          inversion H1; subst;
+          apply inj_pair2 in H3;
+          subst;
+          inversion H2; subst;
+          try (apply eval_udiv_correspondence; assumption);
+          try (apply eval_sdiv_correspondence; assumption)
+        ).
       }
       {
         inversion H4; subst.
