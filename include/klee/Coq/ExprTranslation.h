@@ -123,6 +123,8 @@ public:
 
   ref<CoqExpr> createSMTMul();
 
+  ref<CoqExpr> createSMTUDiv();
+
   ref<CoqExpr> createSMTURem();
 
   ref<CoqExpr> createSMTSRem();

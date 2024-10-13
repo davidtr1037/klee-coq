@@ -244,6 +244,10 @@ ref<CoqExpr> ExprTranslator::translateBinaryExpr(ref<BinaryExpr> e,
     op = createSMTMul();
     break;
 
+  case Expr::UDiv:
+    op = createSMTUDiv();
+    break;
+
   case Expr::URem:
     op = createSMTURem();
     break;
@@ -512,6 +516,14 @@ ref<CoqExpr> ExprTranslator::createSMTMul() {
     coqSMTMul = new CoqVariable("SMT_Mul");
   }
   return coqSMTMul;
+}
+
+ref<CoqExpr> ExprTranslator::createSMTUDiv() {
+  static ref<CoqExpr> coqSMTUDiv = nullptr;
+  if (coqSMTUDiv.isNull()) {
+    coqSMTUDiv = new CoqVariable("SMT_UDiv");
+  }
+  return coqSMTUDiv;
 }
 
 ref<CoqExpr> ExprTranslator::createSMTURem() {

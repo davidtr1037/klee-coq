@@ -229,6 +229,10 @@ ref<CoqTactic> ModuleSupport::getTacticForInst(Instruction &inst) {
 }
 
 ref<CoqTactic> ModuleSupport::getTacticForBinaryOperator(BinaryOperator *inst) {
+  if (isDivOperator(inst)) {
+    return getTacticForDivOperator(inst);
+  }
+
   if (isShitOperator(inst)) {
     return getTacticForShiftOperator(inst);
   }
@@ -279,6 +283,29 @@ ref<CoqTactic> ModuleSupport::getTacticForBinaryOperator(BinaryOperator *inst) {
       getTacticForValue(inst->getOperand(0)),
       getTacticForValue(inst->getOperand(1)),
       opTactic,
+    }
+  );
+}
+
+ref<CoqTactic> ModuleSupport::getTacticForDivOperator(BinaryOperator *inst) {
+  std::string constructor;
+  switch (inst->getOpcode()) {
+  case Instruction::UDiv:
+    constructor = "IS_UDiv";
+    break;
+
+  default:
+    assert(false);
+  }
+
+  ref<CoqTactic> opTactic = new Block({new Apply(constructor)});
+  return new Block(
+    {
+      new Apply("IS_INSTR_Op"),
+      new Apply("IS_OP_Div"),
+      opTactic,
+      getTacticForValue(inst->getOperand(0)),
+      new Block({new LIA()}),
     }
   );
 }
@@ -473,6 +500,17 @@ ref<CoqTactic> ModuleSupport::getTacticForValue(Value *value) {
   }
 
   assert(false);
+}
+
+bool ModuleSupport::isDivOperator(BinaryOperator *inst) {
+  switch (inst->getOpcode()) {
+  case Instruction::UDiv:
+  case Instruction::SDiv:
+    return true;
+
+  default:
+    return false;
+  }
 }
 
 bool ModuleSupport::isShitOperator(BinaryOperator *inst) {
