@@ -81,15 +81,19 @@ Definition eval_ibinop_generic {Int} `{VInt Int} `{ConvertToDV Int} (op : ibinop
       else
         to_dvalue res
   | UDiv ex =>
-    if andb ex (negb ((unsigned x) mod (unsigned y) =? 0)%Z) then
-      DV_Poison
+    if (unsigned x =? 0)%Z then DV_Undef
     else
-      to_dvalue (divu x y)
+      if andb ex (negb ((unsigned x) mod (unsigned y) =? 0)%Z) then
+        DV_Poison
+      else
+        to_dvalue (divu x y)
   | SDiv ex =>
-    if andb ex (negb (((signed x) mod (signed y)) =? 0)%Z) then
-      DV_Poison
+    if (signed x =? 0)%Z then DV_Undef
     else
-      to_dvalue (divs x y)
+      if andb ex (negb (((signed x) mod (signed y)) =? 0)%Z) then
+        DV_Poison
+      else
+        to_dvalue (divs x y)
   | LShr ex =>
     if (bitwidth =? 1)%nat then
       if ((unsigned y) >=? 1)%Z then DV_Undef else to_dvalue x

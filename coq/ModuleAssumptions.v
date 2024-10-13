@@ -20,6 +20,10 @@ Inductive is_supported_ibinop : ibinop -> Prop :=
   | IS_Xor : is_supported_ibinop Xor
 .
 
+Inductive is_supported_div : ibinop -> Prop :=
+  | IS_UDiv : is_supported_div (UDiv false)
+.
+
 Inductive is_supported_shift : ibinop -> Prop :=
   | IS_Shl : is_supported_shift (Shl false false)
   | IS_LShr : is_supported_shift (LShr false)
@@ -43,6 +47,11 @@ Inductive is_supported_exp : llvm_exp -> Prop :=
       is_supported_exp e2 ->
       is_supported_ibinop op ->
       is_supported_exp (OP_IBinop op t e1 e2)
+  | IS_OP_Div : forall op t e n,
+      is_supported_div op ->
+      is_supported_exp e ->
+      (n <> 0)%Z ->
+      is_supported_exp (OP_IBinop op t e (EXP_Integer n))
   | IS_OP_Shift : forall op w e n,
       is_supported_shift op ->
       is_supported_exp e ->
