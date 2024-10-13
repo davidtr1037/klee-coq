@@ -5,7 +5,7 @@
 #include "llvm/IR/Constants.h"
 
 #include "klee/Coq/CoqLanguage.h"
-#include "klee/Coq/Translation.h"
+#include "klee/Coq/ModuleTranslation.h"
 #include "klee/Coq/ModuleAssumptions.h"
 
 #include <map>

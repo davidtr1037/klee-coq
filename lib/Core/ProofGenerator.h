@@ -4,7 +4,7 @@
 #include "ExecutionState.h"
 
 #include "klee/Coq/CoqLanguage.h"
-#include "klee/Coq/Translation.h"
+#include "klee/Coq/ModuleTranslation.h"
 #include "klee/Coq/ExprTranslation.h"
 #include "klee/Coq/ModuleAssumptions.h"
 

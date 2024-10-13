@@ -6,7 +6,7 @@
 #include "llvm/IR/Instructions.h"
 
 #include "klee/Coq/CoqLanguage.h"
-#include "klee/Coq/Translation.h"
+#include "klee/Coq/ModuleTranslation.h"
 
 #include <vector>
 

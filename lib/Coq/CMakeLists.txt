@@ -10,7 +10,7 @@ add_library(kleeCoq
     CoqLanguage.cpp
     ExprTranslation.cpp
     ModuleAssumptions.cpp
-    Translation.cpp
+    ModuleTranslation.cpp
 )
 
 llvm_config(kleeSupport "${USE_LLVM_SHARED}" support)

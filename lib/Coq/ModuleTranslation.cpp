@@ -6,7 +6,7 @@
 
 #include "klee/Support/ErrorHandling.h"
 #include "klee/Coq/CoqLanguage.h"
-#include "klee/Coq/Translation.h"
+#include "klee/Coq/ModuleTranslation.h"
 
 #include <string>
 #include <set>

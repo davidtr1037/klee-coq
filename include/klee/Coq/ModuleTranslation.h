@@ -1,5 +1,5 @@
-#ifndef KLEE_TRANSLATION_H
-#define KLEE_TRANSLATION_H
+#ifndef KLEE_MODULETRANSLATION_H
+#define KLEE_MODULETRANSLATION_H
 
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Function.h"
