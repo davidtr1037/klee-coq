@@ -40,6 +40,8 @@ files=(\
     test_16.bc \
     test_17.bc \
     test_18.bc \
+    test_19.bc \
+    test_20.bc \
 )
 for f in "${files[@]}"; do
     run_klee $f
