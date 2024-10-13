@@ -167,71 +167,112 @@ Proof.
   }
 Qed.
 
-Lemma eval_lshr_correspondence_bv1 : forall m ast n,
+Lemma eval_lshr_correspondence : forall m s (ast : smt_ast s) n,
   (n >= 0)%Z ->
-  (n < 1)%Z ->
+  (n < Zpos (smt_sort_to_width s))%Z ->
   over_approx_via_model
     (eval_ibinop (LShr false)
-       (DV_Int (DI_I1 (smt_eval_ast m Sort_BV1 ast)))
-       (DV_Int (DI_I1 (Int1.repr n))))
-    (Some
-       (Expr Sort_BV1
-          (AST_BinOp Sort_BV1 SMT_LShr ast (AST_Const Sort_BV1 (Int1.repr n)))))
+       (DV_Int (dynamic_int_by_sort s (smt_eval_ast m s ast)))
+       (DV_Int (dynamic_int_by_sort s (repr_by_sort s n))))
+    (Some (Expr s (AST_BinOp s SMT_LShr ast (AST_Const s (repr_by_sort s n)))))
     m.
 Proof.
-  intros m ast n Hn1 Hn2.
+  intros m s ast n Hn1 Hn2.
   unfold eval_ibinop, eval_ibinop_generic.
-  rewrite andb_false_l.
-  simpl.
-  rewrite Int1.Z_mod_modulus_eq.
-  assert(L1 : (n = 0)%Z).
-  { lia. }
-  subst.
-  simpl.
-  eapply OA_Some.
-  { reflexivity. }
+  destruct s; unfold bitwidth; simpl in *.
   {
-    simpl.
-    f_equal.
-    apply Int1.shru_zero.
-  }
-Qed.
-
-Lemma eval_lshr_correspondence_bv32 : forall m ast n,
-  (n >= 0)%Z ->
-  (n < 32)%Z ->
-  over_approx_via_model
-    (eval_ibinop (LShr false)
-       (DV_Int (DI_I32 (smt_eval_ast m Sort_BV32 ast)))
-       (DV_Int (DI_I32 (repr n))))
-    (Some
-       (Expr Sort_BV32
-          (AST_BinOp Sort_BV32 SMT_LShr ast (AST_Const Sort_BV32 (Int32.repr n)))))
-    m.
-Proof.
-  intros m ast n Hn1 Hn2.
-  unfold eval_ibinop, eval_ibinop_generic.
-  rewrite andb_false_l.
-  simpl.
-  rewrite Int.unsigned_repr_eq.
-  assert(L1: (n mod Int.modulus)%Z = n).
-  {
-    apply Z.mod_small.
-    split.
+    rewrite Int1.Z_mod_modulus_eq.
+    assert(L1 : (n = 0)%Z).
     { lia. }
+    subst.
+    simpl.
+    eapply OA_Some.
+    { reflexivity. }
     {
-      unfold Int.modulus, Int.wordsize, Wordsize_32.wordsize, two_power_nat.
       simpl.
-      lia.
+      f_equal.
+      apply Int1.shru_zero.
     }
   }
-  rewrite L1.
-  assert(L2 : (n >=? 32)%Z = false).
-  { lia. }
-  rewrite L2.
-  eapply OA_Some; reflexivity.
+  {
+    rewrite Int8.unsigned_repr_eq.
+    assert(L1: (n mod Int8.modulus)%Z = n).
+    {
+      apply Z.mod_small.
+      split.
+      { lia. }
+      {
+        unfold Int8.modulus, Int8.wordsize, Wordsize_8.wordsize, two_power_nat.
+        simpl.
+        lia.
+      }
+    }
+    rewrite L1.
+    assert(L2 : (n >=? 8)%Z = false).
+    { lia. }
+    rewrite L2.
+    eapply OA_Some; reflexivity.
+  }
+  {
+    (* TODO: why is this case different? *)
+    rewrite Int16.Z_mod_modulus_eq.
+    assert(L1: (n mod Int16.modulus)%Z = n).
+    {
+      apply Z.mod_small.
+      split.
+      { lia. }
+      {
+        unfold Int16.modulus, Int16.wordsize, Wordsize_16.wordsize, two_power_nat.
+        simpl.
+        lia.
+      }
+    }
+    rewrite L1.
+    assert(L2 : (n >=? 16)%Z = false).
+    { lia. }
+    rewrite L2.
+    eapply OA_Some; reflexivity.
+  }
+  {
+    rewrite Int32.unsigned_repr_eq.
+    assert(L1: (n mod Int32.modulus)%Z = n).
+    {
+      apply Z.mod_small.
+      split.
+      { lia. }
+      {
+        unfold Int32.modulus, Int32.wordsize, Wordsize_32.wordsize, two_power_nat.
+        simpl.
+        lia.
+      }
+    }
+    rewrite L1.
+    assert(L2 : (n >=? 32)%Z = false).
+    { lia. }
+    rewrite L2.
+    eapply OA_Some; reflexivity.
+  }
+  {
+    rewrite Int64.unsigned_repr_eq.
+    assert(L1: (n mod Int64.modulus)%Z = n).
+    {
+      apply Z.mod_small.
+      split.
+      { lia. }
+      {
+        unfold Int64.modulus, Int64.wordsize, Wordsize_64.wordsize, two_power_nat.
+        simpl.
+        lia.
+      }
+    }
+    rewrite L1.
+    assert(L2 : (n >=? 64)%Z = false).
+    { lia. }
+    rewrite L2.
+    eapply OA_Some; reflexivity.
+  }
 Qed.
-
+ 
 (* TODO: rename correspondence to over_approx? *)
 Lemma eval_exp_correspondence : forall c_ls s_ls c_gs s_gs ot e m,
   is_supported_exp e ->
@@ -333,16 +374,8 @@ Proof.
             simpl in H1;
             inversion H1;
             apply inj_pair2 in H2;
-            subst.
-            {
-              apply eval_lshr_correspondence_bv1; assumption.
-            }
-            { admit. }
-            { admit. }
-            {
-              apply eval_lshr_correspondence_bv32; assumption.
-            }
-            { admit. }
+            subst;
+            apply eval_lshr_correspondence; assumption.
           }
         }
       }
@@ -634,7 +667,7 @@ Proof.
       apply OA_None.
     }
   }
-Admitted.
+Qed.
 
 Lemma empty_store_correspondence : forall m,
   over_approx_store_via empty_smt_store empty_dv_store m.
