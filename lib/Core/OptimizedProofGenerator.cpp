@@ -11,6 +11,8 @@ using namespace std;
 using namespace llvm;
 using namespace klee;
 
+/* TODO: use DecomposeState */
+
 OptimizedProofGenerator::OptimizedProofGenerator(Module &m, raw_ostream &output)
   : ProofGenerator(m, output) {
 
