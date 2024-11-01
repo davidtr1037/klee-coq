@@ -1232,7 +1232,6 @@ Proof.
   }
 Qed.
 
-(* TODO: rename to safety_via_et *)
 Theorem completeness_via_et: forall mdl fid init_s l,
   is_supported_module mdl ->
   (init_sym_state mdl fid) = Some init_s ->
