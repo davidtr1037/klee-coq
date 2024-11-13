@@ -11,6 +11,7 @@ function run_klee {
         -search=dfs \
         -rewrite-equalities=0 \
         -generate-proof \
+        -optimize-proof \
         -decompose-state \
         -cache-pc-expr \
         -cache-register-expr \
