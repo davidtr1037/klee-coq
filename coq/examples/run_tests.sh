@@ -12,14 +12,15 @@ function run_klee {
         -rewrite-equalities=0 \
         -generate-proof \
         -optimize-proof \
-        -decompose-state \
         -cache-pc-expr \
         -cache-register-expr \
         -cache-stack-expr \
         -cache-sym-names \
         -proof-output-path=${output} \
         $1 &> /dev/null
+    test $? -eq 0 || echo "KLEE failed..."
     coqc -Q ${ROOT}/coq SE ${output}
+    test $? -eq 0 || echo "coqc failed..."
 }
 
 files=(\
