@@ -51,6 +51,7 @@ ProofGenerator::ProofGenerator(Module &m, raw_ostream &output) : m(m), output(ou
   moduleTranslator = new ModuleTranslator(m);
   moduleSupport = new ModuleSupport(m, *moduleTranslator);
   exprTranslator = new ExprTranslator();
+  stateTranslator = new StateTranslator(m, moduleTranslator, exprTranslator);
 
   /* TODO: add shared definitions (global store, etc.) */
   coqGlobalStoreAlias = nullptr;
@@ -66,15 +67,7 @@ void ProofGenerator::generateStaticDefs() {
 void ProofGenerator::generateGlobalDefs() {
   vector<ref<CoqExpr>> requiredDefs;
 
-  /* TODO: add a general mechanism for aliasing */
-  string globalStoreAlias = "gs";
-  ref<CoqExpr> coqGlobalStoreDef = new CoqDefinition(
-    globalStoreAlias,
-    "smt_store",
-    {new CoqVariable("empty_smt_store")}
-  );
-  requiredDefs.push_back(coqGlobalStoreDef);
-  coqGlobalStoreAlias = new CoqVariable(globalStoreAlias);
+  stateTranslator->generateGlobalDefs(requiredDefs);
 
   for (ref<CoqExpr> def : requiredDefs) {
     output << def->dump() << "\n";

@@ -26,6 +26,7 @@ add_library(kleeCore
   Searcher.cpp
   SeedInfo.cpp
   SpecialFunctionHandler.cpp
+  StateTranslation.cpp
   StatsTracker.cpp
   TimingSolver.cpp
   UserSearcher.cpp

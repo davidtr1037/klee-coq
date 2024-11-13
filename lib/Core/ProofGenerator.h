@@ -2,6 +2,7 @@
 #define KLEE_PROOF_GENERATOR_H
 
 #include "ExecutionState.h"
+#include "StateTranslation.h"
 
 #include "klee/Coq/CoqLanguage.h"
 #include "klee/Coq/ModuleTranslation.h"
@@ -76,6 +77,8 @@ public:
   ModuleSupport *moduleSupport;
 
   ExprTranslator *exprTranslator;
+
+  StateTranslator *stateTranslator;
 
   std::list<ref<CoqExpr>> treeDefs;
 
