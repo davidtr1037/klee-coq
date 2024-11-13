@@ -500,6 +500,29 @@ Proof.
   apply int32_sub_add.
 Qed.
 
+(* TODO: finalize? *)
+Lemma equiv_smt_expr_add_consts_generic : forall (s : smt_sort) (ast : smt_ast s) (n1 n2 : smt_sort_to_int_type s) `{VInt (smt_sort_to_int_type s)},
+  equiv_smt_expr
+    (Expr s
+       (AST_BinOp s SMT_Add
+          (AST_BinOp s SMT_Add (AST_Const s n1) ast)
+          (AST_Const s n2)))
+    (Expr s (AST_BinOp s SMT_Add (AST_Const s (add n1 n2)) ast)).
+Proof.
+  intros s ast n1 n2 H.
+  apply EquivExpr.
+  intros m.
+  simpl.
+  destruct s.
+  {
+    simpl in *.
+    rewrite (Int1.add_assoc n1 _ n2).
+    rewrite (Int1.add_commut _ n2).
+    rewrite <- (Int1.add_assoc n1 n2 _).
+    admit.
+  }
+Admitted.
+
 (* TODO: make generic *)
 Lemma equiv_smt_expr_add_consts : forall (ast : smt_ast Sort_BV32) (n1 n2 : int32),
   equiv_smt_expr
