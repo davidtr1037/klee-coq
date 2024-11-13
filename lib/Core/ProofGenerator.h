@@ -202,9 +202,9 @@ public:
 
   void generateLemmaDefs();
 
-  void generateSymbolicNameDefs();
-
   void generateTheorem();
+
+  void dumpDefs(std::vector<ref<CoqExpr>> &defs);
 
   ref<CoqExpr> getTheorem();
 

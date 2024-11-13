@@ -340,7 +340,8 @@ klee::ref<CoqExpr> StateTranslator::createSymbolics(ExecutionState &es,
   }
 }
 
-klee::ref<CoqExpr> StateTranslator::createSymbolicNameCached(unsigned index) {
+klee::ref<CoqExpr> StateTranslator::createSymbolicNameCached(unsigned index,
+                                                             vector<ref<CoqExpr>> &defs) {
   auto i = symbolicNameCache.find(index);
   if (i != symbolicNameCache.end()) {
     return i->second;
@@ -351,7 +352,7 @@ klee::ref<CoqExpr> StateTranslator::createSymbolicNameCached(unsigned index) {
   ref<CoqExpr> def = new CoqDefinition(aliasName, "string", e);
   ref<CoqExpr> alias = new CoqVariable(aliasName);
   symbolicNameCache[index] = alias;
-  symbolicNameDefs.push_back(def);
+  defs.push_back(def);
   return alias;
 }
 

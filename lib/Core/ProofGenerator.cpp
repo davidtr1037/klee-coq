@@ -914,16 +914,14 @@ void ProofGenerator::generateLemmaDefs() {
   }
 }
 
-/* TODO: find a better solution */
-void ProofGenerator::generateSymbolicNameDefs() {
-  for (ref<CoqExpr> def : stateTranslator->symbolicNameDefs) {
-    output << def->dump() << "\n";
-  }
-  stateTranslator->symbolicNameDefs.clear();
-}
-
 void ProofGenerator::generateTheorem() {
   output << getTheorem()->dump() << "\n";
+}
+
+void ProofGenerator::dumpDefs(std::vector<ref<CoqExpr>> &defs) {
+  for (ref<CoqExpr> def : defs) {
+    output << def->dump() << "\n";
+  }
 }
 
 klee::ref<CoqExpr> ProofGenerator::getTheorem() {

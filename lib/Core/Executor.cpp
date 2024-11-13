@@ -4770,16 +4770,16 @@ void Executor::executeMakeSymbolic(ExecutionState &state,
       unsigned index = state.symbolics.size();
       ref<CoqExpr> coqName;
       if (CacheSymNames) {
-        coqName = proofGenerator->stateTranslator->createSymbolicNameCached(index);
+        /* TODO: this should be done from ExprTranslator */
+        std::vector<ref<CoqExpr>> defs;
+        coqName = proofGenerator->stateTranslator->createSymbolicNameCached(index, defs);
+        proofGenerator->dumpDefs(defs);
       } else {
         coqName = proofGenerator->stateTranslator->createSymbolicName(index);
       }
       ref<CoqExpr> coqSMTVar = \
         proofGenerator->exprTranslator->createSMTVar(array->size * 8, coqName);
       state.addArrayTranslation(array, coqSMTVar);
-
-      /* TODO: this should be added from ExprTranslator */
-      proofGenerator->generateSymbolicNameDefs();
     }
 
     state.addSymbolic(mo, array);

@@ -39,8 +39,6 @@ public:
 
   std::map<unsigned, ref<CoqExpr>> symbolicNamesCache;
 
-  std::list<ref<CoqExpr>> symbolicNameDefs;
-
   StateTranslator(llvm::Module &m,
                   ModuleTranslator *moduleTranslator,
                   ExprTranslator *exprTranslator);
@@ -80,7 +78,8 @@ public:
   ref<CoqExpr> createSymbolics(ExecutionState &es,
                                std::vector<ref<CoqExpr>> &defs);
 
-  ref<CoqExpr> createSymbolicNameCached(unsigned index);
+  ref<CoqExpr> createSymbolicNameCached(unsigned index,
+                                        std::vector<ref<CoqExpr>> &defs);
 
   ref<CoqExpr> createSymbolicName(unsigned index);
 
