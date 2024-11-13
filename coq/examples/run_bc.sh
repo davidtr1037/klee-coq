@@ -12,10 +12,10 @@ function run_klee {
         -generate-proof \
         -proof-output-path=${output} \
         -optimize-proof \
-        -decompose-state \
         -cache-pc-expr \
         -cache-register-expr \
         -cache-stack-expr \
+        -cache-sym-names \
         $1 &> /dev/null
     time coqc -Q ${ROOT}/coq SE ${output}
     ls -lh ${output}
