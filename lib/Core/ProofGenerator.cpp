@@ -914,12 +914,6 @@ void ProofGenerator::generateTheorem() {
   output << getTheorem()->dump() << "\n";
 }
 
-void ProofGenerator::dumpDefs(std::vector<ref<CoqExpr>> &defs) {
-  for (ref<CoqExpr> def : defs) {
-    output << def->dump() << "\n";
-  }
-}
-
 klee::ref<CoqExpr> ProofGenerator::getTheorem() {
   ref<CoqTactic> tactic = new Block(
     {

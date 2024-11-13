@@ -9,6 +9,12 @@
 using namespace llvm;
 using namespace klee;
 
+cl::opt<bool> klee::CacheSymNames(
+  "cache-sym-names",
+  cl::init(false),
+  cl::desc("")
+);
+
 ExprTranslator::ExprTranslator() {
 
 }
@@ -73,7 +79,7 @@ ref<CoqExpr> ExprTranslator::translate(ref<Expr> e,
   } else if (isa<BinaryExpr>(e)) {
     coqExpr = translateBinaryExpr(dyn_cast<BinaryExpr>(e), m, useCache, updateCache, defs);
   } else if (isa<ConcatExpr>(e)) {
-    coqExpr = translateConcatExpr(dyn_cast<ConcatExpr>(e), m);
+    coqExpr = translateConcatExpr(dyn_cast<ConcatExpr>(e), m, defs);
   }
 
   assert(coqExpr);
@@ -320,21 +326,23 @@ ref<CoqExpr> ExprTranslator::createSMTBinOp(ref<CoqExpr> op,
 }
 
 ref<CoqExpr> ExprTranslator::translateConcatExpr(ref<ConcatExpr> e,
-                                                 ArrayTranslation *m) {
+                                                 ArrayTranslation *m,
+                                                 std::vector<ref<CoqExpr>> &defs) {
   if (!m) {
     /* must provide an array translation map */
     return nullptr;
   }
 
   if (isa<ReadExpr>(e->getLeft())) {
-    return translateReadExpr(dyn_cast<ReadExpr>(e->getLeft()), m);
+    return translateReadExpr(dyn_cast<ReadExpr>(e->getLeft()), m, defs);
   }
 
   assert(false);
 }
 
 ref<CoqExpr> ExprTranslator::translateReadExpr(ref<ReadExpr> e,
-                                               ArrayTranslation *m) {
+                                               ArrayTranslation *m,
+                                               std::vector<ref<CoqExpr>> &defs) {
   if (!m) {
     /* must provide an array translation map */
     return nullptr;
@@ -344,11 +352,86 @@ ref<CoqExpr> ExprTranslator::translateReadExpr(ref<ReadExpr> e,
   if (array && array->isSymbolicArray()) {
     auto i = m->find(array);
     if (i != m->end()) {
-      return i->second;
+      unsigned index = i->second;
+      ref<CoqExpr> name;
+      if (CacheSymNames) {
+        name = createSymbolicNameCached(index, defs);
+      } else {
+        name = createSymbolicName(index);
+      }
+
+      /* TODO: cache ... */
+      ref<CoqExpr> var = createSMTVar(array->size * 8, name);
+      return var;
     }
   }
 
   assert(false);
+}
+
+ref<CoqExpr> ExprTranslator::createSymbolicNameCached(unsigned index,
+                                                      std::vector<ref<CoqExpr>> &defs) {
+  auto i = symbolicNameCache.find(index);
+  if (i != symbolicNameCache.end()) {
+    return i->second;
+  }
+
+  ref<CoqExpr> e = createSymbolicName(index);
+  std::string aliasName = "sym_name_" + std::to_string(index);
+  ref<CoqExpr> def = new CoqDefinition(aliasName, "string", e);
+  ref<CoqExpr> alias = new CoqVariable(aliasName);
+  symbolicNameCache[index] = alias;
+  defs.push_back(def);
+  return alias;
+}
+
+ref<CoqExpr> ExprTranslator::createSymbolicName(unsigned index) {
+  ref<CoqExpr> arg;
+  if (index == 0) {
+    arg = createEmptyList();
+  } else {
+    arg = createSymbolicNames(index);
+  }
+  return new CoqApplication(
+    new CoqVariable("fresh_name"),
+    {arg}
+  );
+}
+
+ref<CoqExpr> ExprTranslator::createSymbolicNamesCached(unsigned size,
+                                                       std::vector<ref<CoqExpr>> &defs) {
+  auto i = symbolicNamesCache.find(size);
+  if (i != symbolicNamesCache.end()) {
+    return i->second;
+  }
+
+  ref<CoqExpr> e = createSymbolicNames(size);
+  std::string aliasName = "sym_names_" + std::to_string(size);
+  ref<CoqExpr> def = new CoqDefinition(aliasName, "list string", e);
+  ref<CoqExpr> alias = new CoqVariable(aliasName);
+  symbolicNamesCache[size] = alias;
+  defs.push_back(def);
+  return alias;
+}
+
+/* TODO: add an alias */
+ref<CoqExpr> ExprTranslator::createSymbolicNames(unsigned size) {
+  ref<CoqExpr> arg;
+  switch (size) {
+  case 0:
+    return createEmptyList();
+  case 1:
+    arg = createEmptyList();
+    break;
+  default:
+    arg = createSymbolicNames(size - 1);
+    break;
+  }
+
+  return new CoqApplication(
+    new CoqVariable("extend_names"),
+    {arg}
+  );
 }
 
 ref<CoqExpr> ExprTranslator::createSMTVar(unsigned width,

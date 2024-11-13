@@ -33,12 +33,6 @@ cl::opt<bool> CacheStackExpr(
   cl::desc("")
 );
 
-cl::opt<bool> klee::CacheSymNames(
-  "cache-sym-names",
-  cl::init(false),
-  cl::desc("")
-);
-
 StateTranslator::StateTranslator(Module &m,
                                  ModuleTranslator *moduleTranslator,
                                  ExprTranslator *exprTranslator) :
@@ -310,76 +304,10 @@ klee::ref<CoqExpr> StateTranslator::createGlobalStore() {
 klee::ref<CoqExpr> StateTranslator::createSymbolics(ExecutionState &es,
                                                     vector<ref<CoqExpr>> &defs) {
   if (CacheSymNames) {
-    return createSymbolicNamesCached(es.symbolics.size(), defs);
+    return exprTranslator->createSymbolicNamesCached(es.symbolics.size(), defs);
   } else {
-    return createSymbolicNames(es.symbolics.size());
+    return exprTranslator->createSymbolicNames(es.symbolics.size());
   }
-}
-
-klee::ref<CoqExpr> StateTranslator::createSymbolicNameCached(unsigned index,
-                                                             vector<ref<CoqExpr>> &defs) {
-  auto i = symbolicNameCache.find(index);
-  if (i != symbolicNameCache.end()) {
-    return i->second;
-  }
-
-  ref<CoqExpr> e = createSymbolicName(index);
-  string aliasName = "sym_name_" + to_string(index);
-  ref<CoqExpr> def = new CoqDefinition(aliasName, "string", e);
-  ref<CoqExpr> alias = new CoqVariable(aliasName);
-  symbolicNameCache[index] = alias;
-  defs.push_back(def);
-  return alias;
-}
-
-/* TODO: add an alias */
-klee::ref<CoqExpr> StateTranslator::createSymbolicName(unsigned index) {
-  ref<CoqExpr> arg;
-  if (index == 0) {
-    arg = createEmptyList();
-  } else {
-    arg = createSymbolicNames(index);
-  }
-  return new CoqApplication(
-    new CoqVariable("fresh_name"),
-    {arg}
-  );
-}
-
-klee::ref<CoqExpr> StateTranslator::createSymbolicNamesCached(unsigned size,
-                                                              vector<ref<CoqExpr>> &defs) {
-  auto i = symbolicNamesCache.find(size);
-  if (i != symbolicNamesCache.end()) {
-    return i->second;
-  }
-
-  ref<CoqExpr> e = createSymbolicNames(size);
-  string aliasName = "sym_names_" + to_string(size);
-  ref<CoqExpr> def = new CoqDefinition(aliasName, "list string", e);
-  ref<CoqExpr> alias = new CoqVariable(aliasName);
-  symbolicNamesCache[size] = alias;
-  defs.push_back(def);
-  return alias;
-}
-
-/* TODO: add an alias */
-klee::ref<CoqExpr> StateTranslator::createSymbolicNames(unsigned size) {
-  ref<CoqExpr> arg;
-  switch (size) {
-  case 0:
-    return createEmptyList();
-  case 1:
-    arg = createEmptyList();
-    break;
-  default:
-    arg = createSymbolicNames(size - 1);
-    break;
-  }
-
-  return new CoqApplication(
-    new CoqVariable("extend_names"),
-    {arg}
-  );
 }
 
 klee::ref<CoqExpr> StateTranslator::createPC(ExecutionState &es,

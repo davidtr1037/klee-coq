@@ -181,8 +181,8 @@ void ExecutionState::addSymbolic(const MemoryObject *mo, const Array *array) {
   symbolics.emplace_back(ref<const MemoryObject>(mo), array);
 }
 
-void ExecutionState::addArrayTranslation(const Array *array, ref<CoqExpr> e) {
-  arrayTranslation.insert(std::make_pair(array, e));
+void ExecutionState::addArrayTranslation(const Array *array, unsigned index) {
+  arrayTranslation.insert(std::make_pair(array, index));
 }
 
 /**/

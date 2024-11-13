@@ -10,15 +10,21 @@
 
 namespace klee {
 
-typedef std::map<const Array *, ref<CoqExpr>> ArrayTranslation;
+typedef std::map<const Array *, unsigned> ArrayTranslation;
 
 typedef std::map<ref<Expr>, ref<CoqExpr>> ExprCache;
+
+extern llvm::cl::opt<bool> CacheSymNames;
 
 class ExprTranslator {
 
 public:
 
   ExprCache exprCache;
+
+  std::map<unsigned, ref<CoqExpr>> symbolicNameCache;
+
+  std::map<unsigned, ref<CoqExpr>> symbolicNamesCache;
 
   ExprTranslator();
 
@@ -77,10 +83,23 @@ public:
                               std::vector<ref<CoqExpr>> &defs);
 
   ref<CoqExpr> translateConcatExpr(ref<ConcatExpr> e,
-                                   ArrayTranslation *m);
+                                   ArrayTranslation *m,
+                                   std::vector<ref<CoqExpr>> &defs);
 
   ref<CoqExpr> translateReadExpr(ref<ReadExpr> e,
-                                 ArrayTranslation *m);
+                                 ArrayTranslation *m,
+                                 std::vector<ref<CoqExpr>> &defs);
+
+  ref<CoqExpr> createSymbolicNameCached(unsigned index,
+                                        std::vector<ref<CoqExpr>> &defs);
+
+  ref<CoqExpr> createSymbolicName(unsigned index);
+
+  ref<CoqExpr> createSymbolicNamesCached(unsigned size,
+                                         std::vector<ref<CoqExpr>> &defs);
+
+  ref<CoqExpr> createSymbolicNames(unsigned size);
+
 
   ref<CoqExpr> createSMTVar(unsigned width,
                             ref<CoqExpr> name);

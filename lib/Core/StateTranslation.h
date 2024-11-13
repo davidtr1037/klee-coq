@@ -17,8 +17,6 @@
 
 namespace klee {
 
-extern llvm::cl::opt<bool> CacheSymNames;
-
 class StateTranslator {
 
 private:
@@ -32,10 +30,6 @@ public:
   ModuleTranslator *moduleTranslator;
 
   ExprTranslator *exprTranslator;
-
-  std::map<unsigned, ref<CoqExpr>> symbolicNameCache;
-
-  std::map<unsigned, ref<CoqExpr>> symbolicNamesCache;
 
   StateTranslator(llvm::Module &m,
                   ModuleTranslator *moduleTranslator,
@@ -75,16 +69,6 @@ public:
 
   ref<CoqExpr> createSymbolics(ExecutionState &es,
                                std::vector<ref<CoqExpr>> &defs);
-
-  ref<CoqExpr> createSymbolicNameCached(unsigned index,
-                                        std::vector<ref<CoqExpr>> &defs);
-
-  ref<CoqExpr> createSymbolicName(unsigned index);
-
-  ref<CoqExpr> createSymbolicNamesCached(unsigned size,
-                                         std::vector<ref<CoqExpr>> &defs);
-
-  ref<CoqExpr> createSymbolicNames(unsigned size);
 
   ref<CoqExpr> createPC(ExecutionState &es, std::vector<ref<CoqExpr>> &defs);
 

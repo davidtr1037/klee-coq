@@ -204,8 +204,6 @@ public:
 
   void generateTheorem();
 
-  void dumpDefs(std::vector<ref<CoqExpr>> &defs);
-
   ref<CoqExpr> getTheorem();
 
   void generateDebugScript(llvm::raw_ostream &output);
