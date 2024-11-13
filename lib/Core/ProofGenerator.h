@@ -187,7 +187,6 @@ public:
 
   uint64_t allocateAxiomID();
 
-  /* TODO: move all these to a separate class? */
   std::string getStateAliasName(uint64_t stepID);
 
   ref<CoqVariable> getStateAlias(uint64_t stepID);
