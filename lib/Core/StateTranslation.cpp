@@ -15,11 +15,35 @@ using namespace std;
 using namespace llvm;
 using namespace klee;
 
-#define DecomposeState true
-#define CachePCExpr true
-#define CacheRegisterExpr true
-#define CacheStackExpr true
-#define CacheSymNames true
+cl::opt<bool> klee::DecomposeState(
+  "decompose-state",
+  cl::init(false),
+  cl::desc("")
+);
+
+cl::opt<bool> CachePCExpr(
+  "cache-pc-expr",
+  cl::init(false),
+  cl::desc("")
+);
+
+cl::opt<bool> CacheRegisterExpr(
+  "cache-register-expr",
+  cl::init(false),
+  cl::desc("")
+);
+
+cl::opt<bool> CacheStackExpr(
+  "cache-stack-expr",
+  cl::init(false),
+  cl::desc("")
+);
+
+cl::opt<bool> klee::CacheSymNames(
+  "cache-sym-names",
+  cl::init(false),
+  cl::desc("")
+);
 
 StateTranslator::StateTranslator(Module &m,
                                  ModuleTranslator *moduleTranslator,

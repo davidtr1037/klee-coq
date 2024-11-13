@@ -4770,9 +4770,9 @@ void Executor::executeMakeSymbolic(ExecutionState &state,
       unsigned index = state.symbolics.size();
       ref<CoqExpr> coqName;
       if (CacheSymNames) {
-        coqName = proofGenerator->createSymbolicNameCached(index);
+        coqName = proofGenerator->stateTranslator->createSymbolicNameCached(index);
       } else {
-        coqName = proofGenerator->createSymbolicName(index);
+        coqName = proofGenerator->stateTranslator->createSymbolicName(index);
       }
       ref<CoqExpr> coqSMTVar = \
         proofGenerator->exprTranslator->createSMTVar(array->size * 8, coqName);
