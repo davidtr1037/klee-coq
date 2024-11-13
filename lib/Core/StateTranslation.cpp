@@ -15,12 +15,6 @@ using namespace std;
 using namespace llvm;
 using namespace klee;
 
-cl::opt<bool> klee::DecomposeState(
-  "decompose-state",
-  cl::init(false),
-  cl::desc("")
-);
-
 cl::opt<bool> CachePCExpr(
   "cache-pc-expr",
   cl::init(false),
@@ -68,24 +62,6 @@ void StateTranslator::generateGlobalDefs(vector<ref<CoqExpr>> &defs) {
 
 klee::ref<CoqExpr> StateTranslator::translateState(ExecutionState &es,
                                                    vector<ref<CoqExpr>> &defs) {
-  if (!DecomposeState) {
-    return new CoqApplication(
-      new CoqVariable("mk_sym_state"),
-      {
-        createInstCounter(es),
-        createCommand(es),
-        createTrailingCommands(es),
-        createPrevBID(es),
-        createLocalStore(es, defs),
-        createStack(es, defs),
-        createGlobalStore(),
-        createSymbolics(es, defs),
-        createPC(es, defs),
-        createModule(),
-      }
-    );
-  }
-
   defs.push_back(
     new CoqDefinition(
       getICAliasName(es.stepID),

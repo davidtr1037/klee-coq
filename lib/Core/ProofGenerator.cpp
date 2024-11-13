@@ -163,10 +163,6 @@ klee::ref<CoqLemma> ProofGenerator::createLemmaForLeaf(ExecutionState &state) {
 
 /* TODO: check the instruction type */
 klee::ref<CoqTactic> ProofGenerator::getTacticForLeaf(ExecutionState &state) {
-  if (!DecomposeState) {
-    return new Apply("Safe_Leaf_Ret");
-  }
-
   return new Apply(
     "Safe_Leaf_Ret",
     {

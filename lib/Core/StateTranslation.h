@@ -17,8 +17,6 @@
 
 namespace klee {
 
-extern llvm::cl::opt<bool> DecomposeState;
-
 extern llvm::cl::opt<bool> CacheSymNames;
 
 class StateTranslator {
