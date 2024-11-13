@@ -806,7 +806,6 @@ klee::ref<CoqTactic> ProofGenerator::getTacticForEquivPHI(StateInfo &si,
   if (si.wasRegisterUpdated) {
     t = new Block(
       {
-        /* TODO: can use a more simple lemma? */
         new Apply(
           "equiv_smt_store_on_optimized_update",
           {
@@ -1012,7 +1011,7 @@ klee::ref<CoqTactic> ProofGenerator::getTacticForEquivReturn(StateInfo &si,
                                                              ExecutionState &successor) {
   ReturnInst *returnInst = dyn_cast<ReturnInst>(si.inst);
   if (returnInst->getReturnValue()) {
-    /* TODO: avoid code duplication */
+    /* TODO: avoid code duplication? */
     ref<CoqTactic> t;
     if (si.wasRegisterUpdated) {
       t = new Block(
@@ -1421,7 +1420,6 @@ klee::ref<CoqExpr> ProofGenerator::getTheorem() {
   );
 }
 
-/* TODO: check funcion type */
 bool ProofGenerator::isMakeSymbolicInt32(Instruction *inst) {
   if (isa<CallInst>(inst)) {
     CallInst *callInst = dyn_cast<CallInst>(inst);
@@ -1434,7 +1432,6 @@ bool ProofGenerator::isMakeSymbolicInt32(Instruction *inst) {
   return false;
 }
 
-/* TODO: check funcion type */
 bool ProofGenerator::isAssumeBool(Instruction *inst) {
   if (isa<CallInst>(inst)) {
     CallInst *callInst = dyn_cast<CallInst>(inst);
