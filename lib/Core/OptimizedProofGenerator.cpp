@@ -163,14 +163,7 @@ klee::ref<CoqLemma> OptimizedProofGenerator::getBasicBlockDecompositionLemma(Bas
       new CoqVariable("blk_cmds"),
       {moduleTranslator->translateBasicBlockCached(bb)}
     ),
-    /* TODO: add a specific constructor? */
-    new CoqApplication(
-      new CoqVariable("cons"),
-      {
-        head,
-        new CoqList(tail),
-      }
-    )
+    new CoqListCons(head, new CoqList(tail))
   );
 
   ref<CoqTactic> proof = new Block(
