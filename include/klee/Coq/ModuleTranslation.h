@@ -170,6 +170,10 @@ public:
   bool isAssignment(llvm::Instruction &inst);
 
   ~ModuleTranslator();
+
+  static bool isMakeSymbolicInt32(llvm::Instruction *inst);
+
+  static bool isAssumeBool(llvm::Instruction *inst);
 };
 
 }

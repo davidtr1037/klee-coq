@@ -266,10 +266,10 @@ klee::ref<CoqTactic> OptimizedProofGenerator::getTacticForSubtree(StateInfo &si,
   }
 
   if (isa<CallInst>(si.inst)) {
-    if (isMakeSymbolicInt32(si.inst)) {
+    if (ModuleTranslator::isMakeSymbolicInt32(si.inst)) {
       return nullptr;
     }
-    if (isAssumeBool(si.inst)) {
+    if (ModuleTranslator::isAssumeBool(si.inst)) {
       return nullptr;
     }
     return getTacticForSubtreeCall(si, successor);

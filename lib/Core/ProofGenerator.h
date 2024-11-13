@@ -291,12 +291,6 @@ public:
 
   ref<CoqExpr> getTheorem();
 
-  /* TODO: move from here */
-  bool isMakeSymbolicInt32(llvm::Instruction *inst);
-
-  /* TODO: move from here */
-  bool isAssumeBool(llvm::Instruction *inst);
-
   void generateDebugScript(llvm::raw_ostream &output);
 };
 

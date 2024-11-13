@@ -661,7 +661,7 @@ klee::ref<CoqTactic> ProofGenerator::getTacticForSafety(StateInfo &si) {
 klee::ref<CoqTactic> ProofGenerator::getTacticForStep(StateInfo &si,
                                                       ExecutionState &successor) {
   ref<CoqTactic> tactic = getTacticForSat(si, successor, 0);
-  if (isMakeSymbolicInt32(si.inst)) {
+  if (ModuleTranslator::isMakeSymbolicInt32(si.inst)) {
     return new Block(
       {
         new Intros({"s", "Hstep"}),
@@ -674,7 +674,7 @@ klee::ref<CoqTactic> ProofGenerator::getTacticForStep(StateInfo &si,
         tactic,
       }
     );
-  } else if (isAssumeBool(si.inst)) {
+  } else if (ModuleTranslator::isAssumeBool(si.inst)) {
     return new Block(
       {
         new Intros({"s", "Hstep"}),
@@ -920,9 +920,9 @@ klee::ref<CoqTactic> ProofGenerator::getTacticForEquivBranch(StateInfo &si,
 
 klee::ref<CoqTactic> ProofGenerator::getTacticForEquivCall(StateInfo &si,
                                                            ExecutionState &successor) {
-  if (isMakeSymbolicInt32(si.inst)) {
+  if (ModuleTranslator::isMakeSymbolicInt32(si.inst)) {
     return getTacticForEquivMakeSymbolic(si, successor);
-  } else if (isAssumeBool(si.inst)) {
+  } else if (ModuleTranslator::isAssumeBool(si.inst)) {
     return getTacticForEquivAssumeBool(si, successor);
   } else {
     return getTacticForEquivSimpleCall(si, successor);
@@ -1418,30 +1418,6 @@ klee::ref<CoqExpr> ProofGenerator::getTheorem() {
     ),
     tactic
   );
-}
-
-bool ProofGenerator::isMakeSymbolicInt32(Instruction *inst) {
-  if (isa<CallInst>(inst)) {
-    CallInst *callInst = dyn_cast<CallInst>(inst);
-    Function *f = dyn_cast<Function>(callInst->getCalledOperand());
-    if (f && f->isDeclaration()) {
-      return f->getName().equals("klee_make_symbolic_int32");
-    }
-  }
-
-  return false;
-}
-
-bool ProofGenerator::isAssumeBool(Instruction *inst) {
-  if (isa<CallInst>(inst)) {
-    CallInst *callInst = dyn_cast<CallInst>(inst);
-    Function *f = dyn_cast<Function>(callInst->getCalledOperand());
-    if (f && f->isDeclaration()) {
-      return f->getName().equals("klee_assume_bool");
-    }
-  }
-
-  return false;
 }
 
 void ProofGenerator::generateDebugScript(llvm::raw_ostream &output) {
