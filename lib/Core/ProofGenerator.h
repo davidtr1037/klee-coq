@@ -223,10 +223,14 @@ public:
 
   ref<CoqLemma> getUnsatAxiom(ref<CoqExpr> pc, uint64_t axiomID);
 
+  std::string createUnsatAxiomName(uint64_t axiomID);
+
   ref<CoqTactic> getTacticForSubtree(ref<CoqTactic> safetyTactic,
                                      ref<CoqTactic> stepTactic);
 
   ref<CoqLemma> createLemma(uint64_t stepID, ref<CoqTactic> tactic, bool isAdmitted = false);
+
+  std::string createLemmaName(uint64_t stepID);
 
   ref<CoqTactic> getTacticForList(StateInfo &si, unsigned index);
 

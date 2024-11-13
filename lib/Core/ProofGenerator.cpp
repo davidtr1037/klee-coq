@@ -46,7 +46,6 @@ cl::opt<bool> klee::CacheSymNames(
 );
 
 /* TODO: decide how to handle assertions */
-/* TODO: add a function for generating names of axioms and lemmas (L_, UNSAT_, etc.) */
 
 ProofGenerator::ProofGenerator(Module &m, raw_ostream &output) : m(m), output(output) {
   moduleTranslator = new ModuleTranslator(m);
@@ -717,7 +716,7 @@ klee::ref<CoqTactic> ProofGenerator::getTacticForSat(StateInfo &si,
         new Block(
           {
             new Split(
-              new Block({new Apply("L_" + to_string(successor.stepID))}),
+              new Block({new Apply(createLemmaName(successor.stepID))}),
               eqTactic
             )
           }
@@ -878,7 +877,7 @@ klee::ref<CoqTactic> ProofGenerator::getTacticForEquivBranch(StateInfo &si,
             }
           ),
           new Block(
-            {new Apply("UNSAT_" + to_string(hint->unsatAxiomID))}
+            {new Apply(createUnsatAxiomName(hint->unsatAxiomID))}
           ),
         }
       );
@@ -1190,7 +1189,7 @@ klee::ref<CoqTactic> ProofGenerator::getTacticForUnsat(ref<CoqExpr> pc, uint64_t
       ),
       new Block(
         {
-          new Apply("UNSAT_" + to_string(axiomID)),
+          new Apply(createUnsatAxiomName(axiomID)),
         }
       ),
     }
@@ -1199,7 +1198,7 @@ klee::ref<CoqTactic> ProofGenerator::getTacticForUnsat(ref<CoqExpr> pc, uint64_t
 
 klee::ref<CoqLemma> ProofGenerator::getUnsatAxiom(ref<CoqExpr> pc, uint64_t axiomID) {
   return new CoqLemma(
-    "UNSAT_" + to_string(axiomID),
+    createUnsatAxiomName(axiomID),
     new CoqApplication(
       new CoqVariable("unsat"),
       {pc}
@@ -1207,6 +1206,10 @@ klee::ref<CoqLemma> ProofGenerator::getUnsatAxiom(ref<CoqExpr> pc, uint64_t axio
     nullptr,
     true
   );
+}
+
+string ProofGenerator::createUnsatAxiomName(uint64_t axiomID) {
+  return "UNSAT_" + to_string(axiomID);
 }
 
 klee::ref<CoqTactic> ProofGenerator::getTacticForSubtree(ref<CoqTactic> safetyTactic,
@@ -1224,7 +1227,7 @@ klee::ref<CoqLemma> ProofGenerator::createLemma(uint64_t stepID,
                                                 ref<CoqTactic> tactic,
                                                 bool isAdmitted) {
   return new CoqLemma(
-    "L_" + to_string(stepID),
+    createLemmaName(stepID),
     new CoqApplication(
       new CoqVariable("safe_et_opt"),
       {getTreeAlias(stepID)}
@@ -1233,6 +1236,10 @@ klee::ref<CoqLemma> ProofGenerator::createLemma(uint64_t stepID,
     isAdmitted
   );
   return nullptr;
+}
+
+string ProofGenerator::createLemmaName(uint64_t stepID) {
+  return "L_" + to_string(stepID);
 }
 
 klee::ref<CoqTactic> ProofGenerator::getTacticForList(StateInfo &si,
@@ -1398,7 +1405,7 @@ klee::ref<CoqExpr> ProofGenerator::getTheorem() {
               new Inversion("E"),
               new Subst(),
               new Rewrite("E", false),
-              new Apply("L_0"),
+              new Apply(createLemmaName(0)),
             }
           ),
         }
