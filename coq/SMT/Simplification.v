@@ -501,7 +501,7 @@ Proof.
 Qed.
 
 (* TODO: finalize? *)
-Lemma equiv_smt_expr_add_consts_generic : forall (s : smt_sort) (ast : smt_ast s) (n1 n2 : smt_sort_to_int_type s) `{VInt (smt_sort_to_int_type s)},
+Lemma equiv_smt_expr_add_consts_generic : forall (s : smt_sort) `{VInt (smt_sort_to_int_type s)} (ast : smt_ast s) (n1 n2 : smt_sort_to_int_type s),
   equiv_smt_expr
     (Expr s
        (AST_BinOp s SMT_Add
@@ -509,16 +509,17 @@ Lemma equiv_smt_expr_add_consts_generic : forall (s : smt_sort) (ast : smt_ast s
           (AST_Const s n2)))
     (Expr s (AST_BinOp s SMT_Add (AST_Const s (add n1 n2)) ast)).
 Proof.
-  intros s ast n1 n2 H.
+  intros s H ast n1 n2.
   apply EquivExpr.
   intros m.
   simpl.
   destruct s.
   {
-    simpl in *.
+    simpl.
     rewrite (Int1.add_assoc n1 _ n2).
     rewrite (Int1.add_commut _ n2).
     rewrite <- (Int1.add_assoc n1 n2 _).
+    reflexivity. (* TODO: ... *)
     admit.
   }
 Admitted.
