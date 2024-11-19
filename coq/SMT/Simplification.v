@@ -519,7 +519,6 @@ Proof.
     rewrite (Int1.add_assoc n1 _ n2).
     rewrite (Int1.add_commut _ n2).
     rewrite <- (Int1.add_assoc n1 n2 _).
-    reflexivity. (* TODO: ... *)
     admit.
   }
 Admitted.
