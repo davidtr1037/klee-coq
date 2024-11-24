@@ -840,22 +840,20 @@ Inductive over_approx : sym_state -> state -> Prop :=
       (exists m, over_approx_via s c m) -> over_approx s c
 .
 
+(* TODO: move to Completeness.v? *)
 Lemma error_correspondence: forall c s,
-  over_approx s c -> (error_sym_state s <-> error_state c).
+  over_approx s c -> error_state c -> error_sym_state s.
 Proof.
-  intros c s Hoa.
-  split; (inversion Hoa; destruct H as [m H]; inversion H; subst; intros He).
-  {
-    inversion He; subst.
-    { apply ES_Assert with (d := d); assumption. }
-    { apply ES_Unreachable. }
-  }
-  {
-    inversion He; subst.
-    { apply ESS_Assert with (d := d); assumption. }
-    { apply ESS_Unreachable. }
-  }
-Qed.
+  intros c s Hoa He.
+  inversion Hoa.
+  destruct H as [m H].
+  inversion H; subst.
+  inversion He; subst.
+  { apply ESS_Assert with (d := d); assumption. }
+  { apply ESS_Unreachable. }
+  { admit. }
+  { admit. }
+Admitted.
 
 Lemma pc_unsat_lemma : forall s s',
   sym_step s s' -> unsat_sym_state s -> unsat_sym_state s'.
