@@ -11,6 +11,7 @@ From SE Require Import Concrete.
 From SE Require Import DynamicValue.
 From SE Require Import LLVMAst.
 From SE Require Import ModuleAssumptions.
+From SE Require Import NonSpeculativeConcrete.
 From SE Require Import Symbolic.
 From SE Require Import Relation.
 
@@ -177,6 +178,7 @@ Lemma equiv_sym_eval_exp : forall ls1 gs1 ls2 gs2 ot e se1,
   sym_eval_exp ls1 gs1 ot e = Some se1 ->
   (exists se2, (sym_eval_exp ls2 gs2 ot e) = Some se2 /\ equiv_smt_expr se1 se2).
 Proof.
+(*
   intros ls1 gs1 ls2 gs2 ot e se1 His Heq1 Heq2 Heval.
   generalize dependent se1.
   generalize dependent ot.
@@ -418,6 +420,8 @@ Proof.
     }
   }
 Qed.
+*)
+Admitted.
 
 Lemma equiv_sym_eval_phi_args : forall ls1 gs1 ls2 gs2 t args pbid se1,
   (forall bid e, In (bid, e) args -> is_supported_exp e) ->
@@ -693,7 +697,9 @@ Proof.
   inversion Hes2; subst.
   { apply ESS_Assert with (d := d); assumption. }
   { apply ESS_Unreachable. }
-Qed.
+  { admit. }
+  { admit. }
+Admitted.
 
 Inductive safe_et_opt : execution_tree -> Prop :=
   | Safe_Leaf_RetVoid: forall ic cid pbid ls gs syms pc mdl,
@@ -1231,11 +1237,12 @@ Proof.
   }
 Qed.
 
-Theorem completeness_via_et: forall mdl fid init_s l,
+(* TODO: rename? lemma? *)
+Theorem program_safety_via_et_with_ns_step: forall mdl fid init_s l,
   is_supported_module mdl ->
   (init_sym_state mdl fid) = Some init_s ->
   safe_et_opt (t_subtree init_s l) -> 
-  is_safe_program mdl fid.
+  is_safe_program_with_ns_step mdl fid.
 Proof.
   intros mdl fid init_s l Hism Hinit Hse.
   unfold is_safe_program.
@@ -1270,9 +1277,8 @@ Proof.
       { apply safe_leaf. assumption. }
       intros Hes.
       apply error_correspondence in L2_3.
-      apply L2_3 in Hes.
-      apply L4.
-      assumption.
+      { apply L4. assumption. }
+      { assumption. }
     }
     {
       destruct L3 as [so [l' [L_1 L_2]]].
@@ -1284,9 +1290,8 @@ Proof.
       }
       intros Hes.
       apply error_correspondence in L2_3.
-      apply L2_3 in Hes.
-      apply L4.
-      assumption.
+      { apply L4.  assumption. }
+      { assumption. }
     }
     {
       inversion L2_3; subst.
@@ -1302,3 +1307,10 @@ Proof.
     }
   }
 Qed.
+
+Theorem program_safety_via_et: forall mdl fid,
+  is_supported_module mdl ->
+  is_safe_program_with_ns_step mdl fid ->
+  is_safe_program mdl fid.
+Proof.
+Admitted.
