@@ -597,6 +597,7 @@ Inductive error_state : state -> Prop :=
           gs
           mdl
         )
+  (* TODO: add assumptions for e1 e2? safe_llvm_expr? *)
   | ES_UDivByZero : forall ic cid v exact t e1 e2 cs pbid ls stk gs mdl di,
       (eval_exp ls gs (Some t) e2) = Some (DV_Int di) ->
       di_is_zero di = true ->
@@ -611,6 +612,7 @@ Inductive error_state : state -> Prop :=
           gs
           mdl
         )
+  (* TODO: add assumptions for e1 e2? safe_llvm_expr? *)
   (* TODO: what happens with other types? *)
   (* TODO: use bitwidth instead of type width? *)
   | ES_Shl : forall ic cid v nuw nsw w e1 e2 cs pbid ls stk gs mdl di,
