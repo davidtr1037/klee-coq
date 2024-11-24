@@ -61,40 +61,6 @@ Fixpoint get_arg_types (args : list (function_arg)) : list typ :=
   end
 .
 
-Inductive error_state : state -> Prop :=
-  | ES_Assert : forall ic cid args anns cs pbid ls stk gs mdl d,
-      (find_function mdl assert_id) = None ->
-      (find_declaration mdl assert_id) = Some d ->
-      (dc_type d) = assert_type ->
-      TYPE_Function TYPE_Void (get_arg_types args) false = assert_type ->
-      error_state
-        (mk_state
-          ic
-          (CMD_Inst
-            cid
-            (INSTR_VoidCall (TYPE_Void, assert_exp) args anns)
-          )
-          cs
-          pbid
-          ls
-          stk
-          gs
-          mdl
-       )
-  | ES_Unreachable : forall ic cid cs pbid ls stk gs mdl,
-      error_state
-        (mk_state
-          ic
-          (CMD_Term cid TERM_Unreachable)
-          cs
-          pbid
-          ls
-          stk
-          gs
-          mdl
-       )
-.
-
 Definition lookup_ident (s : dv_store) (g : dv_store) (id : ident) : option dynamic_value :=
   match id with
   | ID_Local x => s x
@@ -568,6 +534,71 @@ Definition init_state (mdl : llvm_module) (fid : function_id) : option state :=
     end
   | None => None
   end
+.
+
+Inductive error_state : state -> Prop :=
+  (* TODO: remove? *)
+  | ES_Assert : forall ic cid args anns cs pbid ls stk gs mdl d,
+      (find_function mdl assert_id) = None ->
+      (find_declaration mdl assert_id) = Some d ->
+      (dc_type d) = assert_type ->
+      TYPE_Function TYPE_Void (get_arg_types args) false = assert_type ->
+      error_state
+        (mk_state
+          ic
+          (CMD_Inst
+            cid
+            (INSTR_VoidCall (TYPE_Void, assert_exp) args anns)
+          )
+          cs
+          pbid
+          ls
+          stk
+          gs
+          mdl
+        )
+  | ES_Unreachable : forall ic cid cs pbid ls stk gs mdl,
+      error_state
+        (mk_state
+          ic
+          (CMD_Term cid TERM_Unreachable)
+          cs
+          pbid
+          ls
+          stk
+          gs
+          mdl
+        )
+  | ES_UDivByZero : forall ic cid v exact t e1 e2 cs pbid ls stk gs mdl di,
+      (eval_exp ls gs (Some t) e2) = Some (DV_Int di) ->
+      di_is_zero di = true ->
+      error_state
+        (mk_state
+          ic
+          (CMD_Inst cid (INSTR_Op v (OP_IBinop (UDiv exact) t e1 e2)))
+          cs
+          pbid
+          ls
+          stk
+          gs
+          mdl
+        )
+  (* TODO: what happens with other types? *)
+  (* TODO: use bitwidth instead of type width? *)
+  | ES_Shl : forall ic cid v nuw nsw w e1 e2 cs pbid ls stk gs mdl di,
+      (eval_exp ls gs (Some (TYPE_I w)) e2) = Some (DV_Int di) ->
+      ((di_unsigned di) >= (Zpos w))%Z ->
+      error_state
+        (mk_state
+          ic
+          (CMD_Inst cid (INSTR_Op v (OP_IBinop (Shl nuw nsw) (TYPE_I w) e1 e2)))
+          cs
+          pbid
+          ls
+          stk
+          gs
+          mdl
+        )
 .
 
 Definition is_safe_program (mdl : llvm_module) (fid : function_id) :=
