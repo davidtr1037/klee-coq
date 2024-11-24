@@ -10,6 +10,7 @@ DynamicValue.v
 ExecutionTreeOpt.v
 Symbolic.v
 LLVMAst.v
+LLVMUtils.v
 ModuleAssumptions.v
 ProofGeneration.v
 Numeric/Archi.v
