@@ -55,7 +55,7 @@ Definition multi_ns_step := multi ns_step.
 
 Definition is_safe_program_with_ns_step (mdl : llvm_module) (fid : function_id) :=
   exists init_s,
-    (init_state mdl fid) = Some init_s /\ (forall s, multi_ns_step init_s s -> ~ error_state s)
+    (init_state mdl fid) = Some init_s /\ (safe_state ns_step init_s)
 .
 
 Lemma ns_step_soundness : forall s1 s2,
