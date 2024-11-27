@@ -631,9 +631,24 @@ Inductive error_state : state -> Prop :=
         )
 .
 
-(* TODO: rename? move to ExecutionTreeOpt? *)
+(* TODO: rename? *)
 Definition safe_state (R : relation state) (s : state) :=
   (forall s', (multi R) s s' -> ~ error_state s').
+
+Lemma safe_state_preserved_on_reachability : forall R s s',
+  safe_state R s ->
+  (multi R) s s' ->
+  safe_state R s'.
+Proof.
+  intros R s s' Hsafe Hms.
+  unfold safe_state.
+  intros s'' Hms'.
+  unfold safe_state in Hsafe.
+  apply Hsafe.
+  eapply relation_concat.
+  { eassumption. }
+  { assumption. }
+Qed.
 
 (* TODO: parametrize? *)
 Definition is_safe_program (mdl : llvm_module) (fid : function_id) :=

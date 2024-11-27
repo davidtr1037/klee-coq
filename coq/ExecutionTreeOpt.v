@@ -1308,53 +1308,6 @@ Proof.
   }
 Qed.
 
-Lemma safe_state_preserved_on_reachability : forall R s s',
-  safe_state R s ->
-  (multi R) s s' ->
-  safe_state R s'.
-Proof.
-  intros R s s' Hsafe Hms.
-  unfold safe_state.
-  intros s'' Hms'.
-  unfold safe_state in Hsafe.
-  apply Hsafe.
-  eapply relation_concat.
-  { eassumption. }
-  { assumption. }
-Qed.
-
-Lemma ns_step_relative_completeness : forall s1 s2,
-  safe_state ns_step s1 ->
-  step s1 s2 ->
-  ns_step s1 s2.
-Proof.
-Admitted.
-
-Lemma multi_ns_step_relative_completeness : forall s1 s2,
-  safe_state ns_step s1 ->
-  multi_step s1 s2 ->
-  multi_ns_step s1 s2.
-Proof.
-  intros s1 s2 Hsafe Hms.
-  induction Hms as [s s' | s s' s''].
-  {
-    apply ns_step_relative_completeness with (s2 := s') in Hsafe; try assumption.
-    apply multi_base.
-    assumption.
-  }
-  {
-    assert(Ls' : safe_state ns_step s').
-    {
-      apply safe_state_preserved_on_reachability with (s := s).
-      { assumption. }
-      { apply IHHms. assumption. }
-    }
-    apply IHHms in Hsafe.
-    apply ns_step_relative_completeness with (s2 := s'') in Ls'; try assumption.
-    apply multi_trans with (y := s'); assumption.
-  }
-Qed.
-
 Theorem program_safety_via_et: forall mdl fid init_s l,
   is_supported_module mdl ->
   (init_sym_state mdl fid) = Some init_s ->
