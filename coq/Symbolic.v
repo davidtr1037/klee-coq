@@ -841,6 +841,8 @@ Inductive over_approx : sym_state -> state -> Prop :=
 .
 
 (* TODO: move to Completeness.v? *)
+(* TODO: assume the s/c are supported and use eval_exp_correspondence? *)
+(* TODO: can we prove without additional assumptions? *)
 Lemma error_correspondence: forall c s,
   over_approx s c -> error_state c -> error_sym_state s.
 Proof.
