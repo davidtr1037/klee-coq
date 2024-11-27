@@ -40,89 +40,89 @@ Definition dv_true := DV_Int di_true.
 Definition dv_false := DV_Int di_false.
 
 (* TODO: compare with the latest version *)
-Definition eval_ibinop_generic {Int} `{VInt Int} `{ConvertToDV Int} (op : ibinop) (x y : Int) : dynamic_value :=
+Definition eval_ibinop_generic {Int} `{VInt Int} `{ConvertToDV Int} (op : ibinop) (x y : Int) : option dynamic_value :=
   match op with
   | Add nuw nsw =>
     if orb (andb nuw (eq (add_carry x y zero) one))
            (andb nsw (eq (add_overflow x y zero) one)) then
-      DV_Poison
+      Some DV_Poison
     else
-      to_dvalue (add x y)
+      Some (to_dvalue (add x y))
   | Sub nuw nsw =>
     if orb (andb nuw (eq (sub_borrow x y zero) one))
            (andb nsw (eq (sub_overflow x y zero) one)) then
-      DV_Poison
+      Some DV_Poison
     else
-      to_dvalue (sub x y)
+      Some (to_dvalue (sub x y))
   | Mul nuw nsw =>
     if (bitwidth =? 1)%nat then
-      to_dvalue (mul x y)
+      Some (to_dvalue (mul x y))
     else
       let res := mul x y in
       let res_s' := ((signed x) * (signed y))%Z in
       if orb (andb nuw ((unsigned x) * (unsigned y) >? unsigned res)%Z)
              (andb nsw (orb (min_signed >? res_s')%Z (res_s' >? max_signed)%Z)) then
-        DV_Poison
+        Some DV_Poison
       else
-        to_dvalue res
+        Some (to_dvalue res)
   | Shl nuw nsw =>
     if (bitwidth =? 1)%nat then
-      if ((unsigned y) >=? 1)%Z then DV_Poison else to_dvalue x
+      if ((unsigned y) >=? 1)%Z then Some DV_Poison else Some (to_dvalue x)
     else
       let bz := Z.of_nat bitwidth in
       let res := shl x y in
       let res_u := unsigned res in
       let res_u' := Z.shiftl (unsigned x) (unsigned y) in
       if ((unsigned y) >=? bz)%Z then
-        DV_Poison
+        Some DV_Poison
       else if orb (andb nuw (res_u' >? res_u)%Z)
                   (andb nsw (negb (Z.shiftr (unsigned x) (bz - unsigned y) =? ((unsigned (negative res)) * (Z.pow 2 (unsigned y) - 1)))%Z)) then
-        DV_Poison
+        Some DV_Poison
       else
-        to_dvalue res
+        Some (to_dvalue res)
   | UDiv ex =>
     (* TODO: should be undefined behavior *)
-    if (unsigned y =? 0)%Z then DV_Undef
+    if (unsigned y =? 0)%Z then None
     else
       if andb ex (negb ((unsigned x) mod (unsigned y) =? 0)%Z) then
-        DV_Poison
+        Some DV_Poison
       else
-        to_dvalue (divu x y)
+        Some (to_dvalue (divu x y))
   | SDiv ex =>
     (* TODO: should be undefined behavior *)
-    if (signed y =? 0)%Z then DV_Undef
+    if (signed y =? 0)%Z then None
     else
       if andb ex (negb (((signed x) mod (signed y)) =? 0)%Z) then
-        DV_Poison
+        Some DV_Poison
       else
-        to_dvalue (divs x y)
+        Some (to_dvalue (divs x y))
   | LShr ex =>
     if (bitwidth =? 1)%nat then
-      if ((unsigned y) >=? 1)%Z then DV_Poison else to_dvalue x
+      if ((unsigned y) >=? 1)%Z then Some DV_Poison else Some (to_dvalue x)
     else
       let bz := Z.of_nat bitwidth in
       if ((unsigned y) >=? bz)%Z then
-        DV_Poison
+        Some DV_Poison
       else if andb ex (negb ((unsigned x) mod (Z.pow 2 (unsigned y)) =? 0)%Z) then
-        DV_Poison
+        Some DV_Poison
       else
-        to_dvalue (shru x y)
+        Some (to_dvalue (shru x y))
   | AShr ex =>
     if (bitwidth =? 1)%nat then
-      if ((unsigned y) >=? 1)%Z then DV_Poison else to_dvalue x
+      if ((unsigned y) >=? 1)%Z then Some DV_Poison else Some (to_dvalue x)
     else
       let bz := Z.of_nat bitwidth in
       if ((unsigned y) >=? bz)%Z then
-        DV_Poison
+        Some DV_Poison
       else if andb ex (negb ((unsigned x) mod (Z.pow 2 (unsigned y)) =? 0)%Z) then
-       DV_Poison
+       Some DV_Poison
      else
-       to_dvalue (shr x y)
-  | URem => to_dvalue (modu x y)
-  | SRem => to_dvalue (mods x y)
-  | And => to_dvalue (and x y)
-  | Or => to_dvalue (or x y)
-  | Xor => to_dvalue (xor x y)
+       Some (to_dvalue (shr x y))
+  | URem => Some (to_dvalue (modu x y))
+  | SRem => Some (to_dvalue (mods x y))
+  | And => Some (to_dvalue (and x y))
+  | Or => Some (to_dvalue (or x y))
+  | Xor => Some (to_dvalue (xor x y))
   end
 .
 
@@ -150,7 +150,7 @@ Definition eval_ibinop (op : ibinop) (dv1 dv2 : dynamic_value) : option dynamic_
   | (DV_Int (DI_I8 n1),  DV_Int (DI_I8 n2))
   | (DV_Int (DI_I16 n1), DV_Int (DI_I16 n2))
   | (DV_Int (DI_I32 n1), DV_Int (DI_I32 n2))
-  | (DV_Int (DI_I64 n1), DV_Int (DI_I64 n2)) => Some (eval_ibinop_generic op n1 n2)
+  | (DV_Int (DI_I64 n1), DV_Int (DI_I64 n2)) => eval_ibinop_generic op n1 n2
   | _ => None
   end
 .
