@@ -185,7 +185,6 @@ Definition klee_assume_type := TYPE_Function TYPE_Void [(TYPE_I 1)] false.
 (* TODO: use safe_llvm_expr in other rules *)
 Inductive step : state -> state -> Prop :=
   | Step_OP : forall ic cid v e c cs pbid ls stk gs mdl dv,
-      (safe_llvm_expr e) ->
       (eval_exp ls gs None e) = Some dv ->
       step
         (mk_state
