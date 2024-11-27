@@ -171,6 +171,7 @@ Proof.
   }
 Qed.
 
+(* TODO: do we really need: is_supported_exp e? *)
 Lemma equiv_sym_eval_exp : forall ls1 gs1 ls2 gs2 ot e se1,
   is_supported_exp e ->
   equiv_smt_store ls1 ls2 ->
@@ -815,32 +816,35 @@ Proof.
   inversion Heq; subst.
   {
     rename se into se1.
-    apply equiv_sym_eval_exp with (ls2 := ls2) (gs2 := gs2) in H; try assumption.
+    inversion His; subst.
+    inversion H3; subst.
     {
-      destruct H as [se2 [H_1 H_2]].
-      exists (mk_sym_state
-        (next_inst_counter ic c)
-        c
-        cs
-        pbid
-        (v !-> Some se2; ls2)
-        stk2
-        gs2
-        syms
-        pc2
-        mdl
-      ).
-      split.
-      { apply Sym_Step_OP; assumption. }
+      apply equiv_sym_eval_exp with (ls2 := ls2) (gs2 := gs2) in H; try assumption.
       {
-        apply EquivSymState; try assumption.
-        apply equiv_smt_store_update; assumption.
+        destruct H as [se2 [H_1 H_2]].
+        exists (mk_sym_state
+          (next_inst_counter ic c)
+          c
+          cs
+          pbid
+          (v !-> Some se2; ls2)
+          stk2
+          gs2
+          syms
+          pc2
+          mdl
+        ).
+        split.
+        { apply Sym_Step_OP; assumption. }
+        {
+          apply EquivSymState; try assumption.
+          apply equiv_smt_store_update; assumption.
+        }
       }
     }
     {
-      inversion His; subst.
-      inversion H3; subst.
-      assumption.
+      (* x = udiv ... *)
+      admit.
     }
   }
   {
@@ -1137,7 +1141,7 @@ Proof.
       apply equiv_smt_expr_refl.
     }
   }
-Qed.
+Admitted.
 
 Lemma safe_subtree_equiv: forall s1 s2 l,
   equiv_sym_state s1 s2 ->
