@@ -891,7 +891,7 @@ Proof.
             apply equiv_smt_store_update. try assumption.
             simpl in H.
             inversion H; subst.
-            admit.
+            apply equiv_smt_expr_binop; assumption.
           }
         }
         { admit. }
