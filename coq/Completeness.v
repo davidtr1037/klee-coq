@@ -1276,13 +1276,46 @@ Proof.
         { eapply infer_sort. eassumption. }
         subst.
         remember (sym_eval_exp s_ls s_gs None (OP_IBinop (UDiv false) t e1 e2)) as x.
-        simpl in Heqx.
-        rewrite <- H3 in Heqx.
-        rewrite <- H6 in Heqx.
-        simpl in Heqx.
-        (* TODO : exists *)
-        admit.
+        exists (mk_sym_state
+          (next_inst_counter c_ic c)
+          c
+          cs
+          c_pbid
+          (v !-> Some (Expr Sort_BV1 (AST_BinOp Sort_BV1 SMT_UDiv ast1 ast2)); s_ls)
+          s_stk
+          s_gs
+          s_syms
+          s_pc
+          c_mdl
+        ).
+        split.
+        {
+          apply Sym_Step_OP.
+          simpl.
+          rewrite <- H3.
+          rewrite <- H6.
+          reflexivity.
+        }
+        {
+          apply OA_State.
+          exists m.
+          apply OAV_State; try assumption.
+          apply store_update_correspondence.
+          {
+            rewrite <- H10.
+            eapply OA_Some.
+            { reflexivity. }
+            {
+              simpl.
+              inversion H8; subst.
+              inversion H11; subst.
+              reflexivity.
+            }
+          }
+          { assumption. }
+        }
       }
+      (* TODO: those are similar to the Sort_BV1 case *)
       { admit. }
       { admit. }
       { admit. }
