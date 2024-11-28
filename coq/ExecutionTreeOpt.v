@@ -171,19 +171,17 @@ Proof.
   }
 Qed.
 
-(* TODO: do we really need: is_supported_exp e? *)
 Lemma equiv_sym_eval_exp : forall ls1 gs1 ls2 gs2 ot e se1,
-  is_supported_exp e ->
   equiv_smt_store ls1 ls2 ->
   equiv_smt_store gs1 gs2 ->
   sym_eval_exp ls1 gs1 ot e = Some se1 ->
   (exists se2, (sym_eval_exp ls2 gs2 ot e) = Some se2 /\ equiv_smt_expr se1 se2).
 Proof.
-(*
-  intros ls1 gs1 ls2 gs2 ot e se1 His Heq1 Heq2 Heval.
+  intros ls1 gs1 ls2 gs2 ot e se1 Heq1 Heq2 Heval.
   generalize dependent se1.
   generalize dependent ot.
-  induction e; intros ot se1 Heval; simpl in Heval; try inversion His; subst.
+  induction e; intros ot se1 Heval; simpl in Heval.
+  (* EXP_Ident *)
   {
     unfold sym_lookup_ident in Heval.
     destruct id as [x | x] eqn:E.
@@ -218,30 +216,46 @@ Proof.
       }
     }
   }
+  (* EXP_Integer *)
   {
     exists se1.
     split.
     { simpl. assumption. }
     { apply equiv_smt_expr_refl. }
   }
+  (* EXP_Bool *)
+  {
+    exists se1.
+    split.
+    { simpl. assumption. }
+    { apply equiv_smt_expr_refl. }
+  }
+  (* EXP_Null *)
+  { inversion Heval. }
+  (* EXP_Zero_initializer *)
+  { inversion Heval. }
+  (* EXP_Undef *)
+  { inversion Heval. }
+  (* EXP_Poison *)
+  { inversion Heval. }
   {
     destruct (sym_eval_exp ls1 gs1 (Some t) e1) as [se1' | ] eqn:E1; try discriminate Heval.
     destruct (sym_eval_exp ls1 gs1 (Some t) e2) as [se2' | ] eqn:E2; try discriminate Heval.
-    apply IHe1 with (ot := Some t) (se1 := se1') in H2; try assumption.
-    destruct H2 as [se1'' [H2_1 H2_2]].
-    apply IHe2 with (ot := Some t) (se1 := se2') in H4; try assumption.
-    destruct H4 as [se2'' [H4_1 H4_2]].
+    apply IHe1 with (ot := Some t) (se1 := se1') in E1; try assumption.
+    destruct E1 as [se1'' [E1_1 E1_2]].
+    apply IHe2 with (ot := Some t) (se1 := se2') in E2; try assumption.
+    destruct E2 as [se2'' [E2_1 E2_2]].
     simpl.
-    rewrite H2_1, H4_1.
+    rewrite E1_1, E2_1.
     destruct se1 as [sort1 ast1].
     destruct se1' as [sort1' ast1'].
     destruct se2' as [sort2' ast2'].
     destruct se1'' as [sort1'' ast1''].
     destruct se2'' as [sort2'' ast2''].
     assert(L1 : sort1' = sort1'').
-    { apply sort_injection in H2_2. assumption. }
+    { apply sort_injection in E1_2. assumption. }
     assert(L2 : sort2' = sort2'').
-    { apply sort_injection in H4_2. assumption. }
+    { apply sort_injection in E2_2. assumption. }
     subst.
     destruct sort1'', sort2''; try discriminate Heval; (
       inversion Heval; subst;
@@ -251,85 +265,23 @@ Proof.
     ).
   }
   {
-    destruct (sym_eval_exp ls1 gs1 (Some (TYPE_I w)) e1) as [se1' | ] eqn:E1; try discriminate Heval.
-    destruct (sym_eval_exp ls1 gs1 (Some (TYPE_I w)) (EXP_Integer n)) as [se2' | ] eqn:E2; try discriminate Heval.
-    apply IHe1 with (ot := Some (TYPE_I w)) (se1 := se1') in H4; try assumption.
-    destruct H4 as [se1'' [H4_1 H4_2]].
-    assert(L : is_supported_exp (EXP_Integer n)).
-    { apply IS_EXP_Integer. }
-    apply IHe2 with (ot := Some (TYPE_I w)) (se1 := se2') in L; try assumption.
-    destruct L as [se2'' [L_1 L_2]].
-    simpl in L_1.
-    simpl.
-    rewrite H4_1, L_1.
-    destruct se1 as [sort1 ast1].
-    destruct se1' as [sort1' ast1'].
-    destruct se2' as [sort2' ast2'].
-    destruct se1'' as [sort1'' ast1''].
-    destruct se2'' as [sort2'' ast2''].
-    assert(L1 : sort1' = sort1'').
-    { apply sort_injection in H4_2. assumption. }
-    assert(L2 : sort2' = sort2'').
-    { apply sort_injection in L_2. assumption. }
-    subst.
-    destruct sort1'', sort2''; try discriminate Heval;
-    (
-      inversion H2; subst;
-      inversion Heval; subst;
-      eexists;
-      split; try reflexivity;
-      apply equiv_smt_expr_binop; assumption
-    ).
-  }
-  {
-    destruct (sym_eval_exp ls1 gs1 (Some (TYPE_I w)) e1) as [se1' | ] eqn:E1; try discriminate Heval.
-    destruct (sym_eval_exp ls1 gs1 (Some (TYPE_I w)) (EXP_Integer n)) as [se2' | ] eqn:E2; try discriminate Heval.
-    apply IHe1 with (ot := Some (TYPE_I w)) (se1 := se1') in H4; try assumption.
-    destruct H4 as [se1'' [H4_1 H4_2]].
-    assert(L : is_supported_exp (EXP_Integer n)).
-    { apply IS_EXP_Integer. }
-    apply IHe2 with (ot := Some (TYPE_I w)) (se1 := se2') in L; try assumption.
-    destruct L as [se2'' [L_1 L_2]].
-    simpl in L_1.
-    simpl.
-    rewrite H4_1, L_1.
-    destruct se1 as [sort1 ast1].
-    destruct se1' as [sort1' ast1'].
-    destruct se2' as [sort2' ast2'].
-    destruct se1'' as [sort1'' ast1''].
-    destruct se2'' as [sort2'' ast2''].
-    assert(L1 : sort1' = sort1'').
-    { apply sort_injection in H4_2. assumption. }
-    assert(L2 : sort2' = sort2'').
-    { apply sort_injection in L_2. assumption. }
-    subst.
-    destruct sort1'', sort2''; try discriminate Heval;
-    (
-      inversion H3; subst;
-      inversion Heval; subst;
-      eexists;
-      split; try reflexivity;
-      apply equiv_smt_expr_binop; assumption
-    ).
-  }
-  {
     destruct (sym_eval_exp ls1 gs1 (Some t) e1) as [se1' | ] eqn:E1; try discriminate Heval.
     destruct (sym_eval_exp ls1 gs1 (Some t) e2) as [se2' | ] eqn:E2; try discriminate Heval.
-    apply IHe1 with (ot := Some t) (se1 := se1') in H1; try assumption.
-    destruct H1 as [se1'' [H1_1 H1_2]].
-    apply IHe2 with (ot := Some t) (se1 := se2') in H4; try assumption.
-    destruct H4 as [se2'' [H4_1 H4_2]].
+    apply IHe1 with (ot := Some t) (se1 := se1') in E1; try assumption.
+    destruct E1 as [se1'' [E1_1 E1_2]].
+    apply IHe2 with (ot := Some t) (se1 := se2') in E2; try assumption.
+    destruct E2 as [se2'' [E2_1 E2_2]].
     simpl.
-    rewrite H1_1, H4_1.
+    rewrite E1_1, E2_1.
     destruct se1 as [sort1 ast1].
     destruct se1' as [sort1' ast1'].
     destruct se2' as [sort2' ast2'].
     destruct se1'' as [sort1'' ast1''].
     destruct se2'' as [sort2'' ast2''].
     assert(L1 : sort1' = sort1'').
-    { apply sort_injection in H1_2. assumption. }
+    { apply sort_injection in E1_2. assumption. }
     assert(L2 : sort2' = sort2'').
-    { apply sort_injection in H4_2. assumption. }
+    { apply sort_injection in E2_2. assumption. }
     subst.
     destruct sort1'', sort2''; try discriminate Heval; (
       inversion Heval; subst;
@@ -340,14 +292,14 @@ Proof.
   }
   {
     destruct (sym_eval_exp ls1 gs1 (Some t1) e) as [se | ] eqn:E; try discriminate Heval.
-    apply IHe with (ot := Some t1) (se1 := se) in H4; try assumption.
-    destruct H4 as [se' [H4_1 H4_2]].
+    apply IHe with (ot := Some t1) (se1 := se) in E; try assumption.
+    destruct E as [se' [E_1 E_2]].
     simpl.
-    rewrite H4_1.
+    rewrite E_1.
     destruct se as [sort ast].
     destruct se' as [sort' ast'].
     assert(L1 : sort = sort').
-    { apply sort_injection in H4_2. assumption. }
+    { apply sort_injection in E_2. assumption. }
     subst.
     destruct conv; try discriminate Heval.
     {
@@ -420,18 +372,16 @@ Proof.
       { discriminate Heval. }
     }
   }
+  { inversion Heval. }
 Qed.
-*)
-Admitted.
 
 Lemma equiv_sym_eval_phi_args : forall ls1 gs1 ls2 gs2 t args pbid se1,
-  (forall bid e, In (bid, e) args -> is_supported_exp e) ->
   equiv_smt_store ls1 ls2 ->
   equiv_smt_store gs1 gs2 ->
   sym_eval_phi_args ls1 gs1 t args pbid = Some se1 ->
   (exists se2, sym_eval_phi_args ls2 gs2 t args pbid = Some se2 /\ equiv_smt_expr se1 se2).
 Proof.
-  intros ls1 gs1 ls2 gs2 t args pbid se1 His Heq1 Heq2 Heval.
+  intros ls1 gs1 ls2 gs2 t args pbid se1 Heq1 Heq2 Heval.
   induction args as [ | arg args_tail].
   { discriminate Heval. }
   {
@@ -441,16 +391,9 @@ Proof.
     {
       rewrite raw_id_eqb_eq in E.
       apply equiv_sym_eval_exp with (ls2 := ls2) (gs2 := gs2) in Heval; try assumption.
-      apply (His bid e).
-      left.
-      reflexivity.
     }
     {
       apply IHargs_tail; try assumption.
-      intros bid' e' Hin.
-      apply (His bid' e').
-      right.
-      assumption.
     }
   }
 Qed.
@@ -458,12 +401,11 @@ Qed.
 Lemma equiv_fill_smt_store : forall ls1 gs1 ls2 gs2 l ls1',
   equiv_smt_store ls1 ls2 ->
   equiv_smt_store gs1 gs2 ->
-  (forall x arg, In (x, arg) l -> is_supported_function_arg arg) ->
   fill_smt_store ls1 gs1 l = Some ls1' ->
   exists ls2',
     fill_smt_store ls2 gs2 l = Some ls2' /\ equiv_smt_store ls1' ls2'.
 Proof.
-  intros ls1 gs1 ls2 gs2 l ls1' Heq1 Heq2 His Hf.
+  intros ls1 gs1 ls2 gs2 l ls1' Heq1 Heq2 Hf.
   generalize dependent ls1'.
   induction l as [ | (x, arg) tail]; intros ls1' Hf.
   {
@@ -488,13 +430,7 @@ Proof.
             exists ls2' : smt_store,
                fill_smt_store ls2 gs2 tail = Some ls2' /\ equiv_smt_store ls1'' ls2'
           ).
-          {
-            apply IHtail; try reflexivity.
-            intros x' arg' Hin.
-            apply (His x' arg').
-            apply in_cons.
-            assumption.
-          }
+          { apply IHtail; try reflexivity. }
           destruct L as [ls2'' [L_1 L_2]].
           exists (x !-> Some se2; ls2'').
           split.
@@ -508,12 +444,6 @@ Proof.
             apply equiv_smt_store_update; assumption.
           }
         }
-        {
-          assert(Larg : is_supported_function_arg ((t, e), l)).
-          { apply His with (x := x). apply in_eq. }
-          inversion Larg; subst.
-          assumption.
-        }
       }
       { discriminate Hf. }
     }
@@ -524,18 +454,15 @@ Qed.
 Lemma equiv_create_local_store : forall ls1 gs1 ls2 gs2 d args ls1',
   equiv_smt_store ls1 ls2 ->
   equiv_smt_store gs1 gs2 ->
-  (forall arg, In arg args -> is_supported_function_arg arg) ->
   create_local_smt_store d ls1 gs1 args = Some ls1' ->
   exists ls2',
     create_local_smt_store d ls2 gs2 args = Some ls2' /\ equiv_smt_store ls1' ls2'.
 Proof.
-  intros ls1 gs1 ls2 gs2 d args ls1' Heq1 Heq2 His Hc.
+  intros ls1 gs1 ls2 gs2 d args ls1' Heq1 Heq2 Hc.
   unfold create_local_smt_store in *.
   destruct (ListUtil.merge_lists (df_args d) args) eqn:E.
   {
     apply equiv_fill_smt_store with (ls2 := ls2) (gs2 := gs2) in Hc; try assumption.
-    apply ListUtil.merge_lists_preserves_prop with (xs := (df_args d)) (ys := args);
-    assumption.
   }
   { discriminate Hc. }
 Qed.
@@ -804,6 +731,7 @@ Proof.
   { right. right. assumption. }
 Qed.
 
+(* TODO: remove is_supported_sym_state? *)
 Lemma equiv_sym_state_on_step: forall s1 s1' s2,
   equiv_sym_state s1 s2 ->
   is_supported_sym_state s1 ->
@@ -925,11 +853,6 @@ Proof.
         apply equiv_smt_store_update; assumption.
       }
     }
-    {
-      inversion His; subst.
-      inversion H3; subst.
-      assumption.
-    }
   }
   {
     exists (mk_sym_state
@@ -974,11 +897,6 @@ Proof.
         apply equiv_smt_expr_binop; assumption.
       }
     }
-    {
-      inversion His; subst.
-      inversion H6; subst.
-      assumption.
-    }
   }
   {
     rename cond into ast1.
@@ -1008,11 +926,6 @@ Proof.
         assumption.
       }
     }
-    {
-      inversion His; subst.
-      inversion H6; subst.
-      assumption.
-    }
   }
   {
     rename ls' into ls1'.
@@ -1020,12 +933,7 @@ Proof.
       exists ls2',
         create_local_smt_store d ls2 gs2 args = Some ls2' /\ equiv_smt_store ls1' ls2'
     ).
-    {
-      apply equiv_create_local_store with (ls1 := ls1) (gs1 := gs1); try assumption.
-      inversion His; subst.
-      inversion H7; subst.
-      assumption.
-    }
+    { apply equiv_create_local_store with (ls1 := ls1) (gs1 := gs1); try assumption. }
     destruct L as [ls2' [L_1 L_2]].
     exists (mk_sym_state
       (mk_inst_counter (get_fid d) (blk_id b) (get_cmd_id c'))
@@ -1054,12 +962,7 @@ Proof.
       exists ls2',
         create_local_smt_store d ls2 gs2 args = Some ls2' /\ equiv_smt_store ls1' ls2'
     ).
-    {
-      apply equiv_create_local_store with (ls1 := ls1) (gs1 := gs1); try assumption.
-      inversion His; subst.
-      inversion H7; subst.
-      assumption.
-    }
+    { apply equiv_create_local_store with (ls1 := ls1) (gs1 := gs1); try assumption. }
     destruct L as [ls2' [L_1 L_2]].
     exists (mk_sym_state
       (mk_inst_counter (get_fid d) (blk_id b) (get_cmd_id c'))
@@ -1133,11 +1036,6 @@ Proof.
         apply equiv_smt_store_update; assumption.
       }
     }
-    {
-      inversion His; subst.
-      inversion H7; subst.
-      assumption.
-    }
   }
   {
     rename cond into ast1.
@@ -1164,14 +1062,6 @@ Proof.
         apply EquivSymState; try assumption.
         apply equiv_smt_expr_binop; assumption.
       }
-    }
-    {
-      inversion His; subst.
-      inversion H6; subst.
-      assert(Larg : is_supported_function_arg (TYPE_I BinNums.xH, e, attrs)).
-      { apply H4. apply in_eq. }
-      inversion Larg; subst.
-      assumption.
     }
   }
   {
