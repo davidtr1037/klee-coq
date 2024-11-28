@@ -365,6 +365,13 @@ Proof.
   assumption.
 Qed.
 
+Lemma equiv_smt_expr_sat : forall (ast1 ast2 : smt_ast_bool),
+  equiv_smt_expr (Expr Sort_BV1 ast1) (Expr Sort_BV1 ast2) ->
+  sat ast1 ->
+  sat ast2.
+Proof.
+Admitted.
+
 Lemma equiv_smt_expr_unsat : forall (ast1 ast2 : smt_ast_bool),
   equiv_smt_expr (Expr Sort_BV1 ast1) (Expr Sort_BV1 ast2) ->
   unsat ast1 ->
