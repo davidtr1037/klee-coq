@@ -91,9 +91,23 @@ Proof.
   inversion Hnp; subst.
   inversion Hstep; subst.
   (* INSTR_Op *)
-  { admit. }
+  {
+    apply NS_Step.
+    { eapply Step_OP; eassumption. }
+    {
+      apply Has_No_Poison; try assumption.
+      admit.
+    }
+  }
   (* Phi *)
-  { admit. }
+  {
+    apply NS_Step.
+    { eapply Step_Phi; eassumption. }
+    {
+      apply Has_No_Poison; try assumption.
+      admit.
+    }
+  }
   (* TERM_UnconditionalBr *)
   {
     apply NS_Step.
