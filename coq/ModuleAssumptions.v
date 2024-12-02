@@ -14,8 +14,8 @@ From SE Require Import Symbolic.
 
 Inductive is_supported_ibinop : ibinop -> Prop :=
   | IS_Add : is_supported_ibinop (Add false false)
-(*
   | IS_Sub : is_supported_ibinop (Sub false false)
+(*
   | IS_Mul : is_supported_ibinop (Mul false false)
   | IS_URem : is_supported_ibinop URem
   | IS_SRem : is_supported_ibinop SRem
