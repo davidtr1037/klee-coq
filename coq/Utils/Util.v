@@ -1632,3 +1632,13 @@ Proof.
   intros Heq.
   assumption.
 Qed.
+
+Lemma injection_some_neq : forall (A : Type) (x y : A),
+  Some x <> Some y -> x <> y.
+Proof.
+  intros A x y H.
+  intros Hf.
+  apply H.
+  f_equal.
+  assumption.
+Qed.

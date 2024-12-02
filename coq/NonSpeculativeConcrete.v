@@ -11,6 +11,7 @@ From SE Require Import ModuleAssumptions.
 From SE Require Import Relation.
 
 From SE.Utils Require Import IDMap.
+From SE.Utils Require Import Util.
 
 Inductive store_has_no_poison : dv_store -> Prop :=
   | Store_Has_No_Poison : forall ls,
@@ -96,9 +97,45 @@ Admitted.
 
 Lemma has_no_poison_eval_exp : forall ls gs ot e dv,
   is_supported_exp e ->
+  store_has_no_poison ls ->
+  store_has_no_poison gs ->
   eval_exp ls gs ot e = Some dv ->
   dv <> DV_Poison.
 Proof.
+  intros ls gs ot e dv His Hnp_ls Hnp_gs Heval.
+  inversion His; subst; simpl in Heval.
+  {
+    unfold lookup_ident in Heval.
+    destruct id.
+    {
+      inversion Hnp_gs.
+      specialize (H id).
+      rewrite Heval in H.
+      apply injection_some_neq.
+      assumption.
+    }
+    {
+      inversion Hnp_ls.
+      specialize (H id).
+      rewrite Heval in H.
+      apply injection_some_neq.
+      assumption.
+    }
+  }
+  {
+    destruct ot; try discriminate Heval.
+    destruct t eqn:Et; try discriminate Heval.
+    repeat (
+      destruct w; (
+        simpl in Heval;
+        try discriminate Heval;
+        try (inversion Heval; subst; intros Hf; discriminate Hf)
+      )
+    ).
+  }
+  { admit. }
+  { admit. }
+  { admit. }
 Admitted.
 
 Lemma has_no_poison_eval_phi_args : forall ls gs t args pbid dv,
