@@ -88,6 +88,95 @@ Lemma multi_ns_step_soundness : forall s1 s2,
 Proof.
 Admitted.
 
+Lemma has_no_poison_step : forall s1 s2,
+  is_supported_state s1 ->
+  safe_state ns_step s1 ->
+  has_no_poison s1 ->
+  step s1 s2 ->
+  has_no_poison s2.
+Proof.
+  intros s1 s2 His Hsafe Hnp Hstep.
+  inversion Hnp; subst.
+  inversion Hstep; subst.
+  (* INSTR_Op *)
+  {
+    apply Has_No_Poison; try assumption.
+    apply store_has_no_poison_update; try assumption.
+    admit.
+  }
+  (* Phi *)
+  {
+    apply Has_No_Poison; try assumption.
+    admit.
+  }
+  (* TERM_UnconditionalBr *)
+  {
+    apply Has_No_Poison; assumption.
+  }
+  {
+    apply Has_No_Poison; assumption.
+  }
+  {
+    apply Has_No_Poison; assumption.
+  }
+  {
+    admit.
+  }
+  {
+    admit.
+  }
+  {
+    inversion H1; subst.
+    apply Has_No_Poison; try assumption.
+    {
+      assert(L : frame_has_no_poison (Frame ls' ic' pbid' None)).
+      { apply H2. apply in_eq. }
+      inversion L; subst.
+      assumption.
+    }
+    {
+      eapply stack_has_no_poison_suffix.
+      eassumption.
+    }
+  }
+  {
+    admit.
+  }
+  {
+    apply Has_No_Poison; try assumption.
+    apply Store_Has_No_Poison.
+    inversion H; subst.
+    intros x.
+    destruct (raw_id_eqb x v) eqn:E.
+    {
+      rewrite raw_id_eqb_eq in E.
+      rewrite E.
+      rewrite update_map_eq.
+      intros Hf.
+      discriminate Hf.
+    }
+    {
+      rewrite raw_id_eqb_neq in E.
+      rewrite update_map_neq.
+      { apply H2. }
+      { symmetry. assumption. }
+    }
+  }
+  {
+    apply Has_No_Poison; try assumption.
+  }
+Admitted.
+
+Lemma has_no_poison_multi_step : forall s1 s2,
+  is_supported_state s1 ->
+  safe_state ns_step s1 ->
+  has_no_poison s1 ->
+  multi_step s1 s2 ->
+  has_no_poison s2.
+Proof.
+Admitted.
+
+(* TODO: use has_no_poison_step *)
 Lemma ns_step_relative_completeness : forall s1 s2,
   is_supported_state s1 ->
   safe_state ns_step s1 ->
@@ -96,106 +185,10 @@ Lemma ns_step_relative_completeness : forall s1 s2,
   ns_step s1 s2.
 Proof.
   intros s1 s2 His Hsafe Hnp Hstep.
-  inversion Hnp; subst.
-  inversion Hstep; subst.
-  (* INSTR_Op *)
-  {
-    apply NS_Step.
-    { eapply Step_OP; eassumption. }
-    {
-      apply Has_No_Poison; try assumption.
-      apply store_has_no_poison_update; try assumption.
-      admit.
-    }
-  }
-  (* Phi *)
-  {
-    apply NS_Step.
-    { eapply Step_Phi; eassumption. }
-    {
-      apply Has_No_Poison; try assumption.
-      admit.
-    }
-  }
-  (* TERM_UnconditionalBr *)
-  {
-    apply NS_Step.
-    { eapply Step_UnconditionalBr; eassumption. }
-    { apply Has_No_Poison; assumption. }
-  }
-  {
-    apply NS_Step.
-    { eapply Step_Br_True; eassumption. }
-    { apply Has_No_Poison; assumption. }
-  }
-  {
-    apply NS_Step.
-    { eapply Step_Br_False; eassumption. }
-    { apply Has_No_Poison; assumption. }
-  }
-  {
-    apply NS_Step.
-    { eapply Step_VoidCall; eassumption. }
-    { admit. }
-  }
-  {
-    apply NS_Step.
-    { eapply Step_Call; eassumption. }
-    { admit. }
-  }
-  {
-    apply NS_Step.
-    { eapply Step_RetVoid; eassumption. }
-    {
-      inversion H1; subst.
-      apply Has_No_Poison; try assumption.
-      {
-        assert(L : frame_has_no_poison (Frame ls' ic' pbid' None)).
-        { apply H2. apply in_eq. }
-        inversion L; subst.
-        assumption.
-      }
-      {
-        eapply stack_has_no_poison_suffix.
-        eassumption.
-      }
-    }
-  }
-  {
-    apply NS_Step.
-    { eapply Step_Ret; eassumption. }
-    { admit. }
-  }
-  {
-    apply NS_Step.
-    { eapply Step_MakeSymbolicInt32; eassumption. }
-    {
-      apply Has_No_Poison; try assumption.
-      apply Store_Has_No_Poison.
-      inversion H; subst.
-      intros x.
-      destruct (raw_id_eqb x v) eqn:E.
-      {
-        rewrite raw_id_eqb_eq in E.
-        rewrite E.
-        rewrite update_map_eq.
-        intros Hf.
-        discriminate Hf.
-      }
-      {
-        rewrite raw_id_eqb_neq in E.
-        rewrite update_map_neq.
-        { apply H2. }
-        { symmetry. assumption. }
-      }
-    }
-  }
-  {
-    apply NS_Step.
-    { eapply Step_Assume; eassumption. }
-    { apply Has_No_Poison; try assumption. }
-  }
-Admitted.
+  apply NS_Step.
+  { assumption. }
+  { apply has_no_poison_step with (s1 := s1); try assumption. }
+Qed.
 
 Lemma multi_ns_step_relative_completeness : forall s1 s2,
   is_supported_state s1 ->
@@ -204,7 +197,7 @@ Lemma multi_ns_step_relative_completeness : forall s1 s2,
   multi_step s1 s2 ->
   multi_ns_step s1 s2.
 Proof.
-  intros s1 s2 His Hnp Hsafe Hms.
+  intros s1 s2 His Hsafe Hnp Hms.
   induction Hms as [s s' | s s' s''].
   {
     apply ns_step_relative_completeness with (s2 := s') in Hsafe; try assumption.
@@ -218,14 +211,12 @@ Proof.
       { assumption. }
       { apply IHHms; assumption. }
     }
-    apply IHHms in Hsafe.
+    apply multi_trans with (y := s').
+    { apply IHHms; assumption. }
     {
       apply ns_step_relative_completeness with (s2 := s'') in Ls'; try assumption.
-      { apply multi_trans with (y := s'); try assumption. }
       { apply is_supported_multi_step with (s := s); assumption. }
-      { admit. }
+      { apply has_no_poison_multi_step with (s1 := s); try assumption. }
     }
-    { assumption. }
-    { assumption. }
   }
-Admitted.
+Qed.
