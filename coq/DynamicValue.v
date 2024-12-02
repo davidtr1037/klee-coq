@@ -151,6 +151,16 @@ Definition eval_ibinop (op : ibinop) (dv1 dv2 : dynamic_value) : option dynamic_
   | (DV_Int (DI_I16 n1), DV_Int (DI_I16 n2))
   | (DV_Int (DI_I32 n1), DV_Int (DI_I32 n2))
   | (DV_Int (DI_I64 n1), DV_Int (DI_I64 n2)) => eval_ibinop_generic op n1 n2
+  | (DV_Poison, _) => Some DV_Poison
+  | (_, DV_Poison) =>
+      (* division by poison is undefined behavior *)
+      match op with
+      | UDiv _ => None
+      | SDiv _ => None
+      | URem => None
+      | SRem => None
+      | _ => Some DV_Poison
+      end
   | _ => None
   end
 .
@@ -194,6 +204,8 @@ Definition eval_icmp (op : icmp) (v1 v2 : dynamic_value) : option dynamic_value 
   | (DV_Int (DI_I16 n1), DV_Int (DI_I16 n2))
   | (DV_Int (DI_I32 n1), DV_Int (DI_I32 n2))
   | (DV_Int (DI_I64 n1), DV_Int (DI_I64 n2)) => Some (eval_icmp_generic op n1 n2)
+  | (DV_Poison, _) => Some DV_Poison
+  | (_, DV_Poison) => Some DV_Poison
   | _ => None
   end
 .
@@ -227,6 +239,7 @@ Definition convert conv x t1 t2 : option dynamic_value :=
           Some (DV_Int (DI_I64 (repr (unsigned i1))))
       | TYPE_I 32, DV_Int (DI_I32 i1), TYPE_I 64 =>
           Some (DV_Int (DI_I64 (repr (unsigned i1))))
+      | _, DV_Poison, _ => Some DV_Poison
       | _, _, _ => None
       end
   | Sext =>
@@ -255,6 +268,7 @@ Definition convert conv x t1 t2 : option dynamic_value :=
           Some (DV_Int (DI_I64 (repr (signed i1))))
       | TYPE_I 32, DV_Int (DI_I32 i1), TYPE_I 64 =>
           Some (DV_Int (DI_I64 (repr (signed i1))))
+      | _, DV_Poison, _ => Some DV_Poison
       | _, _, _ => None
       end
   | Trunc =>
@@ -283,6 +297,7 @@ Definition convert conv x t1 t2 : option dynamic_value :=
       (* i32 *)
       | TYPE_I 64, DV_Int (DI_I64 i1), TYPE_I 32 =>
           Some (DV_Int (DI_I32 (repr (unsigned i1))))
+      | _, DV_Poison, _ => Some DV_Poison
       | _, _, _ => None
       end
   | Bitcast =>
