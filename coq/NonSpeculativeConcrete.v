@@ -99,12 +99,27 @@ Definition multi_ns_step := multi ns_step.
 Lemma ns_step_soundness : forall s1 s2,
   ns_step s1 s2 -> step s1 s2.
 Proof.
-Admitted.
+  intros s1 s2 Hstep.
+  inversion Hstep; subst.
+  assumption.
+Qed.
 
 Lemma multi_ns_step_soundness : forall s1 s2,
   multi_ns_step s1 s2 -> multi_step s1 s2.
 Proof.
-Admitted.
+  intros s1 s2 Hms.
+  induction Hms as [s s' | s s' s''].
+  {
+    apply multi_base.
+    apply ns_step_soundness.
+    assumption.
+  }
+  {
+    apply multi_trans with (y := s').
+    { assumption. }
+    { apply ns_step_soundness. assumption. }
+  }
+Qed.
 
 Lemma has_no_poison_multi_ns_step : forall s1 s2,
   multi_ns_step s1 s2 ->
