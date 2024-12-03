@@ -54,7 +54,26 @@ Lemma has_no_poison_store_update : forall s x dv,
   dv <> DV_Poison ->
   store_has_no_poison (x !-> Some dv; s).
 Proof.
-Admitted.
+  intros s x dv Hnp Hneq.
+  apply Store_Has_No_Poison.
+  intros y.
+  destruct (raw_id_eqb x y) eqn:E.
+  {
+    rewrite raw_id_eqb_eq in E.
+    rewrite E.
+    rewrite update_map_eq.
+    intros Hf.
+    inversion Hf; subst.
+    apply Hneq.
+    reflexivity.
+  }
+  {
+    rewrite (raw_id_eqb_neq x y) in E.
+    rewrite update_map_neq; try assumption.
+    inversion Hnp; subst.
+    apply H.
+  }
+Qed.
 
 (* TODO: rename *)
 Lemma stack_has_no_poison_suffix : forall f stk,
