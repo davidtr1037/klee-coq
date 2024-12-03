@@ -96,17 +96,15 @@ Inductive ns_step : state -> state -> Prop :=
 
 Definition multi_ns_step := multi ns_step.
 
-(* TODO: is needed? *)
-Lemma ns_step_soundness : forall s1 s2,
-  ns_step s1 s2 -> step s1 s2.
+Lemma has_no_poison_multi_ns_step : forall s1 s2,
+  multi_ns_step s1 s2 ->
+  has_no_poison s2.
 Proof.
-Admitted.
-
-(* TODO: is needed? *)
-Lemma multi_ns_step_soundness : forall s1 s2,
-  multi_ns_step s1 s2 -> multi_step s1 s2.
-Proof.
-Admitted.
+  intros s1 s2 Hms.
+  inversion Hms; subst.
+  { inversion H; subst. assumption. }
+  { inversion H0; subst. assumption. }
+Qed.
 
 Lemma has_no_poison_eval_exp : forall ls gs ot e dv,
   is_supported_exp e ->
@@ -387,9 +385,9 @@ Proof.
         assumption.
       }
       {
-        eapply has_no_poison_eval_exp.
-        { inversion H; subst. eassumption. }
-        { eassumption. }
+        apply has_no_poison_eval_exp with (ls := ls) (gs := gs) (ot := Some t) (e := e);
+        try assumption.
+        { inversion H; subst. assumption. }
       }
     }
     {
@@ -421,16 +419,6 @@ Proof.
   }
 Admitted.
 
-Lemma has_no_poison_multi_step : forall s1 s2,
-  is_supported_state s1 ->
-  safe_state ns_step s1 ->
-  has_no_poison s1 ->
-  multi_step s1 s2 ->
-  has_no_poison s2.
-Proof.
-Admitted.
-
-(* TODO: use has_no_poison_step *)
 Lemma ns_step_relative_completeness : forall s1 s2,
   is_supported_state s1 ->
   safe_state ns_step s1 ->
@@ -470,7 +458,10 @@ Proof.
     {
       apply ns_step_relative_completeness with (s2 := s'') in Ls'; try assumption.
       { apply is_supported_multi_step with (s := s); assumption. }
-      { apply has_no_poison_multi_step with (s1 := s); try assumption. }
+      {
+        apply has_no_poison_multi_ns_step with (s1 := s).
+        apply IHHms; assumption.
+      }
     }
   }
 Qed.
