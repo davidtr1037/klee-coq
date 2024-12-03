@@ -100,6 +100,21 @@ Lemma has_no_poison_init_state : forall mdl fid s,
   init_state mdl fid = Some s ->
   has_no_poison s.
 Proof.
+  intros mdl fid s Hinit.
+  unfold init_state in Hinit.
+  destruct (find_function mdl fid) as [d | ] eqn:Ed; try discriminate Hinit.
+  destruct (build_inst_counter mdl d) as [ic | ] eqn:Eic; try discriminate Hinit.
+  destruct (entry_block d) as [b | ] eqn:Eb; try discriminate Hinit.
+  destruct (blk_cmds b) as [ | cmd cmds ] eqn:Ecs; try discriminate Hinit.
+  inversion Hinit; subst.
+  apply Has_No_Poison.
+  { admit. }
+  { admit. }
+  {
+    apply Stack_Has_No_Poison.
+    intros f Hin.
+    inversion Hin.
+  }
 Admitted.
 
 (* TODO: is needed? *)
