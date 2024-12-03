@@ -1163,6 +1163,7 @@ Proof.
   { reflexivity. }
 Qed.
 
+(* TODO: (has_no_poison c) can be inferred from (over_approx s c)? *)
 Lemma completeness_single_step :
   forall c c' s,
     is_supported_state c ->
@@ -1251,83 +1252,81 @@ Proof.
         apply has_no_poison_eval_exp in E1; try assumption;
         destruct E1; reflexivity
       ).
+      unfold eval_ibinop in H10.
+      destruct di1 as [n1 | n1 | n1 | n1 | n1], di2 as [n2 | n2 | n2 | n2 | n2];
+      try (discriminate H10).
       {
-        unfold eval_ibinop in H10.
-        destruct di1 as [n1 | n1 | n1 | n1 | n1], di2 as [n2 | n2 | n2 | n2 | n2];
-        try (discriminate H10).
+        simpl in H10.
+        destruct (Int1.unsigned n2 =? 0)%Z eqn:En2; try discriminate H10.
+        assert(L1 :
+          over_approx_via_model
+            (eval_exp c_ls c_gs (Some t) e1)
+            (sym_eval_exp s_ls s_gs (Some t) e1)
+            m
+        ).
+        { apply eval_exp_correspondence; assumption. }
+        assert(L2 :
+          over_approx_via_model
+            (eval_exp c_ls c_gs (Some t) e2)
+            (sym_eval_exp s_ls s_gs (Some t) e2)
+            m
+        ).
+        { apply eval_exp_correspondence; assumption. }
+        rewrite E1 in L1.
+        rewrite E2 in L2.
+        inversion L1; subst.
+        inversion L2; subst.
+        rename sort into sort1, ast into ast1, sort0 into sort2, ast0 into ast2.
+        assert(Lsort1 : sort1 = Sort_BV1).
+        { eapply infer_sort. eassumption. }
+        assert(Lsort2 : sort2 = Sort_BV1).
+        { eapply infer_sort. eassumption. }
+        subst.
+        remember (sym_eval_exp s_ls s_gs None (OP_IBinop (UDiv false) t e1 e2)) as x.
+        exists (mk_sym_state
+          (next_inst_counter c_ic c)
+          c
+          cs
+          c_pbid
+          (v !-> Some (Expr Sort_BV1 (AST_BinOp Sort_BV1 SMT_UDiv ast1 ast2)); s_ls)
+          s_stk
+          s_gs
+          s_syms
+          s_pc
+          c_mdl
+        ).
+        split.
         {
-          simpl in H10.
-          destruct (Int1.unsigned n2 =? 0)%Z eqn:En2; try discriminate H10.
-          assert(L1 :
-            over_approx_via_model
-              (eval_exp c_ls c_gs (Some t) e1)
-              (sym_eval_exp s_ls s_gs (Some t) e1)
-              m
-          ).
-          { apply eval_exp_correspondence; assumption. }
-          assert(L2 :
-            over_approx_via_model
-              (eval_exp c_ls c_gs (Some t) e2)
-              (sym_eval_exp s_ls s_gs (Some t) e2)
-              m
-          ).
-          { apply eval_exp_correspondence; assumption. }
-          rewrite E1 in L1.
-          rewrite E2 in L2.
-          inversion L1; subst.
-          inversion L2; subst.
-          rename sort into sort1, ast into ast1, sort0 into sort2, ast0 into ast2.
-          assert(Lsort1 : sort1 = Sort_BV1).
-          { eapply infer_sort. eassumption. }
-          assert(Lsort2 : sort2 = Sort_BV1).
-          { eapply infer_sort. eassumption. }
-          subst.
-          remember (sym_eval_exp s_ls s_gs None (OP_IBinop (UDiv false) t e1 e2)) as x.
-          exists (mk_sym_state
-            (next_inst_counter c_ic c)
-            c
-            cs
-            c_pbid
-            (v !-> Some (Expr Sort_BV1 (AST_BinOp Sort_BV1 SMT_UDiv ast1 ast2)); s_ls)
-            s_stk
-            s_gs
-            s_syms
-            s_pc
-            c_mdl
-          ).
-          split.
-          {
-            apply Sym_Step_OP.
-            simpl.
-            rewrite <- H3.
-            rewrite <- H7.
-            reflexivity.
-          }
-          {
-            apply OA_State.
-            exists m.
-            apply OAV_State; try assumption.
-            apply store_update_correspondence.
-            {
-              rewrite <- H10.
-              eapply OA_Some.
-              { reflexivity. }
-              {
-                simpl.
-                inversion H9; subst.
-                inversion H14; subst.
-                reflexivity.
-              }
-            }
-            { assumption. }
-          }
+          apply Sym_Step_OP.
+          simpl.
+          rewrite <- H3.
+          rewrite <- H7.
+          reflexivity.
         }
-        (* TODO: those are similar to the Sort_BV1 case *)
-        { admit. }
-        { admit. }
-        { admit. }
-        { admit. }
+        {
+          apply OA_State.
+          exists m.
+          apply OAV_State; try assumption.
+          apply store_update_correspondence.
+          {
+            rewrite <- H10.
+            eapply OA_Some.
+            { reflexivity. }
+            {
+              simpl.
+              inversion H9; subst.
+              inversion H14; subst.
+              reflexivity.
+            }
+          }
+          { assumption. }
+        }
       }
+      (* TODO: those are similar to the Sort_BV1 case *)
+      { admit. }
+      { admit. }
+      { admit. }
+      { admit. }
     }
   }
   (* Phi *)
