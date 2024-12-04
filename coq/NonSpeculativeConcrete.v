@@ -1,4 +1,5 @@
 From Coq Require Import List.
+From Coq Require Import ZArith.
 
 Import ListNotations.
 
@@ -489,7 +490,35 @@ Proof.
       {
         simpl in H14.
         destruct (BinInt.Z.geb (Int1.unsigned n2) (BinNums.Zpos BinNums.xH)) eqn:E.
-        { admit. }
+        {
+          destruct t.
+          {
+            assert(L :
+              error_state
+                (mk_state
+                  ic
+                  (CMD_Inst cid (INSTR_Op v (OP_IBinop (Shl false false) (TYPE_I w) e1 e2)))
+                  (c0 :: cs0)
+                  pbid
+                  ls
+                  stk
+                  gs
+                  mdl
+                )
+            ).
+            {
+              apply ES_Shl with (di := DI_I1 n2); try assumption.
+              simpl.
+              admit.
+            }
+            inversion Hsafe.
+            apply H2 in L.
+            destruct L.
+          }
+          { admit. }
+          { admit. }
+          { admit. }
+        }
         {
           inversion H14; subst.
           discriminate.

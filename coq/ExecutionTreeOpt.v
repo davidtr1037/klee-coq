@@ -1321,6 +1321,7 @@ Proof.
   }
 Qed.
 
+(* TODO: required that init_s is not an error state in safe_et_opt? *)
 Theorem program_safety_via_et: forall mdl fid init_s l,
   is_supported_module mdl ->
   (init_sym_state mdl fid) = Some init_s ->
