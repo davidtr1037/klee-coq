@@ -11,6 +11,8 @@ From SE Require Import LLVMAst.
 From SE Require Import LLVMUtils.
 From SE Require Import Relation.
 
+From SE.Numeric Require Import Integers.
+
 From SE.Utils Require Import IDMap.
 From SE.Utils Require Import ListUtil.
 
@@ -566,6 +568,16 @@ Definition init_state (mdl : llvm_module) (fid : function_id) : option state :=
   end
 .
 
+Definition shl_error_condition di w : bool :=
+  match di with
+  | DI_I1 n
+  | DI_I8 n
+  | DI_I16 n
+  | DI_I32 n
+  | DI_I64 n => cmpu Cge n (repr (Zpos w))
+  end
+.
+
 Inductive error_state : state -> Prop :=
   (* TODO: remove? *)
   | ES_Assert : forall ic cid args anns cs pbid ls stk gs mdl d,
@@ -602,7 +614,7 @@ Inductive error_state : state -> Prop :=
   (* TODO: add assumptions for e1 e2? safe_llvm_expr? *)
   | ES_UDivByZero : forall ic cid v exact t e1 e2 cs pbid ls stk gs mdl di,
       (eval_exp ls gs (Some t) e2) = Some (DV_Int di) ->
-      di_is_zero di = true ->
+      di_is_const di 0 = true ->
       error_state
         (mk_state
           ic
@@ -619,7 +631,7 @@ Inductive error_state : state -> Prop :=
   (* TODO: use bitwidth instead of type width? *)
   | ES_Shl : forall ic cid v nuw nsw w e1 e2 cs pbid ls stk gs mdl di,
       (eval_exp ls gs (Some (TYPE_I w)) e2) = Some (DV_Int di) ->
-      ((di_unsigned di) >= (Zpos w))%Z ->
+      shl_error_condition di w = true ->
       error_state
         (mk_state
           ic

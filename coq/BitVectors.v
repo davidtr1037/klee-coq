@@ -337,14 +337,13 @@ Global Instance VInt64 : VInt Int64.int := {
   repr := Int64.repr;
 }.
 
-(* TODO: rename? move from here? *)
-Definition di_is_zero (di : dynamic_int) : bool :=
+Definition di_is_const (di : dynamic_int) (n : Z) : bool :=
   match di with
-  | DI_I1 n => eq n zero
-  | DI_I8 n => eq n zero
-  | DI_I16 n => eq n zero
-  | DI_I32 n => eq n zero
-  | DI_I64 n => eq n zero
+  | DI_I1 x => eq x (repr n)
+  | DI_I8 x => eq x (repr n)
+  | DI_I16 x => eq x (repr n)
+  | DI_I32 x => eq x (repr n)
+  | DI_I64 x => eq x (repr n)
   end
 .
 

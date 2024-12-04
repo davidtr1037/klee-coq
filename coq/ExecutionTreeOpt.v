@@ -637,7 +637,7 @@ Proof.
       { apply sort_injection in H5_2. symmetry. assumption. }
       subst.
       rename sort2 into sort.
-      unfold udiv_error_condition in *.
+      unfold sym_udiv_error_condition in *.
       eapply equiv_smt_expr_sat.
       {
         eapply equiv_smt_expr_binop.
@@ -653,7 +653,6 @@ Proof.
     { apply equiv_smt_store_symmetry. assumption. }
     { apply equiv_smt_store_symmetry. assumption. }
   }
-  (* TODO: should be similar *)
   {
     rename se into se2.
     apply equiv_sym_eval_exp with (ls2 := ls1) (gs2 := gs1) in H5.
@@ -666,7 +665,7 @@ Proof.
       { apply sort_injection in H5_2. symmetry. assumption. }
       subst.
       rename sort2 into sort.
-      unfold shl_error_condition in *.
+      unfold sym_shl_error_condition in *.
       eapply equiv_smt_expr_sat.
       {
         eapply equiv_smt_expr_binop.
@@ -1281,6 +1280,11 @@ Proof.
       intros Hes.
       apply error_correspondence in L2_3.
       { apply L4. assumption. }
+      {
+        apply is_supported_multi_step with (s := init_c).
+        { apply multi_ns_step_soundness. assumption. }
+        { apply is_supported_init_state with (mdl := mdl) (fid := fid); assumption. }
+      }
       { assumption. }
     }
     {
@@ -1294,6 +1298,11 @@ Proof.
       intros Hes.
       apply error_correspondence in L2_3.
       { apply L4.  assumption. }
+      {
+        apply is_supported_multi_step with (s := init_c).
+        { apply multi_ns_step_soundness. assumption. }
+        { apply is_supported_init_state with (mdl := mdl) (fid := fid); assumption. }
+      }
       { assumption. }
     }
     {

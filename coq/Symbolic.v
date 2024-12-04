@@ -600,7 +600,7 @@ Inductive sym_step : sym_state -> sym_state -> Prop :=
 
 Definition multi_sym_step := multi sym_step.
 
-Definition udiv_error_condition pc se :=
+Definition sym_udiv_error_condition pc se :=
   match se with
   | Expr sort ast =>
       AST_BinOp
@@ -611,7 +611,7 @@ Definition udiv_error_condition pc se :=
   end
 .
 
-Definition shl_error_condition pc se w :=
+Definition sym_shl_error_condition pc se w :=
   match se with
   | Expr sort ast =>
       AST_BinOp
@@ -660,7 +660,7 @@ Inductive error_sym_state : sym_state -> Prop :=
         )
   | ESS_UDivByZero : forall ic cid v exact t e1 e2 cs pbid ls stk gs syms pc mdl se,
       (sym_eval_exp ls gs (Some t) e2) = Some se ->
-      sat (udiv_error_condition pc se) ->
+      sat (sym_udiv_error_condition pc se) ->
       error_sym_state
         (mk_sym_state
           ic
@@ -676,7 +676,7 @@ Inductive error_sym_state : sym_state -> Prop :=
         )
   | ESS_Shl : forall ic cid v nuw nsw w e1 e2 cs pbid ls stk gs syms pc mdl se,
       (sym_eval_exp ls gs (Some (TYPE_I w)) e2) = Some se ->
-      sat (shl_error_condition pc se w) ->
+      sat (sym_shl_error_condition pc se w) ->
       error_sym_state
         (mk_sym_state
           ic
@@ -839,23 +839,6 @@ Inductive over_approx : sym_state -> state -> Prop :=
   | OA_State : forall s c,
       (exists m, over_approx_via s c m) -> over_approx s c
 .
-
-(* TODO: move to Completeness.v? *)
-(* TODO: assume the s/c are supported and use eval_exp_correspondence? *)
-(* TODO: can we prove without additional assumptions? *)
-Lemma error_correspondence: forall c s,
-  over_approx s c -> error_state c -> error_sym_state s.
-Proof.
-  intros c s Hoa He.
-  inversion Hoa.
-  destruct H as [m H].
-  inversion H; subst.
-  inversion He; subst.
-  { apply ESS_Assert with (d := d); assumption. }
-  { apply ESS_Unreachable. }
-  { admit. }
-  { admit. }
-Admitted.
 
 Lemma pc_unsat_lemma : forall s s',
   sym_step s s' -> unsat_sym_state s -> unsat_sym_state s'.
