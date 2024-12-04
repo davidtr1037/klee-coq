@@ -481,10 +481,54 @@ Proof.
     apply Has_No_Poison; assumption.
   }
   {
-    admit.
+    apply Has_No_Poison.
+    {
+      apply has_no_poison_local_store with (d := d) (ls := ls) (gs := gs) (args := args);
+      try assumption.
+      inversion His; subst.
+      inversion H; subst.
+      assumption.
+    }
+    { assumption. }
+    {
+      apply Stack_Has_No_Poison.
+      intros f' Hin.
+      inversion Hin; subst.
+      {
+        apply Frame_Has_No_Poison.
+        assumption.
+      }
+      {
+        inversion H12; subst.
+        apply H3.
+        assumption.
+      }
+    }
   }
   {
-    admit.
+    apply Has_No_Poison.
+    {
+      apply has_no_poison_local_store with (d := d) (ls := ls) (gs := gs) (args := args);
+      try assumption.
+      inversion His; subst.
+      inversion H; subst.
+      assumption.
+    }
+    { assumption. }
+    {
+      apply Stack_Has_No_Poison.
+      intros f' Hin.
+      inversion Hin; subst.
+      {
+        apply Frame_Has_No_Poison.
+        assumption.
+      }
+      {
+        inversion H12; subst.
+        apply H3.
+        assumption.
+      }
+    }
   }
   {
     apply Has_No_Poison; try assumption.
