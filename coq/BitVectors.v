@@ -420,6 +420,17 @@ Proof.
   { assumption. }
 Qed.
 
+Lemma int1_lt_one : forall (n : Int1.int),
+  (Int1.unsigned n >=? 1)%Z = false -> n = Int1.zero.
+Proof.
+  intros n H.
+  assert(L: n = Int1.zero \/ n = Int1.one).
+  { apply int1_destruct. }
+  destruct L.
+  { assumption. }
+  { subst. simpl in H. discriminate H. }
+Qed.
+
 Lemma int32_eqb_eq : forall (x y : Int32.int),
   Int32.eq x y = true -> x = y.
 Proof.
