@@ -1,3 +1,4 @@
+From Coq Require Import Lia.
 From Coq Require Import List.
 From Coq Require Import ZArith.
 
@@ -489,7 +490,7 @@ Proof.
       try discriminate H14.
       {
         simpl in H14.
-        destruct (BinInt.Z.geb (Int1.unsigned n2) (BinNums.Zpos BinNums.xH)) eqn:E.
+        destruct ((Int1.unsigned n2) >=? 1)%Z eqn:E.
         {
           destruct t.
           {
@@ -508,8 +509,17 @@ Proof.
             ).
             {
               apply ES_Shl with (di := DI_I1 n2); try assumption.
+              assert(Lw : w = 1%positive).
+              { admit. }
+              rewrite Lw.
               simpl.
-              admit.
+              unfold Int1.ltu.
+              rewrite Int1.unsigned_repr_eq.
+              replace (1 mod Int1.modulus)%Z with (1%Z); try reflexivity.
+              rewrite Z.geb_ge in E.
+              apply Coqlib.zlt_false with (A := bool) (a := true) (b := false) in E.
+              rewrite E.
+              reflexivity.
             }
             inversion Hsafe.
             apply H2 in L.
