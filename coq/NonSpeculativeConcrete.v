@@ -407,6 +407,15 @@ Proof.
   }
 Qed.
 
+Lemma infer_width_from_eval_exp_i1 : forall ls gs w e n,
+  is_supported_exp e ->
+  eval_exp ls gs (Some (TYPE_I w)) e = Some (DV_Int (DI_I1 n)) ->
+  w = 1%positive.
+Proof.
+  intros ls gs w e n His Heval.
+  inversion His; subst; simpl in Heval.
+Admitted.
+
 Lemma has_no_poison_step : forall s1 s2,
   is_supported_state s1 ->
   safe_state ns_step s1 ->
@@ -448,7 +457,7 @@ Proof.
       try discriminate H14.
       {
         simpl in H14.
-        destruct (BinInt.Z.eqb (Int1.unsigned n2) BinNums.Z0) eqn:E; subst.
+        destruct ((Int1.unsigned n2) =? 0)%Z eqn:E; subst.
         { discriminate H14. }
         {
           inversion H14. subst.
@@ -509,7 +518,7 @@ Proof.
           {
             apply ES_Shl with (di := DI_I1 n2); try assumption.
             assert(Lw : w = 1%positive).
-            { admit. }
+            { eapply infer_width_from_eval_exp_i1; eassumption. }
             rewrite Lw.
             simpl.
             unfold Int1.ltu.
