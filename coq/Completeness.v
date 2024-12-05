@@ -1229,11 +1229,12 @@ Proof.
         }
       }
     }
+    (* UDiv *)
     {
       simpl in H10.
       destruct
-        (eval_exp c_ls c_gs (Some t) e1) as [dv1 | ] eqn:E1,
-        (eval_exp c_ls c_gs (Some t) e2) as [dv2 | ] eqn:E2;
+        (eval_exp c_ls c_gs (Some (TYPE_I w)) e1) as [dv1 | ] eqn:E1,
+        (eval_exp c_ls c_gs (Some (TYPE_I w)) e2) as [dv2 | ] eqn:E2;
       try discriminate H10.
       destruct dv1 as [di1 | | ] , dv2 as [di2 | | ];
       try (
@@ -1260,15 +1261,15 @@ Proof.
         destruct (Int1.unsigned n2 =? 0)%Z eqn:En2; try discriminate H10.
         assert(L1 :
           over_approx_via_model
-            (eval_exp c_ls c_gs (Some t) e1)
-            (sym_eval_exp s_ls s_gs (Some t) e1)
+            (eval_exp c_ls c_gs (Some (TYPE_I w)) e1)
+            (sym_eval_exp s_ls s_gs (Some (TYPE_I w)) e1)
             m
         ).
         { apply eval_exp_correspondence; assumption. }
         assert(L2 :
           over_approx_via_model
-            (eval_exp c_ls c_gs (Some t) e2)
-            (sym_eval_exp s_ls s_gs (Some t) e2)
+            (eval_exp c_ls c_gs (Some (TYPE_I w)) e2)
+            (sym_eval_exp s_ls s_gs (Some (TYPE_I w)) e2)
             m
         ).
         { apply eval_exp_correspondence; assumption. }
@@ -1282,7 +1283,6 @@ Proof.
         assert(Lsort2 : sort2 = Sort_BV1).
         { eapply infer_sort. eassumption. }
         subst.
-        remember (sym_eval_exp s_ls s_gs None (OP_IBinop (UDiv false) t e1 e2)) as x.
         exists (mk_sym_state
           (next_inst_counter c_ic c)
           c
@@ -1332,8 +1332,8 @@ Proof.
     {
       simpl in H10.
       destruct
-        (eval_exp c_ls c_gs (Some t) e1) as [dv1 | ] eqn:E1,
-        (eval_exp c_ls c_gs (Some t) e2) as [dv2 | ] eqn:E2;
+        (eval_exp c_ls c_gs (Some (TYPE_I w)) e1) as [dv1 | ] eqn:E1,
+        (eval_exp c_ls c_gs (Some (TYPE_I w)) e2) as [dv2 | ] eqn:E2;
       try discriminate H10.
       destruct dv1 as [di1 | | ] , dv2 as [di2 | | ];
       try (
@@ -1374,15 +1374,15 @@ Proof.
         {
           assert(L1 :
             over_approx_via_model
-              (eval_exp c_ls c_gs (Some t) e1)
-              (sym_eval_exp s_ls s_gs (Some t) e1)
+              (eval_exp c_ls c_gs (Some (TYPE_I w)) e1)
+              (sym_eval_exp s_ls s_gs (Some (TYPE_I w)) e1)
               m
           ).
           { apply eval_exp_correspondence; assumption. }
           assert(L2 :
             over_approx_via_model
-              (eval_exp c_ls c_gs (Some t) e2)
-              (sym_eval_exp s_ls s_gs (Some t) e2)
+              (eval_exp c_ls c_gs (Some (TYPE_I w)) e2)
+              (sym_eval_exp s_ls s_gs (Some (TYPE_I w)) e2)
               m
           ).
           { apply eval_exp_correspondence; assumption. }
@@ -1396,7 +1396,6 @@ Proof.
           assert(Lsort2 : sort2 = Sort_BV1).
           { eapply infer_sort. eassumption. }
           subst.
-          remember (sym_eval_exp s_ls s_gs None (OP_IBinop (Shl false false) t e1 e2)) as x.
           exists (mk_sym_state
             (next_inst_counter c_ic c)
             c
@@ -1905,8 +1904,8 @@ Proof.
     {
       assert(L :
         over_approx_via_model
-          (eval_exp c_ls c_gs (Some t) e2)
-          (sym_eval_exp s_ls s_gs (Some t) e2)
+          (eval_exp c_ls c_gs (Some (TYPE_I w)) e2)
+          (sym_eval_exp s_ls s_gs (Some (TYPE_I w)) e2)
           m
       ).
       { apply eval_exp_correspondence; assumption. }

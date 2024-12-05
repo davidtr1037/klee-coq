@@ -431,15 +431,15 @@ Proof.
     {
       simpl in H14.
       destruct
-        (eval_exp ls gs (Some t) e1) as [dv1 | ] eqn:E1,
-        (eval_exp ls gs (Some t) e2) as [dv2 | ] eqn:E2;
+        (eval_exp ls gs (Some (TYPE_I w)) e1) as [dv1 | ] eqn:E1,
+        (eval_exp ls gs (Some (TYPE_I w)) e2) as [dv2 | ] eqn:E2;
       try discriminate H14.
       unfold eval_ibinop in H14.
       destruct dv1 as [di1 | | ] eqn:Edv1, dv2 as [di2 | | ] eqn:Edv2;
       try (discriminate H14);
       try (destruct di1; discriminate H14);
       try (
-        apply has_no_poison_eval_exp with (ls := ls) (gs := gs) (ot := Some t) (e := e1);
+        apply has_no_poison_eval_exp with (ls := ls) (gs := gs) (ot := Some (TYPE_I w)) (e := e1);
         try assumption;
         rewrite H14 in E1;
         assumption
@@ -466,22 +466,23 @@ Proof.
     {
       simpl in H14.
       destruct
-        (eval_exp ls gs (Some t) e1) as [dv1 | ] eqn:E1,
-        (eval_exp ls gs (Some t) e2) as [dv2 | ] eqn:E2;
+        (eval_exp ls gs (Some (TYPE_I w)) e1) as [dv1 | ] eqn:E1,
+        (eval_exp ls gs (Some (TYPE_I w)) e2) as [dv2 | ] eqn:E2;
       try discriminate H14.
       unfold eval_ibinop in H14.
       destruct dv1 as [di1 | | ] eqn:Edv1, dv2 as [di2 | | ] eqn:Edv2;
       try (discriminate H14);
       try (destruct di1; discriminate H14);
       try (
-        apply has_no_poison_eval_exp with (ls := ls) (gs := gs) (ot := Some t) (e := e1);
+        apply has_no_poison_eval_exp
+          with (ls := ls) (gs := gs) (ot := Some (TYPE_I w)) (e := e1);
         try assumption;
         rewrite H14 in E1;
         assumption
       );
       try (
         apply has_no_poison_eval_exp
-          with (ls := ls) (gs := gs) (ot := Some t) (e := e2) (dv := DV_Poison) in H7;
+          with (ls := ls) (gs := gs) (ot := Some (TYPE_I w)) (e := e2) (dv := DV_Poison) in H7;
         try assumption;
         destruct H7;
         reflexivity
@@ -492,42 +493,36 @@ Proof.
         simpl in H14.
         destruct ((Int1.unsigned n2) >=? 1)%Z eqn:E.
         {
-          destruct t.
+          assert(L :
+            error_state
+              (mk_state
+                ic
+                (CMD_Inst cid (INSTR_Op v (OP_IBinop (Shl false false) (TYPE_I w) e1 e2)))
+                (c0 :: cs0)
+                pbid
+                ls
+                stk
+                gs
+                mdl
+              )
+          ).
           {
-            assert(L :
-              error_state
-                (mk_state
-                  ic
-                  (CMD_Inst cid (INSTR_Op v (OP_IBinop (Shl false false) (TYPE_I w) e1 e2)))
-                  (c0 :: cs0)
-                  pbid
-                  ls
-                  stk
-                  gs
-                  mdl
-                )
-            ).
-            {
-              apply ES_Shl with (di := DI_I1 n2); try assumption.
-              assert(Lw : w = 1%positive).
-              { admit. }
-              rewrite Lw.
-              simpl.
-              unfold Int1.ltu.
-              rewrite Int1.unsigned_repr_eq.
-              replace (1 mod Int1.modulus)%Z with (1%Z); try reflexivity.
-              rewrite Z.geb_ge in E.
-              apply Coqlib.zlt_false with (A := bool) (a := true) (b := false) in E.
-              rewrite E.
-              reflexivity.
-            }
-            inversion Hsafe.
-            apply H2 in L.
-            destruct L.
+            apply ES_Shl with (di := DI_I1 n2); try assumption.
+            assert(Lw : w = 1%positive).
+            { admit. }
+            rewrite Lw.
+            simpl.
+            unfold Int1.ltu.
+            rewrite Int1.unsigned_repr_eq.
+            replace (1 mod Int1.modulus)%Z with (1%Z); try reflexivity.
+            rewrite Z.geb_ge in E.
+            apply Coqlib.zlt_false with (A := bool) (a := true) (b := false) in E.
+            rewrite E.
+            reflexivity.
           }
-          { admit. }
-          { admit. }
-          { admit. }
+          inversion Hsafe.
+          apply H2 in L.
+          destruct L.
         }
         {
           inversion H14; subst.

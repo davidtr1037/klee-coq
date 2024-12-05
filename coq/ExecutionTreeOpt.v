@@ -827,18 +827,18 @@ Proof.
     {
       simpl in H.
       destruct
-        (sym_eval_exp ls1 gs1 (Some t) e1) as [se1_1 | ] eqn:Ee1,
-        (sym_eval_exp ls1 gs1 (Some t) e2) as [se2_1 | ] eqn:Ee2;
+        (sym_eval_exp ls1 gs1 (Some (TYPE_I w)) e1) as [se1_1 | ] eqn:Ee1,
+        (sym_eval_exp ls1 gs1 (Some (TYPE_I w)) e2) as [se2_1 | ] eqn:Ee2;
       try discriminate H.
       {
         assert(L1 :
           exists se1_2,
-            (sym_eval_exp ls2 gs2 (Some t) e1 = Some se1_2 /\ equiv_smt_expr se1_1 se1_2)
+            (sym_eval_exp ls2 gs2 (Some (TYPE_I w)) e1 = Some se1_2 /\ equiv_smt_expr se1_1 se1_2)
         ).
         { eapply equiv_sym_eval_exp; eassumption. }
         assert(L2 :
           exists se2_2,
-            (sym_eval_exp ls2 gs2 (Some t) e2 = Some se2_2 /\ equiv_smt_expr se2_1 se2_2)
+            (sym_eval_exp ls2 gs2 (Some (TYPE_I w)) e2 = Some se2_2 /\ equiv_smt_expr se2_1 se2_2)
         ).
         { eapply equiv_sym_eval_exp; eassumption. }
         destruct L1 as [se1_2 [L1_1 L1_2]].
@@ -887,18 +887,18 @@ Proof.
     {
       simpl in H.
       destruct
-        (sym_eval_exp ls1 gs1 (Some t) e1) as [se1_1 | ] eqn:Ee1,
-        (sym_eval_exp ls1 gs1 (Some t) e2) as [se2_1 | ] eqn:Ee2;
+        (sym_eval_exp ls1 gs1 (Some (TYPE_I w)) e1) as [se1_1 | ] eqn:Ee1,
+        (sym_eval_exp ls1 gs1 (Some (TYPE_I w)) e2) as [se2_1 | ] eqn:Ee2;
       try discriminate H.
       {
         assert(L1 :
           exists se1_2,
-            (sym_eval_exp ls2 gs2 (Some t) e1 = Some se1_2 /\ equiv_smt_expr se1_1 se1_2)
+            (sym_eval_exp ls2 gs2 (Some (TYPE_I w)) e1 = Some se1_2 /\ equiv_smt_expr se1_1 se1_2)
         ).
         { eapply equiv_sym_eval_exp; eassumption. }
         assert(L2 :
           exists se2_2,
-            (sym_eval_exp ls2 gs2 (Some t) e2 = Some se2_2 /\ equiv_smt_expr se2_1 se2_2)
+            (sym_eval_exp ls2 gs2 (Some (TYPE_I w)) e2 = Some se2_2 /\ equiv_smt_expr se2_1 se2_2)
         ).
         { eapply equiv_sym_eval_exp; eassumption. }
         destruct L1 as [se1_2 [L1_1 L1_2]].
