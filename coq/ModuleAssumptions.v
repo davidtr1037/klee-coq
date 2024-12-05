@@ -59,6 +59,7 @@ Inductive is_supported_function_arg : function_arg -> Prop :=
       is_supported_function_arg ((t, e), attrs)
 .
 
+(* TODO: add SDiv, LShr, AShr, URem, SRem *)
 Inductive is_supported_cmd : llvm_cmd -> Prop :=
   | IS_INSTR_Op : forall n v e,
       is_supported_exp e ->
