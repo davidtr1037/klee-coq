@@ -251,6 +251,27 @@ Proof.
   assumption.
 Qed.
 
+Lemma well_scoped_lookup_ident : forall ls gs syms id se,
+  well_scoped_smt_store ls syms ->
+  well_scoped_smt_store gs syms ->
+  sym_lookup_ident ls gs id = Some se ->
+  well_scoped_smt_expr se syms.
+Proof.
+  intros ls gs syms id se Hls Hgs Heq.
+  unfold sym_lookup_ident in Heq.
+  destruct id as [x | x]; simpl in Heq.
+  {
+    inversion Hgs; subst.
+    specialize (H x se).
+    apply H; assumption.
+  }
+  {
+    inversion Hls; subst.
+    specialize (H x se).
+    apply H; assumption.
+  }
+Qed.
+
 Lemma well_scoped_sym_eval_exp : forall ls gs ot e se syms,
   well_scoped_smt_store ls syms ->
   well_scoped_smt_store gs syms ->
@@ -262,18 +283,24 @@ Proof.
   generalize dependent ot.
   induction e; intros ot se Heq; simpl in *.
   {
-    unfold sym_lookup_ident.
-    destruct id as [x | x] eqn:E; simpl in Heq.
+    unfold sym_eval_ident in Heq.
+    destruct ot as [t | ].
     {
-      inversion Hws_gs; subst.
-      specialize (H x se).
-      apply H; assumption.
+      destruct (sym_lookup_ident ls gs id) as [se' | ] eqn:E; try discriminate Heq.
+      destruct t; try discriminate Heq.
+      repeat (
+        destruct w;
+        try discriminate Heq;
+        try (
+          destruct se' as [sort ast];
+          destruct sort; try discriminate Heq;
+          apply injection_some in Heq;
+          subst;
+          apply well_scoped_lookup_ident with (ls := ls) (gs := gs) (id := id); assumption
+        )
+      ).
     }
-    {
-      inversion Hws_ls; subst.
-      specialize (H x se).
-      apply H; assumption.
-    }
+    { apply well_scoped_lookup_ident with (ls := ls) (gs := gs) (id := id); assumption. }
   }
   {
     destruct ot eqn:Eot.

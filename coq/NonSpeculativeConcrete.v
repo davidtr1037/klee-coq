@@ -430,6 +430,18 @@ Lemma infer_width_from_eval_exp_i1 : forall ls gs w e n,
 Proof.
   intros ls gs w e n His Heval.
   inversion His; subst; simpl in Heval.
+  {
+    destruct (lookup_ident ls gs id) as [dv | ]; try discriminate Heval.
+    repeat (
+      destruct w;
+      try discriminate Heval;
+      try (
+        destruct dv; try discriminate Heval;
+        destruct di; try discriminate Heval;
+        reflexivity
+      )
+    ).
+  }
 Admitted.
 
 Lemma has_no_poison_step : forall s1 s2,

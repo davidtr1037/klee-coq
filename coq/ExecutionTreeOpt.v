@@ -183,36 +183,83 @@ Proof.
   induction e; intros ot se1 Heval; simpl in Heval.
   (* EXP_Ident *)
   {
-    unfold sym_lookup_ident in Heval.
-    destruct id as [x | x] eqn:E.
+    destruct ot as [t | ].
     {
-      inversion Heq2; subst.
-      specialize (H x).
-      destruct H as [[H_1 H_2]| H].
-      { rewrite Heval in H_1. discriminate H_1. }
+      simpl in Heval.
+      destruct (sym_lookup_ident ls1 gs1 id) eqn:E; try discriminate Heval.
+      destruct t; try discriminate Heval.
+      destruct w.
+      { discriminate Heval. }
+      { admit. }
       {
-        destruct H as [se1' [se2 [H_1 [H_2 H_3]]]].
-        rewrite H_1 in Heval.
-        inversion Heval; subst.
-        exists se2.
-        split.
-        { simpl. assumption. }
-        { assumption. }
+        destruct s as [sort ast].
+        destruct sort.
+        {
+          destruct id.
+          {
+            simpl in E.
+            inversion Heq2; subst.
+            specialize (H id).
+            destruct H as [[H_1 H_2]| H].
+            { rewrite E in H_1. discriminate. }
+            {
+              destruct H as [se1' [se2 [H_1 [H_2 H_3]]]].
+              rewrite H_1 in E.
+              inversion E; subst.
+              exists se2.
+              split.
+              {
+                simpl.
+                rewrite H_2.
+                destruct se2 as [sort2 ast2].
+                destruct sort2; try inversion H_3.
+                reflexivity.
+              }
+              { inversion Heval; subst. assumption. }
+            }
+          }
+          { admit. }
+        }
+        { admit. }
+        { admit. }
+        { admit. }
+        { admit. }
       }
     }
     {
-      inversion Heq1; subst.
-      specialize (H x).
-      destruct H as [[H_1 H_2]| H].
-      { rewrite Heval in H_1. discriminate H_1. }
+      unfold sym_eval_ident in Heval.
+      destruct id as [x | x] eqn:E.
       {
-        destruct H as [se1' [se2 [H_1 [H_2 H_3]]]].
-        rewrite H_1 in Heval.
-        inversion Heval; subst.
-        exists se2.
-        split.
-        { simpl. assumption. }
-        { assumption. }
+        simpl in Heval.
+        inversion Heq2; subst.
+        specialize (H x).
+        destruct H as [[H_1 H_2]| H].
+        { rewrite Heval in H_1. discriminate H_1. }
+        {
+          destruct H as [se1' [se2 [H_1 [H_2 H_3]]]].
+          rewrite H_1 in Heval.
+          inversion Heval; subst.
+          exists se2.
+          split.
+          { simpl. assumption. }
+          { assumption. }
+        }
+      }
+      {
+        simpl in Heval.
+        inversion Heq1; subst.
+        specialize (H x).
+        destruct H as [[H_1 H_2]| H].
+        { rewrite Heval in H_1. discriminate H_1. }
+        {
+          destruct H as [se1' [se2 [H_1 [H_2 H_3]]]].
+          rewrite H_1 in Heval.
+          inversion Heval; subst.
+          exists se2.
+          split.
+          { simpl. assumption. }
+          { assumption. }
+        }
       }
     }
   }
@@ -373,7 +420,7 @@ Proof.
     }
   }
   { inversion Heval. }
-Qed.
+Admitted.
 
 Lemma equiv_sym_eval_phi_args : forall ls1 gs1 ls2 gs2 t args pbid se1,
   equiv_smt_store ls1 ls2 ->

@@ -573,16 +573,88 @@ Proof.
   induction e; intros ot; simpl; try (inversion His; subst).
   (* EXP_Ident *)
   {
-    destruct id.
+    unfold eval_ident, sym_eval_ident.
+    destruct ot as [t | ].
     {
-      unfold lookup_ident, sym_lookup_ident.
-      inversion Hgs; subst.
-      apply H.
+      destruct
+        (lookup_ident c_ls c_gs id) as [dv | ] eqn:Edv,
+        (sym_lookup_ident s_ls s_gs id) as [se | ] eqn:Ese.
+      {
+        destruct t; try apply OA_None.
+        repeat (
+          destruct w;
+          try apply OA_None;
+          try (
+            destruct id;
+            [
+              inversion Hgs; subst;
+              specialize (H id);
+              unfold lookup_ident, sym_lookup_ident in *;
+              rewrite Edv, Ese in H;
+              inversion H; subst;
+              destruct sort; try apply OA_None;
+              simpl;
+              assumption |
+              inversion Hls; subst;
+              specialize (H id);
+              unfold lookup_ident, sym_lookup_ident in *;
+              rewrite Edv, Ese in H;
+              inversion H; subst;
+              destruct sort; try apply OA_None;
+              simpl;
+              assumption
+            ]
+          )
+        ).
+      }
+      {
+        destruct id.
+        {
+          inversion Hgs; subst.
+          specialize (H id).
+          unfold lookup_ident, sym_lookup_ident in *.
+          rewrite Edv, Ese in H.
+          inversion H.
+        }
+        {
+          inversion Hls; subst.
+          specialize (H id).
+          unfold lookup_ident, sym_lookup_ident in *.
+          rewrite Edv, Ese in H.
+          inversion H.
+        }
+      }
+      {
+        destruct id.
+        {
+          inversion Hgs; subst.
+          specialize (H id).
+          unfold lookup_ident, sym_lookup_ident in *.
+          rewrite Edv, Ese in H.
+          inversion H.
+        }
+        {
+          inversion Hls; subst.
+          specialize (H id).
+          unfold lookup_ident, sym_lookup_ident in *.
+          rewrite Edv, Ese in H.
+          inversion H.
+        }
+      }
+      { apply OA_None. }
     }
     {
-      unfold lookup_ident, sym_lookup_ident.
-      inversion Hls; subst.
-      apply H.
+      destruct id.
+      {
+        unfold lookup_ident, sym_lookup_ident.
+        inversion Hgs; subst.
+        apply H.
+      }
+      {
+        unfold lookup_ident, sym_lookup_ident.
+        inversion Hls; subst.
+        apply H.
+      }
     }
   }
   (* EXP_Integer *)
