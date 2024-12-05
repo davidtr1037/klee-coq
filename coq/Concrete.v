@@ -71,10 +71,29 @@ Definition lookup_ident (s : dv_store) (g : dv_store) (id : ident) : option dyna
   end
 .
 
+Definition eval_ident (s : dv_store) (g : dv_store) (ot : option typ) (id : ident) : option dynamic_value :=
+  match ot with
+  | Some t =>
+    match (lookup_ident s g id) with
+    | Some dv =>
+        match t, dv with
+        | TYPE_I 1, DV_Int (DI_I1 n) => Some dv
+        | TYPE_I 8, DV_Int (DI_I8 n) => Some dv
+        | TYPE_I 16, DV_Int (DI_I16 n) => Some dv
+        | TYPE_I 32, DV_Int (DI_I32 n) => Some dv
+        | TYPE_I 64, DV_Int (DI_I64 n) => Some dv
+        | _, _ => None
+        end
+    | None => None
+    end
+  | None => lookup_ident s g id
+  end
+.
+
 (* TODO: why vellvm passes dtyp? *)
 Fixpoint eval_exp (s : dv_store) (g : dv_store) (t : option typ) (e : llvm_exp) : option dynamic_value :=
   match e with
-  | EXP_Ident id => lookup_ident s g id
+  | EXP_Ident id => eval_ident s g t id
   | EXP_Integer n =>
       match t with
       | Some (TYPE_I bits) => make_dv bits n

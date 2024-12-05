@@ -145,21 +145,37 @@ Proof.
   generalize dependent ot.
   induction e; intros ot dv Heval; inversion His; subst; simpl in Heval.
   {
-    unfold lookup_ident in Heval.
-    destruct id.
+    unfold eval_ident in Heval.
+    destruct ot as [t | ] eqn:Eot.
     {
-      inversion Hnp_gs.
-      specialize (H id).
-      rewrite Heval in H.
-      apply injection_some_neq.
-      assumption.
+      destruct (lookup_ident ls gs id) as [dv' | ] eqn:E; try discriminate Heval.
+      destruct t; try discriminate Heval.
+      repeat (
+        destruct w;
+        try discriminate Heval;
+        try (
+          destruct dv'; try discriminate Heval;
+          destruct di; (inversion Heval; subst; discriminate)
+        )
+      ).
     }
     {
-      inversion Hnp_ls.
-      specialize (H id).
-      rewrite Heval in H.
-      apply injection_some_neq.
-      assumption.
+      unfold lookup_ident in Heval.
+      destruct id.
+      {
+        inversion Hnp_gs.
+        specialize (H id).
+        rewrite Heval in H.
+        apply injection_some_neq.
+        assumption.
+      }
+      {
+        inversion Hnp_ls.
+        specialize (H id).
+        rewrite Heval in H.
+        apply injection_some_neq.
+        assumption.
+      }
     }
   }
   {
