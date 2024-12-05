@@ -224,15 +224,16 @@ Proof.
     apply IHe with (dv := dv') (ot := Some t1) in H4; try assumption.
     unfold convert in Heval.
     destruct conv.
+    (* Trunc *)
     {
-      destruct t1 eqn:Et1;
+      destruct t1 as [w1 | | | ] eqn:Et1;
       try (
         destruct dv'; try discriminate Heval;
         destruct H4;
         reflexivity
       ).
       repeat (
-        destruct w;
+        destruct w1;
         try (
           destruct dv'; try discriminate Heval;
           destruct H4;
@@ -243,15 +244,15 @@ Proof.
         destruct dv' eqn:Edv'.
         {
           destruct di; try discriminate Heval.
-          destruct t2; try discriminate Heval.
+          destruct t2 as [w2 | | | ]; try discriminate Heval.
           repeat (
-            destruct w;
+            destruct w2;
             try discriminate Heval;
             try (inversion Heval; subst; intros Hf; discriminate Hf)
           ).
         }
         { discriminate Heval. }
-        { inversion Heval. destruct H4. reflexivity. }
+        { inversion Heval; subst. destruct H4. reflexivity. }
       }
       (* TODO: similar *)
       { admit. }
@@ -262,8 +263,7 @@ Proof.
     { admit. }
     { admit. }
     {
-      destruct t1 eqn:Et1, t2 eqn:Et2; try discriminate Heval.
-      rename w into w1, w0 into w2.
+      destruct t1 as [w1 | | | ] eqn:Et1, t2 as [w2 | | | ] eqn:Et2; try discriminate Heval.
       destruct (BinPos.Pos.eqb w1 w2) eqn:Ew.
       {
         inversion Heval; subst.
