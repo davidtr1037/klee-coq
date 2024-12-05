@@ -15,28 +15,13 @@ From SE Require Import Symbolic.
 Inductive is_supported_ibinop : ibinop -> Prop :=
   | IS_Add : is_supported_ibinop (Add false false)
   | IS_Sub : is_supported_ibinop (Sub false false)
-(*
   | IS_Mul : is_supported_ibinop (Mul false false)
-  | IS_URem : is_supported_ibinop URem
-  | IS_SRem : is_supported_ibinop SRem
   | IS_And : is_supported_ibinop And
   | IS_Or : is_supported_ibinop Or
   | IS_Xor : is_supported_ibinop Xor
-*)
-.
-
-Inductive is_supported_div : ibinop -> Prop :=
-  | IS_UDiv : is_supported_div (UDiv false)
 (*
-  | IS_SDiv : is_supported_div (SDiv false)
-*)
-.
-
-Inductive is_supported_shift : ibinop -> Prop :=
-  | IS_Shl : is_supported_shift (Shl false false)
-(*
-  | IS_LShr : is_supported_shift (LShr false)
-  | IS_AShr : is_supported_shift (AShr false)
+  | IS_URem : is_supported_ibinop URem
+  | IS_SRem : is_supported_ibinop SRem
 *)
 .
 
