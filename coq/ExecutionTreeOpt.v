@@ -245,24 +245,17 @@ Proof.
       { admit. }
       {
         destruct s as [sort ast].
-        destruct sort.
-        {
-          simpl.
-          apply equiv_sym_lookup_ident with (ls2 := ls2) (gs2 := gs2) in E; try assumption.
-          destruct E as [se2 [E_1 E_2]].
-          exists se2.
-          rewrite E_1.
-          destruct se2 as [sort2 ast2].
-          destruct sort2; try inversion E_2.
-          inversion Heval; subst.
-          split.
-          { reflexivity. }
-          { assumption. }
-        }
-        { admit. }
-        { admit. }
-        { admit. }
-        { admit. }
+        destruct sort; (
+          simpl;
+          apply equiv_sym_lookup_ident with (ls2 := ls2) (gs2 := gs2) in E; try assumption;
+          destruct E as [se2 [E_1 E_2]];
+          exists se2;
+          rewrite E_1;
+          destruct se2 as [sort2 ast2];
+          destruct sort2; try inversion E_2;
+          inversion Heval; subst;
+          split; try reflexivity; try assumption
+        ).
       }
     }
     {
