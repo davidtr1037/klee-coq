@@ -312,30 +312,31 @@ klee::ref<CoqTactic> OptimizedProofGenerator::getTacticForSubtreeAssignment(Stat
 
   ref<CoqExpr> var = nullptr;
   ref<CoqExpr> expr = nullptr;
-  ref<CoqTactic> exprTactic = nullptr;
 
   if (isa<BinaryOperator>(si.inst)) {
     BinaryOperator *bo = cast<BinaryOperator>(si.inst);
     var = moduleTranslator->translateBinaryOperatorName(bo);
     expr = moduleTranslator->translateBinaryOperatorExpr(bo);
-    exprTactic = moduleSupport->getTacticForBinaryOperatorExpr(bo);
   }
 
   if (isa<CmpInst>(si.inst)) {
     CmpInst *ci = cast<CmpInst>(si.inst);
     var = moduleTranslator->translateCmpInstName(ci);
     expr = moduleTranslator->translateCmpInstExpr(ci);
-    exprTactic = moduleSupport->getTacticForCmpExpr(ci);
   }
 
   if (isa<CastInst>(si.inst)) {
     CastInst *ci = cast<CastInst>(si.inst);
     var = moduleTranslator->translateCastInstName(ci);
     expr = moduleTranslator->translateCastInstExpr(ci);
-    exprTactic = moduleSupport->getTacticForCastExpr(ci);
   }
 
-  assert(var && expr && exprTactic);
+  auto i = moduleSupport->exprLemmaNames.find(si.inst);
+  assert(i != moduleSupport->exprLemmaNames.end());
+  std::string exprLemmaName = i->second;
+  ref<CoqTactic> exprTactic = new Block({new Apply(exprLemmaName)});
+
+  assert(var && expr);
   return new Block(
     {
       new Apply(

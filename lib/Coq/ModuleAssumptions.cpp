@@ -193,15 +193,7 @@ ref<CoqLemma> ModuleSupport::getLemmaForInst(Instruction &inst) {
 }
 
 ref<CoqTactic> ModuleSupport::getTacticForInst(Instruction &inst) {
-  if (isa<BinaryOperator>(&inst)) {
-    return getTacticForAssignment(inst);
-  }
-
-  if (isa<CmpInst>(&inst)) {
-    return getTacticForAssignment(inst);
-  }
-
-  if (isa<CastInst>(&inst)) {
+  if (isa<BinaryOperator>(&inst) || isa<CmpInst>(&inst) || isa<CastInst>(&inst)) {
     return getTacticForAssignment(inst);
   }
 
@@ -231,6 +223,7 @@ ref<CoqTactic> ModuleSupport::getTacticForInst(Instruction &inst) {
 ref<CoqTactic> ModuleSupport::getTacticForAssignment(Instruction &inst) {
   ref<CoqLemma> lemma = getLemmaForAssignmentExpr(inst);
   exprLemmas.push_back(lemma);
+  exprLemmaNames.insert(std::make_pair(&inst, lemma->name));
   return new Block(
     {
       new Apply("IS_INSTR_Op"),
@@ -239,7 +232,6 @@ ref<CoqTactic> ModuleSupport::getTacticForAssignment(Instruction &inst) {
   );
 }
 
-/* TODO: associate the instruction with the lemma name */
 ref<CoqLemma> ModuleSupport::getLemmaForAssignmentExpr(Instruction &inst) {
   std::string lemmaName = "is_supported_expr_" + std::to_string(moduleTranslator.getInstID(inst));
   /* TODO: refactor */

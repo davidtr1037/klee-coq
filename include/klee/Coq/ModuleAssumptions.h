@@ -9,6 +9,7 @@
 #include "klee/Coq/ModuleTranslation.h"
 
 #include <list>
+#include <map>
 #include <vector>
 
 namespace klee {
@@ -28,6 +29,8 @@ public:
   std::vector<ref<CoqLemma>> instLemmas;
 
   std::list<ref<CoqLemma>> exprLemmas;
+
+  std::map<llvm::Instruction *, std::string> exprLemmaNames;
 
   ModuleSupport(llvm::Module &m, ModuleTranslator &moduleTranslator);
 
