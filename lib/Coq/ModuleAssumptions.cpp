@@ -229,28 +229,54 @@ ref<CoqTactic> ModuleSupport::getTacticForInst(Instruction &inst) {
 }
 
 ref<CoqTactic> ModuleSupport::getTacticForAssignment(Instruction &inst) {
-  ref<CoqTactic> exprTactic = nullptr;
-
-  if (isa<BinaryOperator>(inst)) {
-    exprTactic = getTacticForBinaryOperatorExpr(dyn_cast<BinaryOperator>(&inst));
-  }
-
-  if (isa<CmpInst>(inst)) {
-    exprTactic = getTacticForCmpExpr(dyn_cast<CmpInst>(&inst));
-  }
-
-  if (isa<CastInst>(&inst)) {
-    exprTactic = getTacticForCastExpr(dyn_cast<CastInst>(&inst));
-  }
-
-  assert(exprTactic);
-
+  ref<CoqLemma> lemma = getLemmaForAssignmentExpr(inst);
+  exprLemmas.push_back(lemma);
   return new Block(
     {
       new Apply("IS_INSTR_Op"),
-      exprTactic,
+      new Apply(lemma->name),
     }
   );
+}
+
+/* TODO: associate the instruction with the lemma name */
+ref<CoqLemma> ModuleSupport::getLemmaForAssignmentExpr(Instruction &inst) {
+  std::string lemmaName = "is_supported_expr_" + std::to_string(moduleTranslator.getInstID(inst));
+  /* TODO: refactor */
+  ref<CoqExpr> expr = nullptr;
+  if (isa<BinaryOperator>(&inst)) {
+    expr = moduleTranslator.translateBinaryOperatorExpr(dyn_cast<BinaryOperator>(&inst));
+  }
+  if (isa<CmpInst>(&inst)) {
+    expr = moduleTranslator.translateCmpInstExpr(dyn_cast<CmpInst>(&inst));
+  }
+  if (isa<CastInst>(&inst)) {
+    expr = moduleTranslator.translateCastInstExpr(dyn_cast<CastInst>(&inst));
+  }
+
+  assert(expr);
+
+  return new CoqLemma(
+    lemmaName,
+    new CoqApplication(new CoqVariable("is_supported_exp"), {expr}),
+    getTacticForAssignmentExpr(inst)
+  );
+}
+
+ref<CoqTactic> ModuleSupport::getTacticForAssignmentExpr(Instruction &inst) {
+  if (isa<BinaryOperator>(inst)) {
+    return getTacticForBinaryOperatorExpr(dyn_cast<BinaryOperator>(&inst));
+  }
+
+  if (isa<CmpInst>(inst)) {
+    return getTacticForCmpExpr(dyn_cast<CmpInst>(&inst));
+  }
+
+  if (isa<CastInst>(&inst)) {
+    return getTacticForCastExpr(dyn_cast<CastInst>(&inst));
+  }
+
+  assert(false);
 }
 
 ref<CoqTactic> ModuleSupport::getTacticForBinaryOperatorExpr(BinaryOperator *inst) {

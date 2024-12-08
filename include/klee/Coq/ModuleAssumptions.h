@@ -8,6 +8,7 @@
 #include "klee/Coq/CoqLanguage.h"
 #include "klee/Coq/ModuleTranslation.h"
 
+#include <list>
 #include <vector>
 
 namespace klee {
@@ -25,6 +26,8 @@ public:
   std::vector<ref<CoqLemma>> bbLemmas;
 
   std::vector<ref<CoqLemma>> instLemmas;
+
+  std::list<ref<CoqLemma>> exprLemmas;
 
   ModuleSupport(llvm::Module &m, ModuleTranslator &moduleTranslator);
 
@@ -47,6 +50,10 @@ public:
   ref<CoqTactic> getTacticForInst(llvm::Instruction &inst);
 
   ref<CoqTactic> getTacticForAssignment(llvm::Instruction &inst);
+
+  ref<CoqLemma> getLemmaForAssignmentExpr(llvm::Instruction &inst);
+
+  ref<CoqTactic> getTacticForAssignmentExpr(llvm::Instruction &inst);
 
   ref<CoqTactic> getTacticForBinaryOperatorExpr(llvm::BinaryOperator *inst);
 
