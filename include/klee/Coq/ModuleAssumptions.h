@@ -46,15 +46,17 @@ public:
 
   ref<CoqTactic> getTacticForInst(llvm::Instruction &inst);
 
-  ref<CoqTactic> getTacticForBinaryOperator(llvm::BinaryOperator *inst);
+  ref<CoqTactic> getTacticForAssignment(llvm::Instruction &inst);
+
+  ref<CoqTactic> getTacticForBinaryOperatorExpr(llvm::BinaryOperator *inst);
 
   ref<CoqTactic> getTacticForDivOperator(llvm::BinaryOperator *inst);
 
   ref<CoqTactic> getTacticForShiftOperator(llvm::BinaryOperator *inst);
 
-  ref<CoqTactic> getTacticForCmpInst(llvm::CmpInst *inst);
+  ref<CoqTactic> getTacticForCmpExpr(llvm::CmpInst *inst);
 
-  ref<CoqTactic> getTacticForCastInst(llvm::CastInst *inst);
+  ref<CoqTactic> getTacticForCastExpr(llvm::CastInst *inst);
 
   ref<CoqTactic> getTacticForBranchInst(llvm::BranchInst *inst);
 
@@ -70,7 +72,7 @@ public:
 
   bool isDivOperator(llvm::BinaryOperator *inst);
 
-  bool isShitOperator(llvm::BinaryOperator *inst);
+  bool isShiftOperator(llvm::BinaryOperator *inst);
 
   ~ModuleSupport();
 };

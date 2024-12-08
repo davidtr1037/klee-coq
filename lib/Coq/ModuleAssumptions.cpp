@@ -194,15 +194,15 @@ ref<CoqLemma> ModuleSupport::getLemmaForInst(Instruction &inst) {
 
 ref<CoqTactic> ModuleSupport::getTacticForInst(Instruction &inst) {
   if (isa<BinaryOperator>(&inst)) {
-    return getTacticForBinaryOperator(dyn_cast<BinaryOperator>(&inst));
+    return getTacticForAssignment(inst);
   }
 
   if (isa<CmpInst>(&inst)) {
-    return getTacticForCmpInst(dyn_cast<CmpInst>(&inst));
+    return getTacticForAssignment(inst);
   }
 
   if (isa<CastInst>(&inst)) {
-    return getTacticForCastInst(dyn_cast<CastInst>(&inst));
+    return getTacticForAssignment(inst);
   }
 
   if (isa<BranchInst>(&inst)) {
@@ -228,14 +228,39 @@ ref<CoqTactic> ModuleSupport::getTacticForInst(Instruction &inst) {
   assert(false);
 }
 
-ref<CoqTactic> ModuleSupport::getTacticForBinaryOperator(BinaryOperator *inst) {
-  if (isDivOperator(inst)) {
-    return getTacticForDivOperator(inst);
+ref<CoqTactic> ModuleSupport::getTacticForAssignment(Instruction &inst) {
+  ref<CoqTactic> exprTactic = nullptr;
+
+  if (isa<BinaryOperator>(inst)) {
+    exprTactic = getTacticForBinaryOperatorExpr(dyn_cast<BinaryOperator>(&inst));
   }
 
-  if (isShitOperator(inst)) {
-    return getTacticForShiftOperator(inst);
+  if (isa<CmpInst>(inst)) {
+    exprTactic = getTacticForCmpExpr(dyn_cast<CmpInst>(&inst));
   }
+
+  if (isa<CastInst>(&inst)) {
+    exprTactic = getTacticForCastExpr(dyn_cast<CastInst>(&inst));
+  }
+
+  assert(exprTactic);
+
+  return new Block(
+    {
+      new Apply("IS_INSTR_Op"),
+      exprTactic,
+    }
+  );
+}
+
+ref<CoqTactic> ModuleSupport::getTacticForBinaryOperatorExpr(BinaryOperator *inst) {
+  //if (isDivOperator(inst)) {
+  //  return getTacticForDivOperator(inst);
+  //}
+
+  //if (isShiftOperator(inst)) {
+  //  return getTacticForShiftOperator(inst);
+  //}
 
   std::string constructor;
   switch (inst->getOpcode()) {
@@ -275,14 +300,12 @@ ref<CoqTactic> ModuleSupport::getTacticForBinaryOperator(BinaryOperator *inst) {
       assert(false);
   }
 
-  ref<CoqTactic> opTactic = new Block({new Apply(constructor)});
   return new Block(
     {
-      new Apply("IS_INSTR_Op"),
       new Apply("IS_OP_IBinop"),
       getTacticForValue(inst->getOperand(0)),
       getTacticForValue(inst->getOperand(1)),
-      opTactic,
+      new Block({new Apply(constructor)}),
     }
   );
 }
@@ -351,10 +374,9 @@ ref<CoqTactic> ModuleSupport::getTacticForShiftOperator(BinaryOperator *inst) {
   );
 }
 
-ref<CoqTactic> ModuleSupport::getTacticForCmpInst(CmpInst *inst) {
+ref<CoqTactic> ModuleSupport::getTacticForCmpExpr(CmpInst *inst) {
   return new Block(
     {
-      new Apply("IS_INSTR_Op"),
       new Apply("IS_OP_ICmp"),
       getTacticForValue(inst->getOperand(0)),
       getTacticForValue(inst->getOperand(1)),
@@ -362,7 +384,7 @@ ref<CoqTactic> ModuleSupport::getTacticForCmpInst(CmpInst *inst) {
   );
 }
 
-ref<CoqTactic> ModuleSupport::getTacticForCastInst(CastInst *inst) {
+ref<CoqTactic> ModuleSupport::getTacticForCastExpr(CastInst *inst) {
   std::string constructor;
   switch (inst->getOpcode()) {
     case Instruction::ZExt:
@@ -385,12 +407,10 @@ ref<CoqTactic> ModuleSupport::getTacticForCastInst(CastInst *inst) {
       assert(false);
   }
 
-  ref<CoqTactic> opTactic = new Block({new Apply(constructor)});
   return new Block(
     {
-      new Apply("IS_INSTR_Op"),
       new Apply("IS_OP_Conversion"),
-      opTactic,
+      new Block({new Apply(constructor)}),
       getTacticForValue(inst->getOperand(0)),
     }
   );
@@ -522,7 +542,7 @@ bool ModuleSupport::isDivOperator(BinaryOperator *inst) {
   }
 }
 
-bool ModuleSupport::isShitOperator(BinaryOperator *inst) {
+bool ModuleSupport::isShiftOperator(BinaryOperator *inst) {
   switch (inst->getOpcode()) {
   case Instruction::Shl:
   case Instruction::LShr:
