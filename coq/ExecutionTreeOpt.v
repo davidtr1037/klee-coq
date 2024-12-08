@@ -240,23 +240,26 @@ Proof.
       simpl in Heval.
       destruct (sym_lookup_ident ls1 gs1 id) eqn:E; try discriminate Heval.
       destruct t; try discriminate Heval.
-      destruct w.
-      { discriminate Heval. }
-      { admit. }
-      {
-        destruct s as [sort ast].
-        destruct sort; (
-          simpl;
-          apply equiv_sym_lookup_ident with (ls2 := ls2) (gs2 := gs2) in E; try assumption;
-          destruct E as [se2 [E_1 E_2]];
-          exists se2;
-          rewrite E_1;
-          destruct se2 as [sort2 ast2];
-          destruct sort2; try inversion E_2;
-          inversion Heval; subst;
-          split; try reflexivity; try assumption
-        ).
-      }
+      repeat (
+        destruct w; [
+          try discriminate Heval |
+          try discriminate Heval |
+          try (
+            destruct s as [sort ast];
+            destruct sort; (
+              simpl;
+              apply equiv_sym_lookup_ident with (ls2 := ls2) (gs2 := gs2) in E; try assumption;
+              destruct E as [se2 [E_1 E_2]];
+              exists se2;
+              rewrite E_1;
+              destruct se2 as [sort2 ast2];
+              destruct sort2; try inversion E_2;
+              inversion Heval; subst;
+              split; try reflexivity; try assumption
+            )
+          )
+        ]
+      ).
     }
     {
       unfold sym_eval_ident in Heval.
@@ -421,7 +424,7 @@ Proof.
     }
   }
   { inversion Heval. }
-Admitted.
+Qed.
 
 Lemma equiv_sym_eval_phi_args : forall ls1 gs1 ls2 gs2 t args pbid se1,
   equiv_smt_store ls1 ls2 ->
