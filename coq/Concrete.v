@@ -587,13 +587,18 @@ Definition init_state (mdl : llvm_module) (fid : function_id) : option state :=
   end
 .
 
-Definition shl_error_condition di w : bool :=
+Definition udiv_error_condition di : bool :=
+  di_is_const di 0
+.
+
+(* TODO: why bitwidth does not work? *)
+Definition shl_error_condition di : bool :=
   match di with
-  | DI_I1 n
-  | DI_I8 n
-  | DI_I16 n
-  | DI_I32 n
-  | DI_I64 n => cmpu Cge n (repr (Zpos w))
+  | DI_I1 n => cmpu Cge n (Int1.repr 1)
+  | DI_I8 n => cmpu Cge n (Int8.repr 8)
+  | DI_I16 n => cmpu Cge n (Int16.repr 16)
+  | DI_I32 n => cmpu Cge n (Int32.repr 32)
+  | DI_I64 n => cmpu Cge n (Int64.repr 64)
   end
 .
 
@@ -633,7 +638,7 @@ Inductive error_state : state -> Prop :=
   (* TODO: add assumptions for e1 e2? safe_llvm_expr? *)
   | ES_UDivByZero : forall ic cid v exact t e1 e2 cs pbid ls stk gs mdl di,
       (eval_exp ls gs (Some t) e2) = Some (DV_Int di) ->
-      di_is_const di 0 = true ->
+      udiv_error_condition di = true ->
       error_state
         (mk_state
           ic
@@ -650,7 +655,7 @@ Inductive error_state : state -> Prop :=
   (* TODO: use bitwidth instead of type width? *)
   | ES_Shl : forall ic cid v nuw nsw w e1 e2 cs pbid ls stk gs mdl di,
       (eval_exp ls gs (Some (TYPE_I w)) e2) = Some (DV_Int di) ->
-      shl_error_condition di w = true ->
+      shl_error_condition di = true ->
       error_state
         (mk_state
           ic

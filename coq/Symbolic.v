@@ -630,14 +630,18 @@ Definition sym_udiv_error_condition pc se :=
   end
 .
 
-Definition sym_shl_error_condition pc se w :=
+Definition sym_shl_error_condition pc se :=
   match se with
   | Expr sort ast =>
       AST_BinOp
         Sort_BV1
         SMT_And
         pc
-        (AST_CmpOp sort SMT_Uge ast (AST_Const sort (create_int_by_sort sort (Zpos w))))
+        (AST_CmpOp
+          sort
+          SMT_Uge
+          ast
+          (AST_Const sort (create_int_by_sort sort (Zpos (smt_sort_to_width sort)))))
   end
 .
 
@@ -695,7 +699,7 @@ Inductive error_sym_state : sym_state -> Prop :=
         )
   | ESS_Shl : forall ic cid v nuw nsw w e1 e2 cs pbid ls stk gs syms pc mdl se,
       (sym_eval_exp ls gs (Some (TYPE_I w)) e2) = Some se ->
-      sat (sym_shl_error_condition pc se w) ->
+      sat (sym_shl_error_condition pc se) ->
       error_sym_state
         (mk_sym_state
           ic

@@ -423,44 +423,6 @@ Proof.
   }
 Qed.
 
-Lemma infer_width_from_eval_exp_i1 : forall ls gs w e n,
-  is_supported_exp e ->
-  eval_exp ls gs (Some (TYPE_I w)) e = Some (DV_Int (DI_I1 n)) ->
-  w = 1%positive.
-Proof.
-  intros ls gs w e n His Heval.
-  inversion His; subst; simpl in Heval.
-  {
-    destruct (lookup_ident ls gs id) as [dv | ]; try discriminate Heval.
-    repeat (
-      destruct w;
-      try discriminate Heval;
-      try (
-        destruct dv; try discriminate Heval;
-        destruct di; try discriminate Heval;
-        reflexivity
-      )
-    ).
-  }
-  {
-    repeat (destruct w; try discriminate; try reflexivity).
-  }
-  {
-    destruct
-      (eval_exp ls gs (Some t) e1) as [dv1 | ],
-      (eval_exp ls gs (Some t) e2) as [dv2 | ]; try discriminate Heval.
-    destruct dv1 as [di1 | | ] eqn:Edv1, dv2 as [di2 | | ] eqn:Edv2;
-    try discriminate Heval;
-    try (destruct op; discriminate Heval);
-    try (
-      destruct op; (
-        destruct di1 as [n1 | n1 | n1 | n1 | n1]; discriminate Heval
-      )
-    ).
-    admit.
-  }
-Admitted.
-
 Lemma has_no_poison_step : forall s1 s2,
   is_supported_state s1 ->
   safe_state ns_step s1 ->
@@ -562,9 +524,6 @@ Proof.
           ).
           {
             apply ES_Shl with (di := DI_I1 n2); try assumption.
-            assert(Lw : w = 1%positive).
-            { eapply infer_width_from_eval_exp_i1; eassumption. }
-            rewrite Lw.
             simpl.
             unfold Int1.ltu.
             rewrite Int1.unsigned_repr_eq.
