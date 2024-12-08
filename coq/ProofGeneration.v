@@ -392,34 +392,34 @@ Proof.
 Qed.
 
 Lemma inversion_instr_op : forall ic cid v e c cs pbid ls stk gs syms pc mdl s,
-      sym_step
-        (mk_sym_state
-          ic
-          (CMD_Inst cid (INSTR_Op v e))
-          (c :: cs)
-          pbid
-          ls
-          stk
-          gs
-          syms
-          pc
-          mdl
-        )
-        s ->
-      exists se,
-        (sym_eval_exp ls gs None e) = Some se /\
-        s = (mk_sym_state
-          (next_inst_counter ic c)
-          c
-          cs
-          pbid
-          (v !-> Some se; ls)
-          stk
-          gs
-          syms
-          pc
-          mdl
-        ).
+  sym_step
+    (mk_sym_state
+      ic
+      (CMD_Inst cid (INSTR_Op v e))
+      (c :: cs)
+      pbid
+      ls
+      stk
+      gs
+      syms
+      pc
+      mdl
+    )
+    s ->
+  exists se,
+    (sym_eval_exp ls gs None e) = Some se /\
+    s = (mk_sym_state
+      (next_inst_counter ic c)
+      c
+      cs
+      pbid
+      (v !-> Some se; ls)
+      stk
+      gs
+      syms
+      pc
+      mdl
+    ).
 Proof.
   intros ic cid v e c cs pbid ls stk gs syms pc mdl s Hstep.
   inversion Hstep; subst.
