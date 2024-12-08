@@ -38,6 +38,7 @@ Proof.
 Qed.
 
 Lemma not_error_instr_op : forall ic cid v e cs pbid ls stk gs syms pc mdl,
+  is_supported_exp e ->
   ~ error_sym_state
     (mk_sym_state
       ic
@@ -52,9 +53,11 @@ Lemma not_error_instr_op : forall ic cid v e cs pbid ls stk gs syms pc mdl,
       mdl
     ).
 Proof.
-  intros ic cid v e cs pbid ls stk gs syms pc mdl.
+  intros ic cid v e cs pbid ls stk gs syms pc mdl His.
   intros H.
-  inversion H.
+  inversion H; subst.
+  { inversion His; subst. inversion H7. }
+  { inversion His; subst. inversion H7. }
 Qed.
 
 Lemma not_error_phi : forall ic cid v t args cs pbid ls stk gs syms pc mdl,
@@ -439,6 +442,7 @@ Lemma safe_subtree_instr_op : forall ic cid v e c cs pbid ls stk gs syms pc mdl 
       pc
       mdl
     ) in
+  is_supported_exp e ->
   equiv_smt_store (v !-> (sym_eval_exp ls gs None e); ls) ls_opt ->
   (root t =
     (mk_sym_state
@@ -458,9 +462,9 @@ Lemma safe_subtree_instr_op : forall ic cid v e c cs pbid ls stk gs syms pc mdl 
   (safe_et_opt (t_subtree s_init [t])).
 Proof.
   intros ic cid v e c cs pbid ls stk gs syms pc mdl ls_opt t.
-  intros s_init Heq Ht Hsafe.
+  intros s_init His Heq Ht Hsafe.
   apply Safe_Subtree.
-  { apply not_error_instr_op. }
+  { apply not_error_instr_op. assumption. }
   {
     intros s' Hstep.
     left.
