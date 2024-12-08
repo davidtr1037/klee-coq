@@ -255,25 +255,20 @@ Proof.
           destruct H4;
           reflexivity
         )
-      ).
-      {
-        destruct dv' eqn:Edv'.
-        {
-          destruct di; try discriminate Heval.
-          destruct t2 as [w2 | | | ]; try discriminate Heval.
+      );
+      (
+        destruct dv' eqn:Edv'; [
+          destruct di; try discriminate Heval;
+          destruct t2 as [w2 | | | ]; try discriminate Heval;
           repeat (
             destruct w2;
             try discriminate Heval;
             try (inversion Heval; subst; intros Hf; discriminate Hf)
-          ).
-        }
-        { discriminate Heval. }
-        { inversion Heval; subst. destruct H4. reflexivity. }
-      }
-      (* TODO: similar *)
-      { admit. }
-      { admit. }
-      { admit. }
+          ) |
+          discriminate Heval |
+          inversion Heval; subst; destruct H4; reflexivity
+        ]
+      ).
     }
     (* TODO: similar *)
     { admit. }
