@@ -922,7 +922,7 @@ klee::ref<CoqExpr> ProofGenerator::getTheorem() {
       new Block(
         {
           new Apply(
-            "completeness_via_et",
+            "program_safety_via_et",
             {
               moduleTranslator->translateModuleCached(),
               moduleTranslator->createName("main"),
@@ -950,6 +950,7 @@ klee::ref<CoqExpr> ProofGenerator::getTheorem() {
     new CoqApplication(
       new CoqVariable("is_safe_program"),
       {
+        new CoqVariable("step"),
         moduleTranslator->translateModuleCached(),
         moduleTranslator->createName("main"),
       }

@@ -353,6 +353,7 @@ klee::ref<CoqTactic> OptimizedProofGenerator::getTacticForSubtreeAssignment(Stat
           getTreeAlias(successor.stepID),
         }
       ),
+      new Block({new Admit()}),
       t,
       new Block({new Reflexivity()}),
       new Block({new Apply("L_" + to_string(successor.stepID))}),
