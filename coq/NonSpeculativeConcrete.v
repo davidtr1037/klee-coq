@@ -456,22 +456,17 @@ Proof.
         assumption
       ).
       destruct di1 as [n1 | n1 | n1 | n1 | n1], di2 as [n2 | n2 | n2 | n2 | n2];
-      try discriminate H14.
-      {
-        simpl in H14.
-        destruct ((Int1.unsigned n2) =? 0)%Z eqn:E; subst.
-        { discriminate H14. }
-        {
-          inversion H14. subst.
-          intros Hf.
-          discriminate Hf.
-        }
-      }
-      (* TODO: these are similar... *)
-      { admit. }
-      { admit. }
-      { admit. }
-      { admit. }
+      try discriminate H14;
+      (
+        unfold eval_ibinop_generic in H14;
+        destruct ((unsigned n2) =? 0)%Z eqn:E; subst; [
+          discriminate H14 |
+          simpl in H14;
+          inversion H14; subst;
+          intros Hf;
+          discriminate Hf
+        ]
+      ).
     }
     (* Shl *)
     {
