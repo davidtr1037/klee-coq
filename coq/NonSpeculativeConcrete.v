@@ -499,33 +499,18 @@ Proof.
         simpl in H14.
         destruct ((Int1.unsigned n2) >=? 1)%Z eqn:E.
         {
-          assert(L :
-            error_state
-              (mk_state
-                ic
-                (CMD_Inst cid (INSTR_Op v (OP_IBinop (Shl false false) (TYPE_I w) e1 e2)))
-                (c0 :: cs0)
-                pbid
-                ls
-                stk
-                gs
-                mdl
-              )
-          ).
-          {
-            apply ES_Shl with (di := DI_I1 n2); try assumption.
-            simpl.
-            unfold Int1.ltu.
-            rewrite Int1.unsigned_repr_eq.
-            replace (1 mod Int1.modulus)%Z with (1%Z); try reflexivity.
-            rewrite Z.geb_ge in E.
-            apply Coqlib.zlt_false with (A := bool) (a := true) (b := false) in E.
-            rewrite E.
-            reflexivity.
-          }
+          simpl in H14.
           inversion Hsafe.
-          apply H2 in L.
-          destruct L.
+          destruct H2.
+          eapply ES_Shl; try eassumption.
+          simpl.
+          unfold Int1.ltu.
+          rewrite Int1.unsigned_repr_eq.
+          replace (1 mod Int1.modulus)%Z with (1%Z); try reflexivity.
+          rewrite Z.geb_ge in E.
+          apply Coqlib.zlt_false with (A := bool) (a := true) (b := false) in E.
+          rewrite E.
+          reflexivity.
         }
         {
           inversion H14; subst.
