@@ -223,7 +223,6 @@ Definition sat (ast : smt_ast_bool) :=
 
 Definition unsat (ast : smt_ast_bool) := ~ sat ast.
 
-
 Lemma unsat_and : forall (e1 e2 : smt_ast_bool),
   unsat e1 ->
   unsat (AST_BinOp Sort_BV1 SMT_And e1 e2).
