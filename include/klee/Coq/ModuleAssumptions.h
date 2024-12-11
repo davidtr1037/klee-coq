@@ -18,6 +18,8 @@ class ModuleSupport {
 
 public:
 
+  static std::string allocateExprLemmaName();
+
   llvm::Module &m;
 
   ModuleTranslator &moduleTranslator;
@@ -30,7 +32,12 @@ public:
 
   std::list<ref<CoqLemma>> exprLemmas;
 
+  /* TODO: rename? */
   std::map<llvm::Instruction *, std::string> exprLemmaNames;
+
+  std::list<ref<CoqLemma>> valueLemmas;
+
+  std::map<llvm::Value *, std::string> valueLemmaNames;
 
   ModuleSupport(llvm::Module &m, ModuleTranslator &moduleTranslator);
 
@@ -77,6 +84,8 @@ public:
   ref<CoqTactic> getTacticForReturnInst(llvm::ReturnInst *inst);
 
   ref<CoqTactic> getTacticForUnreachableInst(llvm::UnreachableInst *inst);
+
+  ref<CoqLemma> getLemmaForValue(llvm::Value *value);
 
   ref<CoqTactic> getTacticForValue(llvm::Value *value);
 

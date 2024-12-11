@@ -275,6 +275,10 @@ klee::ref<CoqTactic> OptimizedProofGenerator::getTacticForSubtree(StateInfo &si,
 
 klee::ref<CoqTactic> OptimizedProofGenerator::getTacticForSubtreeAssignment(StateInfo &si,
                                                                             ExecutionState &successor) {
+  if (si.inst->getOpcode() == Instruction::UDiv) {
+    return new Block({new Admit()});
+  }
+
   ref<CoqTactic> t;
   if (si.wasRegisterUpdated) {
     t = new Block(

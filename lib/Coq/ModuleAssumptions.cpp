@@ -15,6 +15,11 @@
 using namespace llvm;
 using namespace klee;
 
+std::string ModuleSupport::allocateExprLemmaName() {
+  static uint64_t id = 0;
+  return "is_supported_expr_" + std::to_string(id++);
+}
+
 ModuleSupport::ModuleSupport(Module &m, ModuleTranslator &moduleTranslator) :
   m(m), moduleTranslator(moduleTranslator) {
 
@@ -221,6 +226,27 @@ ref<CoqTactic> ModuleSupport::getTacticForInst(Instruction &inst) {
 }
 
 ref<CoqTactic> ModuleSupport::getTacticForAssignment(Instruction &inst) {
+  if (inst.getOpcode() == Instruction::UDiv) {
+    /* left */
+    Value *leftValue = inst.getOperand(0);
+    ref<CoqLemma> leftLemma = getLemmaForValue(leftValue);
+    valueLemmas.push_back(leftLemma);
+    valueLemmaNames.insert(std::make_pair(leftValue, leftLemma->name));
+    /* right */
+    Value *rightValue = inst.getOperand(1);
+    ref<CoqLemma> rightLemma = getLemmaForValue(rightValue);
+    valueLemmas.push_back(rightLemma);
+    valueLemmaNames.insert(std::make_pair(rightValue, rightLemma->name));
+
+    return new Block(
+      {
+        new Apply("IS_INSTR_Op_UDiv"),
+        new Apply(leftLemma->name),
+        new Apply(rightLemma->name),
+      }
+    );
+  }
+
   ref<CoqLemma> lemma = getLemmaForAssignmentExpr(inst);
   exprLemmas.push_back(lemma);
   exprLemmaNames.insert(std::make_pair(&inst, lemma->name));
@@ -233,7 +259,6 @@ ref<CoqTactic> ModuleSupport::getTacticForAssignment(Instruction &inst) {
 }
 
 ref<CoqLemma> ModuleSupport::getLemmaForAssignmentExpr(Instruction &inst) {
-  std::string lemmaName = "is_supported_expr_" + std::to_string(moduleTranslator.getInstID(inst));
   /* TODO: refactor */
   ref<CoqExpr> expr = nullptr;
   if (isa<BinaryOperator>(&inst)) {
@@ -249,7 +274,7 @@ ref<CoqLemma> ModuleSupport::getLemmaForAssignmentExpr(Instruction &inst) {
   assert(expr);
 
   return new CoqLemma(
-    lemmaName,
+    allocateExprLemmaName(),
     new CoqApplication(new CoqVariable("is_supported_exp"), {expr}),
     getTacticForAssignmentExpr(inst)
   );
@@ -516,6 +541,17 @@ ref<CoqTactic> ModuleSupport::getTacticForReturnInst(ReturnInst *inst) {
 ref<CoqTactic> ModuleSupport::getTacticForUnreachableInst(UnreachableInst *inst) {
   return new Block(
     {new Apply("IS_Term_Unreachable")}
+  );
+}
+
+ref<CoqLemma> ModuleSupport::getLemmaForValue(Value *value) {
+  ref<CoqExpr> expr = moduleTranslator.translateValue(value);
+  ref<CoqTactic> tactic = getTacticForValue(value);
+
+  return new CoqLemma(
+    allocateExprLemmaName(),
+    new CoqApplication(new CoqVariable("is_supported_exp"), {expr}),
+    tactic
   );
 }
 
