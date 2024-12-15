@@ -876,7 +876,7 @@ Proof.
     apply Unsat_State;
     subst;
     inversion Hu; subst;
-    apply unsat_and;
+    apply unsat_and_left;
     assumption
   ).
 Qed.

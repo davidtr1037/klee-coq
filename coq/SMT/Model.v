@@ -223,7 +223,7 @@ Definition sat (ast : smt_ast_bool) :=
 
 Definition unsat (ast : smt_ast_bool) := ~ sat ast.
 
-Lemma unsat_and : forall (e1 e2 : smt_ast_bool),
+Lemma unsat_and_left : forall (e1 e2 : smt_ast_bool),
   unsat e1 ->
   unsat (AST_BinOp Sort_BV1 SMT_And e1 e2).
 Proof.
@@ -239,6 +239,12 @@ Proof.
   apply int1_and_one in Hsat.
   assumption.
 Qed.
+
+Lemma unsat_and_right : forall (e1 e2 : smt_ast_bool),
+  unsat e2 ->
+  unsat (AST_BinOp Sort_BV1 SMT_And e1 e2).
+Proof.
+Admitted.
 
 Lemma subexpr_non_interference : forall sort (ast : smt_ast sort) x m n,
   (~ contains_var (Expr sort ast) x ) ->
