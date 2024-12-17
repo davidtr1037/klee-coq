@@ -74,9 +74,13 @@ public:
                                                ExecutionState &successor,
                                                const ExternalProofHint &hint);
 
-  ref<CoqTactic> getTacticForSubtreeUDiv(StateInfo &si,
-                                         ExecutionState &successor,
-                                         const ExternalProofHint &hint);
+  ref<CoqTactic> getTacticForUnsafeOperation(StateInfo &si,
+                                             ExecutionState &successor,
+                                             const ExternalProofHint &hint);
+
+  ref<CoqTactic> getTacticForErrorCondition(StateInfo &si,
+                                            ExecutionState &successor,
+                                            const ExternalProofHint &hint);
 
   ref<CoqTactic> getTacticForSubtreePHI(StateInfo &si,
                                         ExecutionState &successor);

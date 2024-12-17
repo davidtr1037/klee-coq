@@ -278,8 +278,8 @@ klee::ref<CoqTactic> OptimizedProofGenerator::getTacticForSubtree(StateInfo &si,
 klee::ref<CoqTactic> OptimizedProofGenerator::getTacticForSubtreeAssignment(StateInfo &si,
                                                                             ExecutionState &successor,
                                                                             const ExternalProofHint &hint) {
-  if (si.inst->getOpcode() == Instruction::UDiv) {
-    return getTacticForSubtreeUDiv(si, successor, hint);
+  if (moduleSupport->isUnsafeInstruction(*si.inst)) {
+    return getTacticForUnsafeOperation(si, successor, hint);
   }
 
   ref<CoqExpr> var = nullptr;
@@ -337,9 +337,9 @@ klee::ref<CoqTactic> OptimizedProofGenerator::getTacticForSubtreeAssignment(Stat
   );
 }
 
-klee::ref<CoqTactic> OptimizedProofGenerator::getTacticForSubtreeUDiv(StateInfo &si,
-                                                                      ExecutionState &successor,
-                                                                      const ExternalProofHint &hint) {
+klee::ref<CoqTactic> OptimizedProofGenerator::getTacticForUnsafeOperation(StateInfo &si,
+                                                                          ExecutionState &successor,
+                                                                          const ExternalProofHint &hint) {
   BinaryOperator *bo = cast<BinaryOperator>(si.inst);
   Value *v1 = bo->getOperand(0);
   Value *v2 = bo->getOperand(1);
@@ -347,29 +347,7 @@ klee::ref<CoqTactic> OptimizedProofGenerator::getTacticForSubtreeUDiv(StateInfo 
   ref<CoqTactic> t1 = moduleSupport->getTacticForValueCached(v1);
   ref<CoqTactic> t2 = moduleSupport->getTacticForValueCached(v2);
 
-  ref<CoqTactic> unsatTactic;
-  if (isa<ConstantInt>(v2)) {
-    unsatTactic = new Apply("unsat_false");
-  } else {
-    /* in this case, we are supposed to pass through klee_div_zero_check */
-    assert(!hint.lastUnsatAxiomName.empty());
-    unsatTactic = new Block(
-      {
-        new Concat(
-          {
-            new Try({new Apply("unsat_false")}),
-            new Try(
-              {
-                new Apply("unsat_eq_zero_zext_bv32_bv64"),
-                new Apply(hint.lastUnsatAxiomName),
-              }
-            )
-          }
-        )
-      }
-    );
-  }
-
+  ref<CoqTactic> unsatTactic = getTacticForErrorCondition(si, successor, hint);
   assert(!unsatTactic.isNull());
 
   ref<CoqExpr> ast = new CoqApplication(
@@ -387,10 +365,24 @@ klee::ref<CoqTactic> OptimizedProofGenerator::getTacticForSubtreeUDiv(StateInfo 
     }
   );
 
+  std::string lemmaName;
+  switch (bo->getOpcode()) {
+  case Instruction::UDiv:
+    lemmaName = "safe_subtree_instr_op_udiv";
+    break;
+
+  case Instruction::Shl:
+    lemmaName = "safe_subtree_instr_op_shl";
+    break;
+
+  default:
+    assert(false);
+  }
+
   return new Block(
     {
       new Apply(
-        "safe_subtree_instr_op_udiv",
+        lemmaName,
         {
           stateTranslator->getICAlias(si.stepID),
           createNat(moduleTranslator->getInstID(si.inst)),
@@ -421,6 +413,45 @@ klee::ref<CoqTactic> OptimizedProofGenerator::getTacticForSubtreeUDiv(StateInfo 
       new Block({new Apply("L_" + to_string(successor.stepID))}),
     }
   );
+}
+
+klee::ref<CoqTactic> OptimizedProofGenerator::getTacticForErrorCondition(StateInfo &si,
+                                                                         ExecutionState &successor,
+                                                                         const ExternalProofHint &hint) {
+  BinaryOperator *bo = cast<BinaryOperator>(si.inst);
+  Value *v2 = bo->getOperand(1);
+
+  switch (bo->getOpcode()) {
+  case Instruction::UDiv:
+    if (isa<ConstantInt>(v2)) {
+      return new Apply("unsat_false");
+    } else {
+      /* in this case, we are supposed to pass through klee_div_zero_check */
+      assert(!hint.lastUnsatAxiomName.empty());
+      return new Block(
+        {
+          new Concat(
+            {
+              new Try({new Apply("unsat_false")}),
+              new Try(
+                {
+                  new Apply("unsat_eq_zero_zext_bv32_bv64"),
+                  new Apply(hint.lastUnsatAxiomName),
+                }
+              )
+            }
+          )
+        }
+      );
+    }
+
+  case Instruction::Shl:
+    /* TODO: ... */
+    return new Block({new Admit()});
+
+  default:
+    return nullptr;
+  }
 }
 
 klee::ref<CoqTactic> OptimizedProofGenerator::getTacticForSubtreePHI(StateInfo &si,
