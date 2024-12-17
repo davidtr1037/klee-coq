@@ -1,3 +1,4 @@
+From Coq Require Import Bool.
 From Coq Require Import Lia.
 From Coq Require Import ZArith.
 
@@ -448,4 +449,40 @@ Proof.
   rewrite Int32.repr_unsigned.
   rewrite Int.sub_zero_r.
   apply Int32.sub_add_opp.
+Qed.
+
+(* TODO: rename *)
+Lemma eq_zero_zext_i32_i64 : forall n : int32,
+  Int64.eq Int64.zero (Int64.repr (Int32.unsigned n)) = Int32.eq Int32.zero n.
+Proof.
+  intro n.
+  apply eq_true_iff_eq.
+  split; intros Heq.
+  {
+    destruct n as [x Hx].
+    simpl in Heq.
+    unfold Int64.eq in Heq.
+    replace (Int64.unsigned Int64.zero)%Z with 0%Z in Heq; try reflexivity.
+    rewrite (Int64.unsigned_repr_eq) in Heq.
+    replace (x mod Int64.modulus)%Z with x in Heq.
+    {
+      destruct (Coqlib.zeq 0 x) as [H | H] eqn:E; try inversion Heq.
+      subst.
+      reflexivity.
+    }
+    {
+      symmetry.
+      apply Zmod_small.
+      unfold Int64.modulus, Int64.wordsize, Wordsize_64.wordsize, two_power_nat.
+      unfold Int32.modulus, Int32.wordsize, Wordsize_32.wordsize, two_power_nat in Hx.
+      simpl.
+      simpl in Hx.
+      lia.
+    }
+  }
+  {
+    apply int32_eqb_eq in Heq.
+    subst.
+    reflexivity.
+  }
 Qed.

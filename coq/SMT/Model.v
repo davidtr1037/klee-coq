@@ -521,3 +521,10 @@ Proof.
   rewrite H1.
   reflexivity.
 Qed.
+
+Lemma equiv_smt_expr_eq_symmetry : forall s (ast1 ast2 : smt_ast s),
+  equiv_smt_expr
+    (Expr Sort_BV1 (AST_CmpOp s SMT_Eq ast1 ast2))
+    (Expr Sort_BV1 (AST_CmpOp s SMT_Eq ast2 ast1)).
+Proof.
+Admitted.

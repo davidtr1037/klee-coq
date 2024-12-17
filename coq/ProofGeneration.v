@@ -424,6 +424,59 @@ Proof.
   assumption.
 Qed.
 
+(* TODO: rename? *)
+Lemma equiv_smt_expr_eq_zero_zext_bv32_bv64 : forall ast,
+  equiv_smt_expr
+    (Expr
+      Sort_BV1
+      (AST_CmpOp Sort_BV64 SMT_Eq (AST_Const Sort_BV64 zero) (AST_ZExt Sort_BV32 ast Sort_BV64)))
+    (Expr
+      Sort_BV1
+      (AST_CmpOp Sort_BV32 SMT_Eq (AST_Const Sort_BV32 zero) ast)).
+Proof.
+  intros ast.
+  apply EquivExpr.
+  intros m.
+  simpl.
+  unfold smt_eval_cmpop_by_sort.
+  simpl.
+  rewrite eq_zero_zext_i32_i64.
+  reflexivity.
+Qed.
+
+(* TODO: rename? *)
+Lemma unsat_eq_zero_zext_bv32_bv64 : forall pc ast,
+  unsat
+    (AST_BinOp
+      Sort_BV1
+      SMT_And
+      pc
+      (AST_CmpOp
+        Sort_BV64
+        SMT_Eq
+        (AST_Const Sort_BV64 zero)
+        (AST_ZExt Sort_BV32 ast Sort_BV64))) ->
+  unsat
+    (AST_BinOp
+      Sort_BV1
+      SMT_And
+      pc
+      (AST_CmpOp Sort_BV32 SMT_Eq ast (AST_Const Sort_BV32 zero))).
+Proof.
+  intros pc ast Hunsat.
+  eapply equiv_smt_expr_unsat.
+  {
+    eapply equiv_smt_expr_binop.
+    { apply equiv_smt_expr_refl. }
+    {
+      eapply equiv_smt_expr_transitivity.
+      { apply equiv_smt_expr_eq_zero_zext_bv32_bv64. }
+      { apply equiv_smt_expr_eq_symmetry. }
+    }
+  }
+  assumption.
+Qed.
+
 Lemma inversion_instr_op : forall ic cid v e c cs pbid ls stk gs syms pc mdl s,
   sym_step
     (mk_sym_state
