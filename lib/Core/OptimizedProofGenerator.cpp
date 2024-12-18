@@ -429,7 +429,12 @@ klee::ref<CoqTactic> OptimizedProofGenerator::getTacticForErrorCondition(StateIn
   case Instruction::UDiv:
   case Instruction::SDiv:
     if (isa<ConstantInt>(v2)) {
-      return new Apply("unsat_false");
+      return new Block(
+        {
+          new Apply("unsat_extension_with_ne_i32"),
+          new Reflexivity(),
+        }
+      );
     } else {
       /* in this case, we are supposed to pass through klee_div_zero_check */
       assert(!hint.lastUnsatAxiomName.empty());
@@ -437,7 +442,12 @@ klee::ref<CoqTactic> OptimizedProofGenerator::getTacticForErrorCondition(StateIn
         {
           new Concat(
             {
-              new Try({new Apply("unsat_false")}),
+              new Try(
+                {
+                  new Apply("unsat_extension_with_ne_i32"),
+                  new Reflexivity(),
+                }
+              ),
               new Try(
                 {
                   new Apply("unsat_div_condition_bv32"),
@@ -450,17 +460,27 @@ klee::ref<CoqTactic> OptimizedProofGenerator::getTacticForErrorCondition(StateIn
       );
     }
 
+  /* TODO: avoid code duplication */
   case Instruction::Shl:
     if (isa<ConstantInt>(v2)) {
-      return new Apply("unsat_false");
+      return new Block(
+        {
+          new Apply("unsat_extension_with_ne_i32"),
+          new Reflexivity(),
+        }
+      );
     } else {
-      /* TODO: avoid code duplication */
       assert(!hint.lastUnsatAxiomName.empty());
       return new Block(
         {
           new Concat(
             {
-              new Try({new Apply("unsat_false")}),
+              new Try(
+                {
+                  new Apply("unsat_extension_with_ne_i32"),
+                  new Reflexivity(),
+                }
+              ),
               new Try(
                 {
                   new Apply("unsat_shift_condition_bv32"),
