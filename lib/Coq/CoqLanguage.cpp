@@ -362,12 +362,18 @@ BasicTactic::BasicTactic(const string &name, const vector<ref<CoqExpr>> &args) :
 }
 
 string BasicTactic::dump(int indent) const {
+  return dump(indent, true);
+}
+
+string BasicTactic::dump(int indent, bool end) const {
   ostringstream os;
   os << space(indent) << name;
   for (ref<CoqExpr> e : args) {
     os << " " << e->dump();
   }
-  os << ".";
+  if (end) {
+    os << ".";
+  }
   return os.str();
 }
 

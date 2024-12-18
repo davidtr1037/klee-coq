@@ -258,6 +258,8 @@ public:
     BasicTactic(const std::string &name, const std::vector<ref<CoqExpr>> &args);
 
     std::string dump(int indent) const;
+
+    std::string dump(int indent, bool end) const;
 };
 
 class Block : public CoqTactic {
