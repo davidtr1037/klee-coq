@@ -285,6 +285,60 @@ Proof.
   }
 Admitted.
 
+Lemma has_no_poison_eval_exp_division : forall ls gs op w e1 e2 dv,
+  store_has_no_poison ls ->
+  store_has_no_poison gs ->
+  is_unsafe_division op ->
+  is_supported_exp e1 ->
+  is_supported_exp e2 ->
+  eval_exp ls gs None (OP_IBinop op (TYPE_I w) e1 e2) = Some dv ->
+  dv <> DV_Poison.
+Proof.
+  intros ls gs op w e1 e2 dv Hls Hgs Hop His1 His2 Heval.
+  simpl in Heval.
+  destruct
+    (eval_exp ls gs (Some (TYPE_I w)) e1) as [dv1 | ] eqn:E1,
+    (eval_exp ls gs (Some (TYPE_I w)) e2) as [dv2 | ] eqn:E2;
+  try discriminate Heval.
+  unfold eval_ibinop in Heval.
+  destruct dv1 as [di1 | | ] eqn:Edv1, dv2 as [di2 | | ] eqn:Edv2;
+  try (discriminate Heval);
+  try (destruct op; inversion Hop; discriminate Heval);
+  try (destruct di1; destruct op; inversion Hop; discriminate Heval);
+  try (
+    apply has_no_poison_eval_exp
+      with (ls := ls) (gs := gs) (ot := Some (TYPE_I w)) (e := e1);
+    try assumption;
+    rewrite Heval in E1;
+    assumption
+  ).
+  {
+    destruct di1 as [n1 | n1 | n1 | n1 | n1], di2 as [n2 | n2 | n2 | n2 | n2];
+    try discriminate Heval;
+    inversion Hop; subst;
+    try (
+      unfold eval_ibinop_generic in Heval;
+      destruct ((unsigned n2) =? 0)%Z eqn:E; subst; [
+        discriminate Heval |
+        simpl in Heval;
+        inversion Heval; subst;
+        intros Hf;
+        discriminate Hf
+      ]
+    );
+    try (
+      unfold eval_ibinop_generic in Heval;
+      destruct ((signed n2) =? 0)%Z eqn:E; subst; [
+        discriminate Heval |
+        simpl in Heval;
+        inversion Heval; subst;
+        intros Hf;
+        discriminate Hf
+      ]
+    ).
+  }
+Qed.
+
 Lemma has_no_poison_eval_phi_args : forall ls gs t args pbid dv,
   (forall bid e, In (bid, e) args -> is_supported_exp e) ->
   store_has_no_poison ls ->
@@ -442,64 +496,31 @@ Proof.
       inversion H6; subst.
       (* UDiv *)
       {
-        simpl in H14.
-        destruct
-          (eval_exp ls gs (Some (TYPE_I w)) e1) as [dv1 | ] eqn:E1,
-          (eval_exp ls gs (Some (TYPE_I w)) e2) as [dv2 | ] eqn:E2;
-        try discriminate H14.
-        unfold eval_ibinop in H14.
-        destruct dv1 as [di1 | | ] eqn:Edv1, dv2 as [di2 | | ] eqn:Edv2;
-        try (discriminate H14);
-        try (destruct di1; discriminate H14);
-        try (
-          apply has_no_poison_eval_exp with (ls := ls) (gs := gs) (ot := Some (TYPE_I w)) (e := e1);
-          try assumption;
-          rewrite H14 in E1;
-          assumption
-        ).
-        destruct di1 as [n1 | n1 | n1 | n1 | n1], di2 as [n2 | n2 | n2 | n2 | n2];
-        try discriminate H14;
-        (
-          unfold eval_ibinop_generic in H14;
-          destruct ((unsigned n2) =? 0)%Z eqn:E; subst; [
-            discriminate H14 |
-            simpl in H14;
-            inversion H14; subst;
-            intros Hf;
-            discriminate Hf
-          ]
-        ).
+        eapply has_no_poison_eval_exp_division
+          with (ls := ls) (gs := gs) (w := w) (e1 := e1) (e2 := e2);
+        try eassumption.
+        apply Is_Unsafe_Division_UDiv.
       }
       (* SDiv *)
-      (* TODO: the only difference in the proof is signed intead of unsigned at the end *)
       {
-        simpl in H14.
-        destruct
-          (eval_exp ls gs (Some (TYPE_I w)) e1) as [dv1 | ] eqn:E1,
-          (eval_exp ls gs (Some (TYPE_I w)) e2) as [dv2 | ] eqn:E2;
-        try discriminate H14.
-        unfold eval_ibinop in H14.
-        destruct dv1 as [di1 | | ] eqn:Edv1, dv2 as [di2 | | ] eqn:Edv2;
-        try (discriminate H14);
-        try (destruct di1; discriminate H14);
-        try (
-          apply has_no_poison_eval_exp with (ls := ls) (gs := gs) (ot := Some (TYPE_I w)) (e := e1);
-          try assumption;
-          rewrite H14 in E1;
-          assumption
-        ).
-        destruct di1 as [n1 | n1 | n1 | n1 | n1], di2 as [n2 | n2 | n2 | n2 | n2];
-        try discriminate H14;
-        (
-          unfold eval_ibinop_generic in H14;
-          destruct ((signed n2) =? 0)%Z eqn:E; subst; [
-            discriminate H14 |
-            simpl in H14;
-            inversion H14; subst;
-            intros Hf;
-            discriminate Hf
-          ]
-        ).
+        eapply has_no_poison_eval_exp_division
+          with (ls := ls) (gs := gs) (w := w) (e1 := e1) (e2 := e2);
+        try eassumption.
+        apply Is_Unsafe_Division_SDiv.
+      }
+      (* URem *)
+      {
+        eapply has_no_poison_eval_exp_division
+          with (ls := ls) (gs := gs) (w := w) (e1 := e1) (e2 := e2);
+        try eassumption.
+        apply Is_Unsafe_Division_URem.
+      }
+      (* SRem *)
+      {
+        eapply has_no_poison_eval_exp_division
+          with (ls := ls) (gs := gs) (w := w) (e1 := e1) (e2 := e2);
+        try eassumption.
+        apply Is_Unsafe_Division_SRem.
       }
       (* Shl *)
       {
