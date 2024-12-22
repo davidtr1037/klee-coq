@@ -19,10 +19,19 @@ Inductive is_supported_ibinop : ibinop -> Prop :=
   | IS_Xor : is_supported_ibinop Xor
 .
 
-(* TODO: add LShr, AShr, URem, SRem *)
+Inductive is_unsafe_division : ibinop -> Prop :=
+  | Is_Unsafe_Division_UDiv : is_unsafe_division (UDiv false)
+  | Is_Unsafe_Division_SDiv : is_unsafe_division (SDiv false)
+  | Is_Unsafe_Division_URem : is_unsafe_division (URem)
+  | Is_Unsafe_Division_SRem : is_unsafe_division (SRem)
+.
+
+(* TODO: add missing ops *)
 Inductive is_unsafe_op : ibinop -> Prop :=
   | Is_Unsafe_Op_UDiv : is_unsafe_op (UDiv false)
   | Is_Unsafe_Op_SDiv : is_unsafe_op (SDiv false)
+  | Is_Unsafe_Op_URem : is_unsafe_op (URem)
+  | Is_Unsafe_Op_SRem : is_unsafe_op (SRem)
   | Is_Unsafe_Op_Shl : is_unsafe_op (Shl false false)
 .
 
