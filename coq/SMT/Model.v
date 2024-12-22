@@ -282,6 +282,23 @@ Proof.
   assumption.
 Qed.
 
+Lemma unsat_and_right : forall (e1 e2 : smt_ast_bool),
+  unsat e2 ->
+  unsat (AST_BinOp Sort_BV1 SMT_And e1 e2).
+Proof.
+  intros e1 e2 Hunsat.
+  unfold unsat in *.
+  intros Hsat.
+  apply Hunsat.
+  unfold sat in *.
+  destruct Hsat as [m Hsat].
+  exists m.
+  unfold sat_via in *.
+  simpl in Hsat.
+  apply int1_and_one_right in Hsat.
+  assumption.
+Qed.
+
 Lemma subexpr_non_interference : forall sort (ast : smt_ast sort) x m n,
   (~ contains_var (Expr sort ast) x ) ->
   smt_eval_ast m sort ast = smt_eval_ast (mk_smt_model (x !-> n; bv_model m)) sort ast.
