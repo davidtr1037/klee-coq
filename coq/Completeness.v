@@ -1235,6 +1235,130 @@ Proof.
   { reflexivity. }
 Qed.
 
+Lemma completeness_single_step_udiv : forall c cid v w e1 e2 c' s,
+    Concrete.cmd c = CMD_Inst cid (INSTR_Op v (OP_IBinop (UDiv false) (TYPE_I w) e1 e2)) ->
+    is_supported_state c ->
+    has_no_poison c ->
+    ns_step c c' ->
+    well_scoped s ->
+    over_approx s c ->
+    (exists s', sym_step s s' /\ over_approx s' c').
+Proof.
+  intros c cid v w e1 e2 c' s Hcmd Hiss Hnp Hs Hws Hoa.
+  destruct c as [c_ic c_c c_cs c_pbid c_ls c_stk c_gs c_mdl].
+  destruct s as [s_ic s_c s_cs s_pbid s_ls s_stk s_gs s_syms s_pc s_mdl].
+  inversion Hs; subst.
+  inversion Hoa; subst.
+  inversion H; subst;
+  try discriminate Hcmd.
+  inversion Hoa; subst.
+  destruct H1 as [m H1].
+  inversion H1; subst.
+  inversion Hcmd; subst.
+  inversion Hnp; subst.
+  inversion Hiss; subst.
+  inversion H7; subst.
+  { inversion H4; subst. inversion H15. }
+  {
+    simpl in H11.
+    destruct
+      (eval_exp c_ls c_gs (Some (TYPE_I w)) e1) as [dv1 | ] eqn:E1,
+      (eval_exp c_ls c_gs (Some (TYPE_I w)) e2) as [dv2 | ] eqn:E2;
+    try discriminate H11.
+    destruct dv1 as [di1 | | ] , dv2 as [di2 | | ];
+    try (
+      unfold eval_ibinop in H11;
+      destruct di1; discriminate H11
+    );
+    try (
+      unfold eval_ibinop in H11;
+      destruct di2; discriminate H11
+    );
+    try (
+      unfold eval_ibinop in H11;
+      discriminate H11
+    );
+    try (
+      apply has_no_poison_eval_exp in E1; try assumption;
+      destruct E1; reflexivity
+    ).
+    unfold eval_ibinop in H11.
+    destruct di1 as [n1 | n1 | n1 | n1 | n1], di2 as [n2 | n2 | n2 | n2 | n2];
+    try (discriminate H11).
+    {
+      simpl in H11.
+      destruct (Int1.unsigned n2 =? 0)%Z eqn:En2; try discriminate H11.
+      assert(L1 :
+        over_approx_via_model
+          (eval_exp c_ls c_gs (Some (TYPE_I w)) e1)
+          (sym_eval_exp s_ls s_gs (Some (TYPE_I w)) e1)
+          m
+      ).
+      { apply eval_exp_correspondence; assumption. }
+      assert(L2 :
+        over_approx_via_model
+          (eval_exp c_ls c_gs (Some (TYPE_I w)) e2)
+          (sym_eval_exp s_ls s_gs (Some (TYPE_I w)) e2)
+          m
+      ).
+      { apply eval_exp_correspondence; assumption. }
+      rewrite E1 in L1.
+      rewrite E2 in L2.
+      inversion L1; subst.
+      inversion L2; subst.
+      rename sort into sort1, ast into ast1, sort0 into sort2, ast0 into ast2.
+      assert(Lsort1 : sort1 = Sort_BV1).
+      { eapply infer_sort. eassumption. }
+      assert(Lsort2 : sort2 = Sort_BV1).
+      { eapply infer_sort. eassumption. }
+      subst.
+      exists (mk_sym_state
+        (next_inst_counter c_ic c)
+        c
+        cs
+        c_pbid
+        (v !-> Some (Expr Sort_BV1 (AST_BinOp Sort_BV1 SMT_UDiv ast1 ast2)); s_ls)
+        s_stk
+        s_gs
+        s_syms
+        s_pc
+        c_mdl
+      ).
+      split.
+      {
+        apply Sym_Step_OP.
+        simpl.
+        rewrite <- H4.
+        rewrite <- H5.
+        reflexivity.
+      }
+      {
+        apply OA_State.
+        exists m.
+        apply OAV_State; try assumption.
+        apply store_update_correspondence.
+        {
+          rewrite <- H11.
+          eapply OA_Some.
+          { reflexivity. }
+          {
+            simpl.
+            inversion H9; subst.
+            inversion H12; subst.
+            reflexivity.
+          }
+        }
+        { assumption. }
+      }
+    }
+    (* TODO: those are similar to the Sort_BV1 case *)
+    { admit. }
+    { admit. }
+    { admit. }
+    { admit. }
+  }
+Admitted.
+
 (* TODO: (has_no_poison c) can be inferred from (over_approx s c)? *)
 Lemma completeness_single_step :
   forall c c' s,
@@ -1305,102 +1429,9 @@ Proof.
       inversion H7; subst.
       (* UDiv *)
       {
-        simpl in H10.
-        destruct
-          (eval_exp c_ls c_gs (Some (TYPE_I w)) e1) as [dv1 | ] eqn:E1,
-          (eval_exp c_ls c_gs (Some (TYPE_I w)) e2) as [dv2 | ] eqn:E2;
-        try discriminate H10.
-        destruct dv1 as [di1 | | ] , dv2 as [di2 | | ];
-        try (
-          unfold eval_ibinop in H10;
-          destruct di1; discriminate H10
-        );
-        try (
-          unfold eval_ibinop in H10;
-          destruct di2; discriminate H10
-        );
-        try (
-          unfold eval_ibinop in H10;
-          discriminate H10
-        );
-        try (
-          apply has_no_poison_eval_exp in E1; try assumption;
-          destruct E1; reflexivity
-        ).
-        unfold eval_ibinop in H10.
-        destruct di1 as [n1 | n1 | n1 | n1 | n1], di2 as [n2 | n2 | n2 | n2 | n2];
-        try (discriminate H10).
-        {
-          simpl in H10.
-          destruct (Int1.unsigned n2 =? 0)%Z eqn:En2; try discriminate H10.
-          assert(L1 :
-            over_approx_via_model
-              (eval_exp c_ls c_gs (Some (TYPE_I w)) e1)
-              (sym_eval_exp s_ls s_gs (Some (TYPE_I w)) e1)
-              m
-          ).
-          { apply eval_exp_correspondence; assumption. }
-          assert(L2 :
-            over_approx_via_model
-              (eval_exp c_ls c_gs (Some (TYPE_I w)) e2)
-              (sym_eval_exp s_ls s_gs (Some (TYPE_I w)) e2)
-              m
-          ).
-          { apply eval_exp_correspondence; assumption. }
-          rewrite E1 in L1.
-          rewrite E2 in L2.
-          inversion L1; subst.
-          inversion L2; subst.
-          rename sort into sort1, ast into ast1, sort0 into sort2, ast0 into ast2.
-          assert(Lsort1 : sort1 = Sort_BV1).
-          { eapply infer_sort. eassumption. }
-          assert(Lsort2 : sort2 = Sort_BV1).
-          { eapply infer_sort. eassumption. }
-          subst.
-          exists (mk_sym_state
-            (next_inst_counter c_ic c)
-            c
-            cs
-            c_pbid
-            (v !-> Some (Expr Sort_BV1 (AST_BinOp Sort_BV1 SMT_UDiv ast1 ast2)); s_ls)
-            s_stk
-            s_gs
-            s_syms
-            s_pc
-            c_mdl
-          ).
-          split.
-          {
-            apply Sym_Step_OP.
-            simpl.
-            rewrite <- H3.
-            rewrite <- H4.
-            reflexivity.
-          }
-          {
-            apply OA_State.
-            exists m.
-            apply OAV_State; try assumption.
-            apply store_update_correspondence.
-            {
-              rewrite <- H10.
-              eapply OA_Some.
-              { reflexivity. }
-              {
-                simpl.
-                inversion H11; subst.
-                inversion H17; subst.
-                reflexivity.
-              }
-            }
-            { assumption. }
-          }
-        }
-        (* TODO: those are similar to the Sort_BV1 case *)
-        { admit. }
-        { admit. }
-        { admit. }
-        { admit. }
+        eapply completeness_single_step_udiv
+          with (cid := cid) (v := v) (w := w) (e1 := e1) (e2 := e2); try eassumption.
+        reflexivity.
       }
       (* SDiv *)
       (* TODO: very similar to UDiv *)
