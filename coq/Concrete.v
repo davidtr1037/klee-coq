@@ -594,6 +594,12 @@ Inductive is_division : ibinop -> Prop :=
   | Is_Division_SRem : is_division SRem
 .
 
+Inductive is_shift : ibinop -> Prop :=
+  | Is_Shift_Shl : forall nuw nsw, is_shift (Shl nuw nsw)
+  | Is_Shift_LShr : forall exact, is_shift (LShr exact)
+  | Is_Shift_AShr : forall exact, is_shift (AShr exact)
+.
+
 Definition division_error_condition di : bool :=
   di_is_const di 0
 .
@@ -660,14 +666,15 @@ Inductive error_state : state -> Prop :=
         )
   (* TODO: add assumptions for e1 e2? safe_llvm_expr? *)
   (* TODO: what happens with other types? *)
-  (* TODO: use bitwidth instead of type width? *)
-  | ES_Shl : forall ic cid v nuw nsw w e1 e2 cs pbid ls stk gs mdl di,
+  (* TODO: rename *)
+  | ES_Shl : forall ic cid v op w e1 e2 cs pbid ls stk gs mdl di,
+      is_shift op ->
       (eval_exp ls gs (Some (TYPE_I w)) e2) = Some (DV_Int di) ->
       shl_error_condition di = true ->
       error_state
         (mk_state
           ic
-          (CMD_Inst cid (INSTR_Op v (OP_IBinop (Shl nuw nsw) (TYPE_I w) e1 e2)))
+          (CMD_Inst cid (INSTR_Op v (OP_IBinop op (TYPE_I w) e1 e2)))
           cs
           pbid
           ls

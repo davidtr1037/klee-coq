@@ -58,7 +58,7 @@ Proof.
   intros H.
   inversion H; subst.
   { inversion His; subst. inversion H3; subst; inversion H7. }
-  { inversion His; subst. inversion H7. }
+  { inversion His; subst. inversion H3; subst; inversion H7. }
 Qed.
 
 Lemma not_error_phi : forall ic cid v t args cs pbid ls stk gs syms pc mdl,
@@ -677,7 +677,7 @@ Proof.
       apply Hunsat.
       assumption.
     }
-    { inversion Hop. }
+    { inversion Hop; inversion H2; subst; try discriminate. }
   }
   {
     intros s' Hstep.
@@ -875,6 +875,85 @@ Proof.
   apply Is_Unsafe_Division_SRem.
 Qed.
 
+Lemma safe_subtree_instr_op_shift : forall ic cid v op et e1 e2 c cs pbid ls stk gs syms pc mdl ls_opt se2 t,
+  let s_init :=
+    (mk_sym_state
+      ic
+      (CMD_Inst cid (INSTR_Op v (OP_IBinop op et e1 e2)))
+      (c :: cs)
+      pbid
+      ls
+      stk
+      gs
+      syms
+      pc
+      mdl
+    ) in
+  is_unsafe_shift op ->
+  is_supported_exp e1 ->
+  is_supported_exp e2 ->
+  equiv_smt_store (v !-> (sym_eval_exp ls gs None (OP_IBinop op et e1 e2)); ls) ls_opt ->
+  sym_eval_exp ls gs (Some et) e2 = Some se2 ->
+  unsat (sym_shl_error_condition pc se2) ->
+  (root t =
+    (mk_sym_state
+      (next_inst_counter ic c)
+      c
+      cs
+      pbid
+      ls_opt
+      stk
+      gs
+      syms
+      pc
+      mdl
+    )
+  ) ->
+  (safe_et_opt t) ->
+  (safe_et_opt (t_subtree s_init [t])).
+Proof.
+  intros ic cid v op et e1 e2 c cs pbid ls stk gs syms pc mdl ls_opt se2 t.
+  intros s_init Hop His1 His2 Heq Heval_e2 Hunsat Ht Hsafe.
+  apply Safe_Subtree.
+  {
+    intros Herr.
+    inversion Herr; subst.
+    { inversion Hop; subst; inversion H2. }
+    {
+      rewrite Heval_e2 in H15.
+      inversion H15; subst.
+      unfold unsat in Hunsat.
+      apply Hunsat.
+      assumption.
+    }
+  }
+  {
+    intros s' Hstep.
+    left.
+    exists t.
+    split.
+    { apply in_list_0. }
+    {
+      split.
+      { assumption. }
+      {
+        apply inversion_instr_op in Hstep.
+        destruct Hstep as [se [Heval Hs]].
+        rewrite Hs.
+        rewrite Ht.
+        apply EquivSymState.
+        {
+          rewrite <- Heval.
+          assumption.
+        }
+        { apply equiv_sym_stack_refl. }
+        { apply equiv_smt_store_refl. }
+        { apply equiv_smt_expr_refl. }
+      }
+    }
+  }
+Qed.
+
 Lemma safe_subtree_instr_op_shl : forall ic cid v et e1 e2 c cs pbid ls stk gs syms pc mdl ls_opt se2 t,
   let s_init :=
     (mk_sym_state
@@ -913,44 +992,92 @@ Lemma safe_subtree_instr_op_shl : forall ic cid v et e1 e2 c cs pbid ls stk gs s
 Proof.
   intros ic cid v et e1 e2 c cs pbid ls stk gs syms pc mdl ls_opt se2 t.
   intros s_init His1 His2 Heq Heval_e2 Hunsat Ht Hsafe.
-  apply Safe_Subtree.
-  {
-    intros Herr.
-    inversion Herr; subst.
-    { inversion H2. }
-    {
-      rewrite Heval_e2 in H1.
-      inversion H1; subst.
-      unfold unsat in Hunsat.
-      apply Hunsat.
-      assumption.
-    }
-  }
-  {
-    intros s' Hstep.
-    left.
-    exists t.
-    split.
-    { apply in_list_0. }
-    {
-      split.
-      { assumption. }
-      {
-        apply inversion_instr_op in Hstep.
-        destruct Hstep as [se [Heval Hs]].
-        rewrite Hs.
-        rewrite Ht.
-        apply EquivSymState.
-        {
-          rewrite <- Heval.
-          assumption.
-        }
-        { apply equiv_sym_stack_refl. }
-        { apply equiv_smt_store_refl. }
-        { apply equiv_smt_expr_refl. }
-      }
-    }
-  }
+  eapply safe_subtree_instr_op_shift; try eassumption.
+  apply Is_Unsafe_Shift_Shl.
+Qed.
+
+Lemma safe_subtree_instr_op_lshr : forall ic cid v et e1 e2 c cs pbid ls stk gs syms pc mdl ls_opt se2 t,
+  let s_init :=
+    (mk_sym_state
+      ic
+      (CMD_Inst cid (INSTR_Op v (OP_IBinop (LShr false) et e1 e2)))
+      (c :: cs)
+      pbid
+      ls
+      stk
+      gs
+      syms
+      pc
+      mdl
+    ) in
+  is_supported_exp e1 ->
+  is_supported_exp e2 ->
+  equiv_smt_store (v !-> (sym_eval_exp ls gs None (OP_IBinop (LShr false) et e1 e2)); ls) ls_opt ->
+  sym_eval_exp ls gs (Some et) e2 = Some se2 ->
+  unsat (sym_shl_error_condition pc se2) ->
+  (root t =
+    (mk_sym_state
+      (next_inst_counter ic c)
+      c
+      cs
+      pbid
+      ls_opt
+      stk
+      gs
+      syms
+      pc
+      mdl
+    )
+  ) ->
+  (safe_et_opt t) ->
+  (safe_et_opt (t_subtree s_init [t])).
+Proof.
+  intros ic cid v et e1 e2 c cs pbid ls stk gs syms pc mdl ls_opt se2 t.
+  intros s_init His1 His2 Heq Heval_e2 Hunsat Ht Hsafe.
+  eapply safe_subtree_instr_op_shift; try eassumption.
+  apply Is_Unsafe_Shift_LShr.
+Qed.
+
+Lemma safe_subtree_instr_op_ashr : forall ic cid v et e1 e2 c cs pbid ls stk gs syms pc mdl ls_opt se2 t,
+  let s_init :=
+    (mk_sym_state
+      ic
+      (CMD_Inst cid (INSTR_Op v (OP_IBinop (AShr false) et e1 e2)))
+      (c :: cs)
+      pbid
+      ls
+      stk
+      gs
+      syms
+      pc
+      mdl
+    ) in
+  is_supported_exp e1 ->
+  is_supported_exp e2 ->
+  equiv_smt_store (v !-> (sym_eval_exp ls gs None (OP_IBinop (AShr false) et e1 e2)); ls) ls_opt ->
+  sym_eval_exp ls gs (Some et) e2 = Some se2 ->
+  unsat (sym_shl_error_condition pc se2) ->
+  (root t =
+    (mk_sym_state
+      (next_inst_counter ic c)
+      c
+      cs
+      pbid
+      ls_opt
+      stk
+      gs
+      syms
+      pc
+      mdl
+    )
+  ) ->
+  (safe_et_opt t) ->
+  (safe_et_opt (t_subtree s_init [t])).
+Proof.
+  intros ic cid v et e1 e2 c cs pbid ls stk gs syms pc mdl ls_opt se2 t.
+  intros s_init His1 His2 Heq Heval_e2 Hunsat Ht Hsafe.
+  eapply safe_subtree_instr_op_shift; try eassumption.
+  apply Is_Unsafe_Shift_AShr.
 Qed.
 
 Lemma inversion_phi : forall ic cid v t args c cs pbid ls stk gs syms pc mdl s,

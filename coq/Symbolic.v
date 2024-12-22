@@ -698,13 +698,15 @@ Inductive error_sym_state : sym_state -> Prop :=
           pc
           mdl
         )
-  | ESS_Shl : forall ic cid v nuw nsw w e1 e2 cs pbid ls stk gs syms pc mdl se,
+  (* TODO: rename *)
+  | ESS_Shl : forall ic cid v op w e1 e2 cs pbid ls stk gs syms pc mdl se,
+      is_shift op ->
       (sym_eval_exp ls gs (Some (TYPE_I w)) e2) = Some se ->
       sat (sym_shl_error_condition pc se) ->
       error_sym_state
         (mk_sym_state
           ic
-          (CMD_Inst cid (INSTR_Op v (OP_IBinop (Shl nuw nsw) (TYPE_I w) e1 e2)))
+          (CMD_Inst cid (INSTR_Op v (OP_IBinop op (TYPE_I w) e1 e2)))
           cs
           pbid
           ls

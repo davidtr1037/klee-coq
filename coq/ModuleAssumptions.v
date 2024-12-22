@@ -26,6 +26,12 @@ Inductive is_unsafe_division : ibinop -> Prop :=
   | Is_Unsafe_Division_SRem : is_unsafe_division (SRem)
 .
 
+Inductive is_unsafe_shift : ibinop -> Prop :=
+  | Is_Unsafe_Shift_Shl : is_unsafe_shift (Shl false false)
+  | Is_Unsafe_Shift_LShr : is_unsafe_shift (LShr false)
+  | Is_Unsafe_Shift_AShr : is_unsafe_shift (AShr false)
+.
+
 (* TODO: add missing ops *)
 Inductive is_unsafe_op : ibinop -> Prop :=
   | Is_Unsafe_Op_UDiv : is_unsafe_op (UDiv false)
@@ -33,6 +39,8 @@ Inductive is_unsafe_op : ibinop -> Prop :=
   | Is_Unsafe_Op_URem : is_unsafe_op (URem)
   | Is_Unsafe_Op_SRem : is_unsafe_op (SRem)
   | Is_Unsafe_Op_Shl : is_unsafe_op (Shl false false)
+  | Is_Unsafe_Op_LShr : is_unsafe_op (LShr false)
+  | Is_Unsafe_Op_AShr : is_unsafe_op (AShr false)
 .
 
 Inductive is_supported_conv : conversion_type -> Prop :=
