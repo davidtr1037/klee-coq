@@ -260,6 +260,14 @@ ref<CoqTactic> ModuleSupport::getTacticForAssignment(Instruction &inst) {
       lemmaName = "Is_Unsafe_Op_Shl";
       break;
 
+    case Instruction::LShr:
+      lemmaName = "Is_Unsafe_Op_LShr";
+      break;
+
+    case Instruction::AShr:
+      lemmaName = "Is_Unsafe_Op_AShr";
+      break;
+
     default:
       assert(false);
     }

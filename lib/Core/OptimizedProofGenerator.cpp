@@ -387,6 +387,14 @@ klee::ref<CoqTactic> OptimizedProofGenerator::getTacticForUnsafeOperation(StateI
     lemmaName = "safe_subtree_instr_op_shl";
     break;
 
+  case Instruction::LShr:
+    lemmaName = "safe_subtree_instr_op_lshr";
+    break;
+
+  case Instruction::AShr:
+    lemmaName = "safe_subtree_instr_op_ashr";
+    break;
+
   default:
     assert(false);
   }
@@ -443,6 +451,8 @@ klee::ref<CoqTactic> OptimizedProofGenerator::getTacticForErrorCondition(StateIn
     break;
 
   case Instruction::Shl:
+  case Instruction::LShr:
+  case Instruction::AShr:
     lemmaName = "unsat_shift_condition_bv32";
     break;
 
