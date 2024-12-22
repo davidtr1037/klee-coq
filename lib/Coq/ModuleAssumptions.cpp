@@ -248,6 +248,14 @@ ref<CoqTactic> ModuleSupport::getTacticForAssignment(Instruction &inst) {
       lemmaName = "Is_Unsafe_Op_SDiv";
       break;
 
+    case Instruction::URem:
+      lemmaName = "Is_Unsafe_Op_URem";
+      break;
+
+    case Instruction::SRem:
+      lemmaName = "Is_Unsafe_Op_SRem";
+      break;
+
     case Instruction::Shl:
       lemmaName = "Is_Unsafe_Op_Shl";
       break;
