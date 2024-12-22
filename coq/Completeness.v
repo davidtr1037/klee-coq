@@ -2171,13 +2171,13 @@ Proof.
       inversion L; subst.
       { rewrite H13 in H1. discriminate. }
       {
-        apply ESS_Shl with (se := (Expr sort ast)).
+        apply ESS_OverShift with (se := (Expr sort ast)).
         { assumption. }
         { symmetry. assumption. }
         {
           rewrite H13 in H0.
           inversion H0; subst.
-          unfold sat, sym_shl_error_condition.
+          unfold sat, sym_shift_error_condition.
           exists m.
           unfold sat_via.
           destruct sort; (

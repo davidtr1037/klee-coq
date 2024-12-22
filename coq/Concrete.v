@@ -605,7 +605,7 @@ Definition division_error_condition di : bool :=
 .
 
 (* TODO: why bitwidth does not work? *)
-Definition shl_error_condition di : bool :=
+Definition shift_error_condition di : bool :=
   match di with
   | DI_I1 n => cmpu Cge n (Int1.repr 1)
   | DI_I8 n => cmpu Cge n (Int8.repr 8)
@@ -666,11 +666,10 @@ Inductive error_state : state -> Prop :=
         )
   (* TODO: add assumptions for e1 e2? safe_llvm_expr? *)
   (* TODO: what happens with other types? *)
-  (* TODO: rename *)
-  | ES_Shl : forall ic cid v op w e1 e2 cs pbid ls stk gs mdl di,
+  | ES_OverShift : forall ic cid v op w e1 e2 cs pbid ls stk gs mdl di,
       is_shift op ->
       (eval_exp ls gs (Some (TYPE_I w)) e2) = Some (DV_Int di) ->
-      shl_error_condition di = true ->
+      shift_error_condition di = true ->
       error_state
         (mk_state
           ic

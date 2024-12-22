@@ -630,7 +630,7 @@ Definition sym_division_error_condition pc se :=
   end
 .
 
-Definition sym_shl_error_condition pc se :=
+Definition sym_shift_error_condition pc se :=
   match se with
   | Expr sort ast =>
       AST_BinOp
@@ -698,11 +698,10 @@ Inductive error_sym_state : sym_state -> Prop :=
           pc
           mdl
         )
-  (* TODO: rename *)
-  | ESS_Shl : forall ic cid v op w e1 e2 cs pbid ls stk gs syms pc mdl se,
+  | ESS_OverShift : forall ic cid v op w e1 e2 cs pbid ls stk gs syms pc mdl se,
       is_shift op ->
       (sym_eval_exp ls gs (Some (TYPE_I w)) e2) = Some se ->
-      sat (sym_shl_error_condition pc se) ->
+      sat (sym_shift_error_condition pc se) ->
       error_sym_state
         (mk_sym_state
           ic

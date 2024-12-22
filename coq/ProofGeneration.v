@@ -894,7 +894,7 @@ Lemma safe_subtree_instr_op_shift : forall ic cid v op et e1 e2 c cs pbid ls stk
   is_supported_exp e2 ->
   equiv_smt_store (v !-> (sym_eval_exp ls gs None (OP_IBinop op et e1 e2)); ls) ls_opt ->
   sym_eval_exp ls gs (Some et) e2 = Some se2 ->
-  unsat (sym_shl_error_condition pc se2) ->
+  unsat (sym_shift_error_condition pc se2) ->
   (root t =
     (mk_sym_state
       (next_inst_counter ic c)
@@ -972,7 +972,7 @@ Lemma safe_subtree_instr_op_shl : forall ic cid v et e1 e2 c cs pbid ls stk gs s
   is_supported_exp e2 ->
   equiv_smt_store (v !-> (sym_eval_exp ls gs None (OP_IBinop (Shl false false) et e1 e2)); ls) ls_opt ->
   sym_eval_exp ls gs (Some et) e2 = Some se2 ->
-  unsat (sym_shl_error_condition pc se2) ->
+  unsat (sym_shift_error_condition pc se2) ->
   (root t =
     (mk_sym_state
       (next_inst_counter ic c)
@@ -1014,7 +1014,7 @@ Lemma safe_subtree_instr_op_lshr : forall ic cid v et e1 e2 c cs pbid ls stk gs 
   is_supported_exp e2 ->
   equiv_smt_store (v !-> (sym_eval_exp ls gs None (OP_IBinop (LShr false) et e1 e2)); ls) ls_opt ->
   sym_eval_exp ls gs (Some et) e2 = Some se2 ->
-  unsat (sym_shl_error_condition pc se2) ->
+  unsat (sym_shift_error_condition pc se2) ->
   (root t =
     (mk_sym_state
       (next_inst_counter ic c)
@@ -1056,7 +1056,7 @@ Lemma safe_subtree_instr_op_ashr : forall ic cid v et e1 e2 c cs pbid ls stk gs 
   is_supported_exp e2 ->
   equiv_smt_store (v !-> (sym_eval_exp ls gs None (OP_IBinop (AShr false) et e1 e2)); ls) ls_opt ->
   sym_eval_exp ls gs (Some et) e2 = Some se2 ->
-  unsat (sym_shl_error_condition pc se2) ->
+  unsat (sym_shift_error_condition pc se2) ->
   (root t =
     (mk_sym_state
       (next_inst_counter ic c)

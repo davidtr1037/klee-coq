@@ -725,7 +725,7 @@ Proof.
       { assumption. }
     }
     destruct L as [se1 [L_1 L_2]].
-    apply ESS_Shl with (se := se1).
+    apply ESS_OverShift with (se := se1).
     { assumption. }
     { assumption. }
     {
@@ -734,7 +734,7 @@ Proof.
       { apply sort_injection in L_2. symmetry. assumption. }
       subst.
       rename sort2 into sort.
-      unfold sym_shl_error_condition in *.
+      unfold sym_shift_error_condition in *.
       eapply equiv_smt_expr_sat.
       {
         eapply equiv_smt_expr_binop.

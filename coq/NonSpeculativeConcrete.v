@@ -556,7 +556,7 @@ Proof.
             simpl in H14.
             inversion Hsafe.
             destruct H2.
-            eapply ES_Shl; try eassumption; try apply Is_Shift_Shl.
+            eapply ES_OverShift; try eassumption; try apply Is_Shift_Shl.
             simpl.
             unfold Int1.ltu.
             rewrite Int1.unsigned_repr_eq.
