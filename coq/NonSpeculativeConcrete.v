@@ -339,6 +339,181 @@ Proof.
   }
 Qed.
 
+(* TODO: remove *)
+(*
+Lemma has_no_poison_eval_exp_shift : forall s1 s2 cid v op w e1 e2,
+  Concrete.cmd s1 = CMD_Inst cid (INSTR_Op v (OP_IBinop op (TYPE_I w) e1 e2)) ->
+  is_unsafe_shift op ->
+  is_supported_state s1 ->
+  safe_state ns_step s1 ->
+  has_no_poison s1 ->
+  step s1 s2 ->
+  has_no_poison s2.
+Proof.
+  intros s1 s2 cid v op w e1 e2 Hcmd Hop His Hsafe Hnp Hstep.
+  inversion Hcmd; subst.
+  inversion His; subst.
+  inversion H; subst; inversion Hcmd; subst.
+  { inversion H3; subst. inversion H10; subst; inversion Hop. }
+  {
+  inversion Hnp; subst.
+  inversion Hstep; subst; try discriminate Hcmd.
+  apply Has_No_Poison; try assumption.
+  apply has_no_poison_store_update; try assumption.
+  inversion Hcmd; subst.
+  simpl in H20.
+  destruct
+    (eval_exp ls gs (Some (TYPE_I w)) e1) as [dv1 | ] eqn:E1,
+    (eval_exp ls gs (Some (TYPE_I w)) e2) as [dv2 | ] eqn:E2;
+  try discriminate H20.
+  unfold eval_ibinop in H20.
+  destruct dv1 as [di1 | | ] eqn:Edv1, dv2 as [di2 | | ] eqn:Edv2;
+  try (destruct op; inversion Hop; discriminate H20);
+  try (destruct di1; destruct op; inversion Hop; discriminate H20);
+  try (
+    apply has_no_poison_eval_exp
+      with (ls := ls) (gs := gs) (ot := Some (TYPE_I w)) (e := e1);
+    try assumption;
+    rewrite H20 in E1;
+    assumption
+  );
+  try (
+    apply has_no_poison_eval_exp
+      with (ls := ls) (gs := gs) (ot := Some (TYPE_I w)) (e := e2) (dv := DV_Poison) in H5;
+    try assumption;
+    destruct H5;
+    reflexivity
+  ).
+  destruct di1 as [n1 | n1 | n1 | n1 | n1], di2 as [n2 | n2 | n2 | n2 | n2];
+  try discriminate H20.
+  {
+    inversion Hop; subst.
+    {
+      simpl in H20.
+      destruct ((Int1.unsigned n2) >=? 1)%Z eqn:E.
+      {
+        simpl in H20.
+        inversion Hsafe.
+        destruct H6.
+        eapply ES_OverShift; try eassumption; try apply Is_Shift_Shl.
+        simpl.
+        unfold Int1.ltu.
+        rewrite Int1.unsigned_repr_eq.
+        replace (1 mod Int1.modulus)%Z with (1%Z); try reflexivity.
+        rewrite Z.geb_ge in E.
+        apply Coqlib.zlt_false with (A := bool) (a := true) (b := false) in E.
+        rewrite E.
+        reflexivity.
+      }
+      {
+        inversion H20; subst.
+        discriminate.
+      }
+    }
+    { admit. }
+    { admit. }
+  }
+  (* TODO: similar *)
+  { admit. }
+  { admit. }
+  { admit. }
+  { admit. }
+Admitted.
+*)
+
+Lemma has_no_poison_eval_exp_shift : forall ls gs op w e1 e2 dv di,
+  store_has_no_poison ls ->
+  store_has_no_poison gs ->
+  is_unsafe_shift op ->
+  is_supported_exp e1 ->
+  is_supported_exp e2 ->
+  eval_exp ls gs None (OP_IBinop op (TYPE_I w) e1 e2) = Some dv ->
+  eval_exp ls gs (Some (TYPE_I w)) e2 = Some (DV_Int di) ->
+  shift_error_condition di = false ->
+  dv <> DV_Poison.
+Proof.
+  intros ls gs op w e1 e2 dv di Hls Hgs Hop His1 His2 Heval Heval2 Hcond.
+  simpl in Heval.
+  destruct
+    (eval_exp ls gs (Some (TYPE_I w)) e1) as [dv1 | ] eqn:E1,
+    (eval_exp ls gs (Some (TYPE_I w)) e2) as [dv2 | ] eqn:E2;
+  try discriminate Heval.
+  unfold eval_ibinop in Heval.
+  destruct dv1 as [di1 | | ] eqn:Edv1, dv2 as [di2 | | ] eqn:Edv2;
+  try (discriminate Heval);
+  try (destruct di1; discriminate Heval);
+  try (
+    apply has_no_poison_eval_exp
+      with (ls := ls) (gs := gs) (ot := Some (TYPE_I w)) (e := e1);
+    try assumption;
+    rewrite Heval in E1;
+    assumption
+  );
+  try (
+    apply has_no_poison_eval_exp
+      with (ls := ls) (gs := gs) (ot := Some (TYPE_I w)) (e := e2) (dv := DV_Poison) in His2;
+    try assumption;
+    destruct His2;
+    reflexivity
+  ).
+  destruct di1 as [n1 | n1 | n1 | n1 | n1], di2 as [n2 | n2 | n2 | n2 | n2];
+  try discriminate Heval.
+  {
+    destruct op;
+    try inversion Hop; subst; (
+      simpl in Heval;
+      destruct ((Int1.unsigned n2) >=? 1)%Z eqn:E; [
+        inversion Heval2; subst;
+        simpl in Hcond;
+        unfold Int1.ltu in Hcond;
+        rewrite Int1.unsigned_repr_eq in Hcond;
+        replace (1 mod Int1.modulus)%Z with (1%Z) in Hcond; try reflexivity;
+        rewrite Z.geb_ge in E;
+        apply Coqlib.zlt_false with (A := bool) (a := true) (b := false) in E;
+        rewrite E in Hcond;
+        discriminate Hcond |
+        inversion Heval; subst;
+        discriminate
+      ]
+    ).
+  }
+  (* TODO: similar *)
+  { admit. }
+  { admit. }
+  { admit. }
+  { admit. }
+Admitted.
+
+(* TODO: rename? *)
+Lemma shift_error_negation : forall ic cid v op w e1 e2 cs pbid ls stk gs mdl di,
+  is_unsafe_shift op ->
+  (eval_exp ls gs (Some (TYPE_I w)) e2) = Some (DV_Int di) ->
+  ~ error_state
+    (mk_state
+      ic
+      (CMD_Inst cid (INSTR_Op v (OP_IBinop op (TYPE_I w) e1 e2)))
+      cs
+      pbid
+      ls
+      stk
+      gs
+      mdl
+    ) ->
+  shift_error_condition di = false.
+Proof.
+  intros ic cid v op w e1 e2 cs pbid ls stk gs mdl di Hop Heval Hne.
+  destruct (shift_error_condition di) eqn:E.
+  {
+    destruct Hne.
+    eapply ES_OverShift; try eassumption.
+    inversion Hop.
+    { apply Is_Shift_Shl. }
+    { apply Is_Shift_LShr. }
+    { apply Is_Shift_AShr. }
+  }
+  { reflexivity. }
+Qed.
+
 Lemma has_no_poison_eval_phi_args : forall ls gs t args pbid dv,
   (forall bid e, In (bid, e) args -> is_supported_exp e) ->
   store_has_no_poison ls ->
@@ -524,57 +699,29 @@ Proof.
       }
       (* Shl *)
       {
-        simpl in H14.
-        destruct
-          (eval_exp ls gs (Some (TYPE_I w)) e1) as [dv1 | ] eqn:E1,
-          (eval_exp ls gs (Some (TYPE_I w)) e2) as [dv2 | ] eqn:E2;
-        try discriminate H14.
-        unfold eval_ibinop in H14.
-        destruct dv1 as [di1 | | ] eqn:Edv1, dv2 as [di2 | | ] eqn:Edv2;
-        try (discriminate H14);
-        try (destruct di1; discriminate H14);
-        try (
-          apply has_no_poison_eval_exp
-            with (ls := ls) (gs := gs) (ot := Some (TYPE_I w)) (e := e1);
-          try assumption;
-          rewrite H14 in E1;
-          assumption
-        );
-        try (
-          apply has_no_poison_eval_exp
-            with (ls := ls) (gs := gs) (ot := Some (TYPE_I w)) (e := e2) (dv := DV_Poison) in H8;
-          try assumption;
-          destruct H8;
-          reflexivity
-        ).
-        destruct di1 as [n1 | n1 | n1 | n1 | n1], di2 as [n2 | n2 | n2 | n2 | n2];
-        try discriminate H14.
+        destruct (eval_exp ls gs (Some (TYPE_I w)) e2) as [dv2 | ] eqn:E2.
         {
-          simpl in H14.
-          destruct ((Int1.unsigned n2) >=? 1)%Z eqn:E.
+          destruct dv2 as [di2 | | ] eqn:Edv2.
           {
-            simpl in H14.
-            inversion Hsafe.
-            destruct H2.
-            eapply ES_OverShift; try eassumption; try apply Is_Shift_Shl.
-            simpl.
-            unfold Int1.ltu.
-            rewrite Int1.unsigned_repr_eq.
-            replace (1 mod Int1.modulus)%Z with (1%Z); try reflexivity.
-            rewrite Z.geb_ge in E.
-            apply Coqlib.zlt_false with (A := bool) (a := true) (b := false) in E.
-            rewrite E.
+            apply has_no_poison_eval_exp_shift
+              with (ls := ls) (gs := gs) (op := Shl false false) (w := w) (e1 := e1) (e2 := e2) (di := di2);
+            try assumption.
+            { apply Is_Unsafe_Shift_Shl. }
+            {
+              inversion Hsafe; subst.
+              eapply shift_error_negation; try eassumption.
+              apply Is_Unsafe_Shift_Shl.
+            }
+          }
+          { admit. }
+          {
+            apply has_no_poison_eval_exp
+              with (ls := ls) (gs := gs) (ot := Some (TYPE_I w)) (e := e2) (dv := DV_Poison) in H8;
+            try assumption.
+            destruct H8.
             reflexivity.
           }
-          {
-            inversion H14; subst.
-            discriminate.
-          }
         }
-        (* TODO: similar *)
-        { admit. }
-        { admit. }
-        { admit. }
         { admit. }
       }
       { admit. }
