@@ -1438,6 +1438,19 @@ Proof.
   }
 Admitted.
 
+Lemma completeness_single_step_shift : forall c cid v op w e1 e2 c' s,
+  is_unsafe_shift op ->
+  Concrete.cmd c = CMD_Inst cid (INSTR_Op v (OP_IBinop op (TYPE_I w) e1 e2)) ->
+  is_supported_state c ->
+  has_no_poison c ->
+  ns_step c c' ->
+  well_scoped s ->
+  over_approx s c ->
+  (exists s', sym_step s s' /\ over_approx s' c').
+Proof.
+  intros c cid v op w e1 e2 c' s Hop Hcmd Hiss Hnp Hs Hws Hoa.
+Admitted.
+
 (* TODO: (has_no_poison c) can be inferred from (over_approx s c)? *)
 Lemma completeness_single_step :
   forall c c' s,
@@ -1653,9 +1666,19 @@ Proof.
         { admit. }
       }
       (* LShr *)
-      { admit. }
+      {
+        eapply completeness_single_step_shift
+          with (cid := cid) (v := v) (w := w) (e1 := e1) (e2 := e2); try eassumption.
+        { apply Is_Unsafe_Shift_LShr. }
+        { reflexivity. }
+      }
       (* AShr *)
-      { admit. }
+      {
+        eapply completeness_single_step_shift
+          with (cid := cid) (v := v) (w := w) (e1 := e1) (e2 := e2); try eassumption.
+        { apply Is_Unsafe_Shift_AShr. }
+        { reflexivity. }
+      }
     }
   }
   (* Phi *)
