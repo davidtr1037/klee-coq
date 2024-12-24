@@ -852,24 +852,6 @@ Proof.
   { right. right. assumption. }
 Qed.
 
-Definition ibinop_to_smt_binop (op : ibinop) : smt_binop :=
-  match op with
-  | Add _ _ => SMT_Add
-  | Sub _ _ => SMT_Sub
-  | Mul _ _ => SMT_Mul
-  | Shl _ _ => SMT_Shl
-  | UDiv _ => SMT_UDiv
-  | SDiv _ => SMT_SDiv
-  | LShr _ => SMT_LShr
-  | AShr _ => SMT_AShr
-  | URem => SMT_URem
-  | SRem => SMT_SRem
-  | And => SMT_And
-  | Or => SMT_Or
-  | Xor => SMT_Xor
-  end
-.
-
 Lemma equiv_sym_state_on_ibinop_step : forall s1 s1' s2 cid v op w e1 e2,
   equiv_sym_state s1 s2 ->
   sym_cmd s1 = CMD_Inst cid (INSTR_Op v (OP_IBinop op (TYPE_I w) e1 e2)) ->
