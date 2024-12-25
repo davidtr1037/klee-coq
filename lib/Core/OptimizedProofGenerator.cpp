@@ -964,6 +964,7 @@ klee::ref<CoqTactic> OptimizedProofGenerator::getTacticForSubtree(StateInfo &sta
     uint64_t axiomID = allocateAxiomID();
     ref<CoqLemma> lemma = getUnsatAxiom(unsatPC, axiomID);
     unsatAxioms.push_front(lemma);
+    output.unsatAxiomName = lemma->name;
 
     Instruction *targetInst = si2.state->pc->inst;
     BasicBlock *targetBB = targetInst->getParent();

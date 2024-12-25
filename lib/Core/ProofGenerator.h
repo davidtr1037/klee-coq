@@ -142,7 +142,7 @@ public:
                                               ExecutionState &successor,
                                               const ExternalProofHint &hint);
 
-  ref<CoqTactic> getTacticForSafety(StateInfo &si);
+  ref<CoqTactic> getTacticForSafety(StateInfo &si, const ExternalProofHint *hint);
 
   ref<CoqTactic> getTacticForStep(StateInfo &si,
                                   ExecutionState &successor);
@@ -193,13 +193,15 @@ public:
 
   virtual ref<CoqTactic> getTacticForStep(StateInfo &stateInfo,
                                           SuccessorInfo &successor1,
-                                          SuccessorInfo &successor2);
+                                          SuccessorInfo &successor2,
+                                          ProofGenerationOutput &output);
 
   void getTacticsForBranches(StateInfo &stateInfo,
                              SuccessorInfo &si1,
                              SuccessorInfo &si2,
                              ref<CoqTactic> &tactic1,
-                             ref<CoqTactic> &tactic2);
+                             ref<CoqTactic> &tactic2,
+                             ProofGenerationOutput &output);
 
   virtual ref<CoqTactic> getTacticForUnsat(ref<CoqExpr> pc, uint64_t axiomID);
 

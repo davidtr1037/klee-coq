@@ -213,17 +213,96 @@ void ProofGenerator::handleStep(StateInfo &si,
 klee::ref<CoqLemma> ProofGenerator::createLemmaForSubtree(StateInfo &si,
                                                           ExecutionState &successor,
                                                           const ExternalProofHint &hint) {
-  ref<CoqTactic> safetyTactic = getTacticForSafety(si);
+  ref<CoqTactic> safetyTactic = getTacticForSafety(si, &hint);
   ref<CoqTactic> stepTactic = getTacticForStep(si, successor);
   ref<CoqTactic> tactic = getTacticForSubtree(safetyTactic, stepTactic);
   return createLemma(si.stepID, tactic);
 }
 
-klee::ref<CoqTactic> ProofGenerator::getTacticForSafety(StateInfo &si) {
+klee::ref<CoqTactic> ProofGenerator::getTacticForSafety(StateInfo &si,
+                                                        const ExternalProofHint *hint) {
   if (moduleTranslator->isAssignment(*si.inst)) {
-    return new Block(
-      {new Apply("not_error_instr_op")}
-    );
+    if (moduleSupport->isUnsafeInstruction(*si.inst)) {
+      BinaryOperator *bo = cast<BinaryOperator>(si.inst);
+      Value *v2 = bo->getOperand(1);
+      ref<CoqTactic> t = nullptr;
+
+      std::string lemmaName;
+      switch (bo->getOpcode()) {
+      case Instruction::UDiv:
+      case Instruction::SDiv:
+      case Instruction::URem:
+      case Instruction::SRem:
+        lemmaName = "unsat_div_condition_bv32";
+        break;
+
+      case Instruction::Shl:
+      case Instruction::LShr:
+      case Instruction::AShr:
+        lemmaName = "unsat_shift_condition_bv32";
+        break;
+
+      default:
+        assert(false);
+      }
+
+      if (isa<ConstantInt>(v2)) {
+        t = new Block(
+          {
+            new Apply("unsat_and_right"),
+            new Apply("unsat_false"),
+          }
+        );
+      } else {
+        assert(hint && !hint->lastUnsatAxiomName.empty());
+        t = new Block(
+          {
+            new Concat(
+              {
+                /* this block should come first, otherwise the failing tactic is slow... */
+                new Try(
+                  {
+                    new Apply(lemmaName),
+                    new Apply(hint->lastUnsatAxiomName),
+                  }
+                ),
+                new Try(
+                  {
+                    new Apply("unsat_and_right"),
+                    new Apply("unsat_false"),
+                  }
+                ),
+              }
+            )
+          }
+        );
+      }
+
+      return new Block(
+        {
+          new Intros({"Herr"}),
+          new Inversion("Herr"),
+          new Subst(),
+          new Block(
+            {
+              new Inversion("H15"),
+              new Subst(),
+              new EApply("sat_unsat_contradiction"),
+              new Block({new EAssumption()}),
+              t,
+            }
+          ),
+          new Block({new Inversion("H2")}),
+        }
+      );
+    } else {
+      return new Block(
+        {
+          new Apply("not_error_instr_op"),
+          moduleSupport->getTacticForAssignmentExprCached(*si.inst),
+        }
+      );
+    }
   }
 
   if (isa<BranchInst>(si.inst)) {
@@ -694,6 +773,7 @@ klee::ref<CoqTactic> ProofGenerator::getTacticForEquivReturn(StateInfo &si,
   }
 }
 
+/* TODO: pass an external proof hint? */
 void ProofGenerator::handleStep(StateInfo &stateInfo,
                                 SuccessorInfo &si1,
                                 SuccessorInfo &si2,
@@ -727,17 +807,18 @@ klee::ref<CoqLemma> ProofGenerator::createLemmaForSubtree(StateInfo &stateInfo,
                                                           SuccessorInfo &si1,
                                                           SuccessorInfo &si2,
                                                           ProofGenerationOutput &output) {
-  ref<CoqTactic> safetyTactic = getTacticForSafety(stateInfo);
-  ref<CoqTactic> stepTactic = getTacticForStep(stateInfo, si1, si2);
+  ref<CoqTactic> safetyTactic = getTacticForSafety(stateInfo, nullptr);
+  ref<CoqTactic> stepTactic = getTacticForStep(stateInfo, si1, si2, output);
   ref<CoqTactic> tactic = getTacticForSubtree(safetyTactic, stepTactic);
   return createLemma(stateInfo.stepID, tactic);
 }
 
 klee::ref<CoqTactic> ProofGenerator::getTacticForStep(StateInfo &stateInfo,
                                                       SuccessorInfo &si1,
-                                                      SuccessorInfo &si2) {
+                                                      SuccessorInfo &si2,
+                                                      ProofGenerationOutput &output) {
   ref<CoqTactic> tactic1, tactic2;
-  getTacticsForBranches(stateInfo, si1, si2, tactic1, tactic2);
+  getTacticsForBranches(stateInfo, si1, si2, tactic1, tactic2, output);
   return new Block(
     {
       new Intros({"s", "Hstep"}),
@@ -753,7 +834,8 @@ void ProofGenerator::getTacticsForBranches(StateInfo &stateInfo,
                                            SuccessorInfo &si1,
                                            SuccessorInfo &si2,
                                            ref<CoqTactic> &tactic1,
-                                           ref<CoqTactic> &tactic2) {
+                                           ref<CoqTactic> &tactic2,
+                                           ProofGenerationOutput &output) {
   assert(si1.isSat || si2.isSat);
 
   if (!si1.isSat || !si2.isSat) {
@@ -762,6 +844,7 @@ void ProofGenerator::getTacticsForBranches(StateInfo &stateInfo,
       ref<CoqExpr> e = exprTranslator->translate(si1.unsatPC, &si2.state->arrayTranslation, true);
       ref<CoqLemma> lemma = getUnsatAxiom(e, axiomID);
       unsatAxioms.push_front(lemma);
+      output.unsatAxiomName = lemma->name;
 
       ProofHint hint(e, axiomID, false);
       tactic1 = getTacticForUnsat(e, axiomID);
@@ -771,6 +854,7 @@ void ProofGenerator::getTacticsForBranches(StateInfo &stateInfo,
       ref<CoqExpr> e = exprTranslator->translate(si2.unsatPC, &si1.state->arrayTranslation, true);
       ref<CoqLemma> lemma = getUnsatAxiom(e, axiomID);
       unsatAxioms.push_front(lemma);
+      output.unsatAxiomName = lemma->name;
 
       ProofHint hint(e, axiomID, true);
       tactic1 = getTacticForSat(stateInfo, *si1.state, 0, &hint);
