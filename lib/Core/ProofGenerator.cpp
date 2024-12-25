@@ -227,6 +227,7 @@ klee::ref<CoqTactic> ProofGenerator::getTacticForSafety(StateInfo &si,
       Value *v2 = bo->getOperand(1);
       ref<CoqTactic> t = nullptr;
 
+      bool isDivision;
       std::string lemmaName;
       switch (bo->getOpcode()) {
       case Instruction::UDiv:
@@ -234,12 +235,14 @@ klee::ref<CoqTactic> ProofGenerator::getTacticForSafety(StateInfo &si,
       case Instruction::URem:
       case Instruction::SRem:
         lemmaName = "unsat_div_condition_bv32";
+        isDivision = true;
         break;
 
       case Instruction::Shl:
       case Instruction::LShr:
       case Instruction::AShr:
         lemmaName = "unsat_shift_condition_bv32";
+        isDivision = false;
         break;
 
       default:
@@ -278,21 +281,29 @@ klee::ref<CoqTactic> ProofGenerator::getTacticForSafety(StateInfo &si,
         );
       }
 
+      ref<CoqTactic> t1 = new Block(
+        {
+          new Subst(),
+          new Inversion("H15"),
+          new Subst(),
+          new EApply("sat_unsat_contradiction"),
+          new Block({new EAssumption()}),
+          t,
+        }
+      );
+      ref<CoqTactic> t2 = new Block(
+        {
+          new Subst(),
+          new Inversion("H2"),
+        }
+      );
+
       return new Block(
         {
           new Intros({"Herr"}),
           new Inversion("Herr"),
-          new Subst(),
-          new Block(
-            {
-              new Inversion("H15"),
-              new Subst(),
-              new EApply("sat_unsat_contradiction"),
-              new Block({new EAssumption()}),
-              t,
-            }
-          ),
-          new Block({new Inversion("H2")}),
+          isDivision ? t1 : t2,
+          isDivision ? t2 : t1,
         }
       );
     } else {
