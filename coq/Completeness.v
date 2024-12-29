@@ -1315,18 +1315,7 @@ Proof.
       assert(Lsort2 : sort2 = Sort_BV1).
       { eapply infer_sort. eassumption. }
       subst.
-      exists (mk_sym_state
-        (next_inst_counter c_ic c)
-        c
-        cs
-        c_pbid
-        (v !-> Some (Expr Sort_BV1 (AST_BinOp Sort_BV1 (ibinop_to_smt_binop op) ast1 ast2)); s_ls)
-        s_stk
-        s_gs
-        s_syms
-        s_pc
-        c_mdl
-      ).
+      eexists.
       split.
       {
         apply Sym_Step_OP.
@@ -1518,18 +1507,7 @@ Proof.
       assert(Lsort2 : sort2 = Sort_BV1).
       { eapply infer_sort. eassumption. }
       subst.
-      exists (mk_sym_state
-        (next_inst_counter c_ic c)
-        c
-        cs
-        c_pbid
-        (v !-> Some (Expr Sort_BV1 (AST_BinOp Sort_BV1 (ibinop_to_smt_binop op) ast1 ast2)); s_ls)
-        s_stk
-        s_gs
-        s_syms
-        s_pc
-        c_mdl
-      ).
+      eexists.
       split.
       {
         apply Sym_Step_OP.
