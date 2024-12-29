@@ -1226,13 +1226,14 @@ Proof.
   }
 Qed.
 
-(* TODO: generalize *)
-Lemma infer_sort : forall (sort : smt_sort) (x : smt_sort_to_int_type sort) (n : int1),
-  make_dynamic_int sort x = DI_I1 n -> sort = Sort_BV1.
+Lemma infer_sort_generic : forall (sort : smt_sort) (x : smt_sort_to_int_type sort) di,
+  make_dynamic_int sort x = di -> sort = get_sort_by_dynamic_int di.
 Proof.
-  intros sort x n H.
-  destruct sort; try ( simpl in H; discriminate H ).
-  { reflexivity. }
+  intros sort x di H.
+  destruct sort; (
+    destruct di; try discriminate H;
+    reflexivity
+  ).
 Qed.
 
 Lemma completeness_single_step_division : forall c cid v op w e1 e2 c' s,
@@ -1311,9 +1312,9 @@ Proof.
       inversion L2; subst.
       rename sort into sort1, ast into ast1, sort0 into sort2, ast0 into ast2.
       assert(Lsort1 : sort1 = Sort_BV1).
-      { eapply infer_sort. eassumption. }
+      { apply infer_sort_generic in H9. assumption. }
       assert(Lsort2 : sort2 = Sort_BV1).
-      { eapply infer_sort. eassumption. }
+      { apply infer_sort_generic in H12. assumption. }
       subst.
       eexists.
       split.
@@ -1503,9 +1504,9 @@ Proof.
       inversion L2; subst.
       rename sort into sort1, ast into ast1, sort0 into sort2, ast0 into ast2.
       assert(Lsort1 : sort1 = Sort_BV1).
-      { eapply infer_sort. eassumption. }
+      { apply infer_sort_generic in H9. assumption. }
       assert(Lsort2 : sort2 = Sort_BV1).
-      { eapply infer_sort. eassumption. }
+      { apply infer_sort_generic in H12. assumption. }
       subst.
       eexists.
       split.
@@ -1543,10 +1544,10 @@ Proof.
             simpl.
             replace n2 with (Int1.repr 0) in H12.
             {
+              inversion H9; subst.
               inversion H12; subst.
               rewrite H10.
               rewrite Int1.shl_zero.
-              inversion H9; subst.
               reflexivity.
             }
             { symmetry. apply int1_lt_one. assumption. }
@@ -1635,9 +1636,9 @@ Proof.
       inversion L2; subst.
       rename sort into sort1, ast into ast1, sort0 into sort2, ast0 into ast2.
       assert(Lsort1 : sort1 = Sort_BV8).
-      { admit. }
+      { apply infer_sort_generic in H9. assumption. }
       assert(Lsort2 : sort2 = Sort_BV8).
-      { admit. }
+      { apply infer_sort_generic in H12. assumption. }
       subst.
       eexists.
       split.
@@ -1893,7 +1894,7 @@ Proof.
     {
       rewrite H10 in H2.
       inversion H2; subst.
-      apply infer_sort in H5.
+      apply infer_sort_generic in H5.
       subst.  (* TODO: why rewrite does not work? *)
       exists (mk_sym_state
         (mk_inst_counter (ic_fid c_ic) (bid1) (get_cmd_id c))
@@ -1943,7 +1944,7 @@ Proof.
     {
       rewrite H10 in H2.
       inversion H2; subst.
-      apply infer_sort in H5.
+      apply infer_sort_generic in H5.
       subst.
       exists (mk_sym_state
         (mk_inst_counter (ic_fid c_ic) (bid2) (get_cmd_id c))
@@ -2208,7 +2209,7 @@ Proof.
     {
       rewrite H13 in H2.
       inversion H2; subst.
-      apply infer_sort in H5.
+      apply infer_sort_generic in H5.
       subst.
       exists (mk_sym_state
         (next_inst_counter c_ic c)

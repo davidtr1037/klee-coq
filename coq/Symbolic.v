@@ -782,6 +782,16 @@ Definition init_sym_state (mdl : llvm_module) (fid : function_id) : option sym_s
   end
 .
 
+Definition get_sort_by_dynamic_int (x : dynamic_int) : smt_sort :=
+  match x with
+  | DI_I1 n => Sort_BV1
+  | DI_I8 n => Sort_BV8
+  | DI_I16 n => Sort_BV16
+  | DI_I32 n => Sort_BV32
+  | DI_I64 n => Sort_BV64
+  end
+.
+
 Definition make_dynamic_int (s : smt_sort) (x : smt_sort_to_int_type s) : dynamic_int :=
   let f :=
     match s return smt_sort_to_int_type s -> dynamic_int with
