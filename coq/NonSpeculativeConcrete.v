@@ -133,6 +133,47 @@ Proof.
   { inversion H0; subst. assumption. }
 Qed.
 
+Lemma has_no_poison_convert : forall conv dv t1 t2 dv',
+  convert conv dv t1 t2 = Some dv' ->
+  is_supported_conv conv ->
+  conv <> Bitcast ->
+  dv <> DV_Poison ->
+  dv' <> DV_Poison.
+Proof.
+  intros conv dv t1 t2 dv' Hconv His Hne Hdv.
+  destruct conv;
+  try (destruct Hne; reflexivity);
+  (
+    destruct t1 as [w1 | | | ] eqn:Et1;
+    try (
+      destruct dv; try discriminate Hconv;
+      destruct Hdv;
+      reflexivity
+    );
+    repeat (
+      destruct w1;
+      try (
+        destruct dv; try discriminate Hconv;
+        destruct Hdv;
+        reflexivity
+      )
+    );
+    (
+      destruct dv eqn:Edv; [
+        destruct di; try discriminate Hconv;
+        destruct t2 as [w2 | | | ]; try discriminate Hconv;
+        repeat (
+          destruct w2;
+          try discriminate Hconv;
+          try (inversion Hconv; subst; intros Hf; discriminate Hf)
+        ) |
+        discriminate Hconv |
+        inversion Hconv; subst; destruct Hdv; reflexivity
+      ]
+    )
+  ).
+Qed.
+
 Lemma has_no_poison_eval_exp : forall ls gs ot e dv,
   is_supported_exp e ->
   store_has_no_poison ls ->
@@ -238,42 +279,24 @@ Proof.
     destruct (eval_exp ls gs (Some t1) e) as [dv' | ] eqn:E;
     try discriminate Heval.
     apply IHe with (dv := dv') (ot := Some t1) in H4; try assumption.
-    unfold convert in Heval.
     destruct conv.
     (* Trunc *)
     {
-      destruct t1 as [w1 | | | ] eqn:Et1;
-      try (
-        destruct dv'; try discriminate Heval;
-        destruct H4;
-        reflexivity
-      ).
-      repeat (
-        destruct w1;
-        try (
-          destruct dv'; try discriminate Heval;
-          destruct H4;
-          reflexivity
-        )
-      );
-      (
-        destruct dv' eqn:Edv'; [
-          destruct di; try discriminate Heval;
-          destruct t2 as [w2 | | | ]; try discriminate Heval;
-          repeat (
-            destruct w2;
-            try discriminate Heval;
-            try (inversion Heval; subst; intros Hf; discriminate Hf)
-          ) |
-          discriminate Heval |
-          inversion Heval; subst; destruct H4; reflexivity
-        ]
-      ).
+      eapply has_no_poison_convert; try eassumption.
+      discriminate.
     }
-    (* TODO: similar *)
-    { admit. }
-    { admit. }
+    (* Zext *)
     {
+      eapply has_no_poison_convert; try eassumption.
+      discriminate.
+    }
+    (* Sext *)
+    {
+      eapply has_no_poison_convert; try eassumption.
+      discriminate.
+    }
+    {
+      unfold convert in Heval.
       destruct t1 as [w1 | | | ] eqn:Et1, t2 as [w2 | | | ] eqn:Et2; try discriminate Heval.
       destruct (BinPos.Pos.eqb w1 w2) eqn:Ew.
       {
@@ -283,7 +306,7 @@ Proof.
       { discriminate Heval. }
     }
   }
-Admitted.
+Qed.
 
 Lemma has_no_poison_eval_exp_division : forall ls gs op w e1 e2 dv,
   store_has_no_poison ls ->
