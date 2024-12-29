@@ -1614,10 +1614,73 @@ Proof.
         }
       }
     }
-    (* TODO: those are similar to the Sort_BV1 case *)
+    {
+      assert(L1 :
+        over_approx_via_model
+          (eval_exp c_ls c_gs (Some (TYPE_I w)) e1)
+          (sym_eval_exp s_ls s_gs (Some (TYPE_I w)) e1)
+          m
+      ).
+      { apply eval_exp_correspondence; assumption. }
+      assert(L2 :
+        over_approx_via_model
+          (eval_exp c_ls c_gs (Some (TYPE_I w)) e2)
+          (sym_eval_exp s_ls s_gs (Some (TYPE_I w)) e2)
+          m
+      ).
+      { apply eval_exp_correspondence; assumption. }
+      rewrite E1 in L1.
+      rewrite E2 in L2.
+      inversion L1; subst.
+      inversion L2; subst.
+      rename sort into sort1, ast into ast1, sort0 into sort2, ast0 into ast2.
+      assert(Lsort1 : sort1 = Sort_BV8).
+      { admit. }
+      assert(Lsort2 : sort2 = Sort_BV8).
+      { admit. }
+      subst.
+      eexists.
+      split.
+      {
+        apply Sym_Step_OP.
+        simpl.
+        rewrite <- H4.
+        rewrite <- H5.
+        reflexivity.
+      }
+      {
+        apply OA_State.
+        exists m.
+        apply OAV_State; try assumption.
+        apply store_update_correspondence; try assumption.
+        destruct op; inversion Hop; subst;
+        (
+          rewrite <- H11;
+          simpl;
+          destruct (Int8.unsigned n2 >=? 8)%Z eqn:En2; [
+            simpl in H11;
+            rewrite En2 in H11;
+            inversion H11; subst;
+            inversion H0; subst;
+            inversion H20; subst;
+            specialize (H3 v);
+            rewrite update_map_eq in H3;
+            destruct H3;
+            reflexivity |
+            eapply OA_Some; try reflexivity;
+            simpl;
+            inversion H9; subst;
+            inversion H12; subst;
+            reflexivity
+          ]
+        ).
+      }
+    }
+    (* TODO: similar to the Sort_BV8 case *)
     { admit. }
+    (* TODO: similar to the Sort_BV8 case *)
     { admit. }
-    { admit. }
+    (* TODO: similar to the Sort_BV8 case *)
     { admit. }
   }
 Admitted.
