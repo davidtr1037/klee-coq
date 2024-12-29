@@ -1,3 +1,4 @@
+From Coq Require Import Bool.
 From Coq Require Import Lia.
 From Coq Require Import List.
 From Coq Require Import ZArith.
@@ -11,6 +12,8 @@ From SE Require Import DynamicValue.
 From SE Require Import LLVMAst.
 From SE Require Import ModuleAssumptions.
 From SE Require Import Relation.
+
+From SE.Numeric Require Import Integers.
 
 From SE.Utils Require Import IDMap.
 From SE.Utils Require Import Util.
@@ -409,6 +412,7 @@ Proof.
         unfold Int1.ltu in Hcond;
         rewrite Int1.unsigned_repr_eq in Hcond;
         replace (1 mod Int1.modulus)%Z with (1%Z) in Hcond; try reflexivity;
+        apply negb_false_iff in Hcond;
         rewrite Z.geb_ge in E;
         apply Coqlib.zlt_false with (A := bool) (a := true) (b := false) in E;
         rewrite E in Hcond;
@@ -419,11 +423,90 @@ Proof.
     ).
   }
   (* TODO: similar *)
-  { admit. }
-  { admit. }
-  { admit. }
-  { admit. }
-Admitted.
+  {
+    destruct op;
+    try inversion Hop; subst; (
+      simpl in Heval;
+      destruct ((Int8.unsigned n2) >=? 8)%Z eqn:E; [
+        inversion Heval2; subst;
+        simpl in Hcond;
+        unfold Int8.ltu in Hcond;
+        rewrite Int8.unsigned_repr_eq in Hcond;
+        replace (8 mod Int8.modulus)%Z with (8%Z) in Hcond; try reflexivity;
+        apply negb_false_iff in Hcond;
+        rewrite Z.geb_ge in E;
+        apply Coqlib.zlt_false with (A := bool) (a := true) (b := false) in E;
+        rewrite E in Hcond;
+        discriminate Hcond |
+        inversion Heval; subst;
+        discriminate
+      ]
+    ).
+  }
+  (* TODO: similar *)
+  {
+    destruct op;
+    try inversion Hop; subst; (
+      simpl in Heval;
+      destruct ((Int16.unsigned n2) >=? 16)%Z eqn:E; [
+        inversion Heval2; subst;
+        simpl in Hcond;
+        unfold Int16.ltu in Hcond;
+        rewrite Int16.unsigned_repr_eq in Hcond;
+        replace (16 mod Int16.modulus)%Z with (16%Z) in Hcond; try reflexivity;
+        apply negb_false_iff in Hcond;
+        rewrite Z.geb_ge in E;
+        apply Coqlib.zlt_false with (A := bool) (a := true) (b := false) in E;
+        rewrite E in Hcond;
+        discriminate Hcond |
+        inversion Heval; subst;
+        discriminate
+      ]
+    ).
+  }
+  (* TODO: similar *)
+  {
+    destruct op;
+    try inversion Hop; subst; (
+      simpl in Heval;
+      destruct ((Int32.unsigned n2) >=? 32)%Z eqn:E; [
+        inversion Heval2; subst;
+        simpl in Hcond;
+        unfold Int32.ltu in Hcond;
+        rewrite Int32.unsigned_repr_eq in Hcond;
+        replace (32 mod Int32.modulus)%Z with (32%Z) in Hcond; try reflexivity;
+        apply negb_false_iff in Hcond;
+        rewrite Z.geb_ge in E;
+        apply Coqlib.zlt_false with (A := bool) (a := true) (b := false) in E;
+        rewrite E in Hcond;
+        discriminate Hcond |
+        inversion Heval; subst;
+        discriminate
+      ]
+    ).
+  }
+  (* TODO: similar *)
+  {
+    destruct op;
+    try inversion Hop; subst; (
+      simpl in Heval;
+      destruct ((Int64.unsigned n2) >=? 64)%Z eqn:E; [
+        inversion Heval2; subst;
+        simpl in Hcond;
+        unfold Int64.ltu in Hcond;
+        rewrite Int64.unsigned_repr_eq in Hcond;
+        replace (64 mod Int64.modulus)%Z with (64%Z) in Hcond; try reflexivity;
+        apply negb_false_iff in Hcond;
+        rewrite Z.geb_ge in E;
+        apply Coqlib.zlt_false with (A := bool) (a := true) (b := false) in E;
+        rewrite E in Hcond;
+        discriminate Hcond |
+        inversion Heval; subst;
+        discriminate
+      ]
+    ).
+  }
+Qed.
 
 (* TODO: rename? *)
 Lemma shift_error_negation : forall ic cid v op w e1 e2 cs pbid ls stk gs mdl di,
