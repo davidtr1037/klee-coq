@@ -96,7 +96,7 @@ Qed.
 (* TODO: s1 should not contain poison? *)
 Inductive ns_step : state -> state -> Prop :=
   | NS_Step : forall s1 s2,
-      step s1 s2 -> has_no_poison s2 -> ns_step s1 s2
+      has_no_poison s1 -> step s1 s2 -> has_no_poison s2 -> ns_step s1 s2
 .
 
 Definition multi_ns_step := multi ns_step.
@@ -1017,6 +1017,7 @@ Lemma ns_step_relative_completeness : forall s1 s2,
 Proof.
   intros s1 s2 His Hsafe Hnp Hstep.
   apply NS_Step.
+  { assumption. }
   { assumption. }
   { apply has_no_poison_step with (s1 := s1); try assumption. }
 Qed.

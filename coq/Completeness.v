@@ -1240,45 +1240,43 @@ Lemma completeness_single_step_division : forall c cid v op w e1 e2 c' s,
   is_unsafe_division op ->
   Concrete.cmd c = CMD_Inst cid (INSTR_Op v (OP_IBinop op (TYPE_I w) e1 e2)) ->
   is_supported_state c ->
-  has_no_poison c ->
   ns_step c c' ->
   well_scoped s ->
   over_approx s c ->
   (exists s', sym_step s s' /\ over_approx s' c').
 Proof.
-  intros c cid v op w e1 e2 c' s Hop Hcmd Hiss Hnp Hs Hws Hoa.
+  intros c cid v op w e1 e2 c' s Hop Hcmd Hiss Hs Hws Hoa.
   destruct c as [c_ic c_c c_cs c_pbid c_ls c_stk c_gs c_mdl].
   destruct s as [s_ic s_c s_cs s_pbid s_ls s_stk s_gs s_syms s_pc s_mdl].
   inversion Hs; subst.
   inversion Hoa; subst.
-  inversion H; subst;
+  inversion H0; subst;
   try discriminate Hcmd.
-  inversion Hoa; subst.
-  destruct H1 as [m H1].
-  inversion H1; subst.
+  destruct H2 as [m H2].
+  inversion H2; subst.
   inversion Hcmd; subst.
-  inversion Hnp; subst.
+  inversion H; subst.
   inversion Hiss; subst.
   inversion H7; subst.
   { inversion Hop; subst; inversion H4; subst; inversion H15. }
   {
-    simpl in H11.
+    simpl in H12.
     destruct
       (eval_exp c_ls c_gs (Some (TYPE_I w)) e1) as [dv1 | ] eqn:E1,
       (eval_exp c_ls c_gs (Some (TYPE_I w)) e2) as [dv2 | ] eqn:E2;
-    try discriminate H11;
+    try discriminate H12;
     destruct dv1 as [di1 | | ] , dv2 as [di2 | | ];
     try (
-      unfold eval_ibinop in H11;
-      destruct di1; discriminate H11
+      unfold eval_ibinop in H12;
+      destruct di1; discriminate H12
     );
     try (
-      unfold eval_ibinop in H11;
-      destruct di2; discriminate H11
+      unfold eval_ibinop in H12;
+      destruct di2; discriminate H12
     );
     try (
-      unfold eval_ibinop in H11;
-      discriminate H11
+      unfold eval_ibinop in H12;
+      discriminate H12
     );
     try (
       apply has_no_poison_eval_exp in E2; try assumption;
@@ -1288,9 +1286,9 @@ Proof.
       apply has_no_poison_eval_exp in E1; try assumption;
       destruct E1; reflexivity
     ).
-    unfold eval_ibinop in H11.
+    unfold eval_ibinop in H12.
     destruct di1 as [n1 | n1 | n1 | n1 | n1], di2 as [n2 | n2 | n2 | n2 | n2];
-    try (discriminate H11).
+    try (discriminate H12).
     {
       assert(L1 :
         over_approx_via_model
@@ -1314,7 +1312,7 @@ Proof.
       assert(Lsort1 : sort1 = Sort_BV1).
       { apply infer_sort_generic in H9. assumption. }
       assert(Lsort2 : sort2 = Sort_BV1).
-      { apply infer_sort_generic in H12. assumption. }
+      { apply infer_sort_generic in H11. assumption. }
       subst.
       eexists.
       split.
@@ -1334,13 +1332,13 @@ Proof.
           destruct op; inversion Hop; subst.
           (* UDiv *)
           {
-            rewrite <- H11.
+            rewrite <- H12.
             simpl.
             destruct (Int1.unsigned n2 =? 0)%Z eqn:En2.
             {
-              simpl in H11.
-              rewrite En2 in H11.
-              discriminate H11.
+              simpl in H12.
+              rewrite En2 in H12.
+              discriminate H12.
             }
             {
               eapply OA_Some.
@@ -1348,20 +1346,20 @@ Proof.
               {
                 simpl.
                 inversion H9; subst.
-                inversion H12; subst.
+                inversion H11; subst.
                 reflexivity.
               }
             }
           }
           (* SDiv *)
           {
-            rewrite <- H11.
+            rewrite <- H12.
             simpl.
             destruct (Int1.signed n2 =? 0)%Z eqn:En2.
             {
-              simpl in H11.
-              rewrite En2 in H11.
-              discriminate H11.
+              simpl in H12.
+              rewrite En2 in H12.
+              discriminate H12.
             }
             {
               eapply OA_Some.
@@ -1369,20 +1367,20 @@ Proof.
               {
                 simpl.
                 inversion H9; subst.
-                inversion H12; subst.
+                inversion H11; subst.
                 reflexivity.
               }
             }
           }
           (* URem *)
           {
-            rewrite <- H11.
+            rewrite <- H12.
             simpl.
             destruct (Int1.unsigned n2 =? 0)%Z eqn:En2.
             {
-              simpl in H11.
-              rewrite En2 in H11.
-              discriminate H11.
+              simpl in H12.
+              rewrite En2 in H12.
+              discriminate H12.
             }
             {
               eapply OA_Some.
@@ -1390,20 +1388,20 @@ Proof.
               {
                 simpl.
                 inversion H9; subst.
-                inversion H12; subst.
+                inversion H11; subst.
                 reflexivity.
               }
             }
           }
           (* SRem *)
           {
-            rewrite <- H11.
+            rewrite <- H12.
             simpl.
             destruct (Int1.signed n2 =? 0)%Z eqn:En2.
             {
-              simpl in H11.
-              rewrite En2 in H11.
-              discriminate H11.
+              simpl in H12.
+              rewrite En2 in H12.
+              discriminate H12.
             }
             {
               eapply OA_Some.
@@ -1411,7 +1409,7 @@ Proof.
               {
                 simpl.
                 inversion H9; subst.
-                inversion H12; subst.
+                inversion H11; subst.
                 reflexivity.
               }
             }
@@ -1432,24 +1430,22 @@ Lemma completeness_single_step_shift : forall c cid v op w e1 e2 c' s,
   is_unsafe_shift op ->
   Concrete.cmd c = CMD_Inst cid (INSTR_Op v (OP_IBinop op (TYPE_I w) e1 e2)) ->
   is_supported_state c ->
-  has_no_poison c ->
   ns_step c c' ->
   well_scoped s ->
   over_approx s c ->
   (exists s', sym_step s s' /\ over_approx s' c').
 Proof.
-  intros c cid v op w e1 e2 c' s Hop Hcmd Hiss Hnp Hs Hws Hoa.
+  intros c cid v op w e1 e2 c' s Hop Hcmd Hiss Hs Hws Hoa.
   destruct c as [c_ic c_c c_cs c_pbid c_ls c_stk c_gs c_mdl].
   destruct s as [s_ic s_c s_cs s_pbid s_ls s_stk s_gs s_syms s_pc s_mdl].
   inversion Hs; subst.
-  inversion Hoa; subst.
-  inversion H; subst;
+  inversion H0; subst;
   try discriminate Hcmd.
   inversion Hoa; subst.
-  destruct H1 as [m H1].
-  inversion H1; subst.
+  destruct H2 as [m H2].
+  inversion H2; subst.
   inversion Hcmd; subst.
-  inversion Hnp; subst.
+  inversion H; subst.
   inversion Hiss; subst.
   inversion H7; subst.
   { inversion Hop; subst; inversion H4; subst; inversion H15. }
@@ -1532,7 +1528,7 @@ Proof.
             simpl in H11.
             rewrite En2 in H11.
             inversion H11; subst.
-            inversion H0; subst.
+            inversion H1; subst.
             inversion H20; subst.
             specialize (H3 v).
             rewrite update_map_eq in H3.
@@ -1562,7 +1558,7 @@ Proof.
             simpl in H11.
             rewrite En2 in H11.
             inversion H11; subst.
-            inversion H0; subst.
+            inversion H1; subst.
             inversion H20; subst.
             specialize (H3 v).
             rewrite update_map_eq in H3.
@@ -1592,7 +1588,7 @@ Proof.
             simpl in H11.
             rewrite En2 in H11.
             inversion H11; subst.
-            inversion H0; subst.
+            inversion H1; subst.
             inversion H20; subst.
             specialize (H3 v).
             rewrite update_map_eq in H3.
@@ -1662,7 +1658,7 @@ Proof.
             simpl in H11;
             rewrite En2 in H11;
             inversion H11; subst;
-            inversion H0; subst;
+            inversion H1; subst;
             inversion H20; subst;
             specialize (H3 v);
             rewrite update_map_eq in H3;
@@ -1686,29 +1682,27 @@ Proof.
   }
 Admitted.
 
-(* TODO: (has_no_poison c) can be inferred from (over_approx s c)? *)
 Lemma completeness_single_step :
   forall c c' s,
     is_supported_state c ->
-    has_no_poison c ->
     ns_step c c' ->
     well_scoped s ->
     over_approx s c ->
     (exists s', sym_step s s' /\ over_approx s' c').
 Proof.
-  intros c c' s Hiss Hnp Hs Hws Hoa.
+  intros c c' s Hiss Hs Hws Hoa.
   destruct c as [c_ic c_c c_cs c_pbid c_ls c_stk c_gs c_mdl].
   destruct s as [s_ic s_c s_cs s_pbid s_ls s_stk s_gs s_syms s_pc s_mdl].
   inversion Hs; subst.
-  inversion H; subst;
+  inversion H0; subst;
   inversion Hoa; subst;
-  destruct H1 as [m H1];
-  inversion H1; subst.
+  destruct H2 as [m H2];
+  inversion H2; subst.
   (* INSTR_Op *)
   {
     inversion Hiss; subst.
-    inversion Hnp; subst.
-    inversion H5; subst.
+    inversion H; subst.
+    inversion H6; subst.
     {
       assert(L :
         over_approx_via_model
@@ -1718,7 +1712,7 @@ Proof.
       ).
       { apply eval_exp_correspondence; assumption. }
       inversion L; subst.
-      { rewrite H10 in *. discriminate H4. }
+      { rewrite H11 in *. discriminate H5. }
       {
         exists (mk_sym_state
           (next_inst_counter c_ic c)
@@ -1744,8 +1738,8 @@ Proof.
           apply OAV_State; try assumption.
           apply store_update_correspondence.
           {
-            rewrite H10 in H2.
-            rewrite <- H2.
+            rewrite H11 in H3.
+            rewrite <- H3.
             eapply OA_Some; reflexivity.
           }
           { assumption. }
@@ -1753,7 +1747,7 @@ Proof.
       }
     }
     {
-      inversion H7; subst.
+      inversion H8; subst.
       (* UDiv *)
       {
         eapply completeness_single_step_division
@@ -1816,11 +1810,11 @@ Proof.
     {
       apply eval_phi_args_correspondence; try assumption.
       inversion Hiss; subst.
-      inversion H5; subst.
+      inversion H6; subst.
       assumption.
     }
     inversion L; subst.
-    { rewrite H10 in *. discriminate H3. }
+    { rewrite H11 in *. discriminate H4. }
     {
       exists (mk_sym_state
         (next_inst_counter c_ic c)
@@ -1846,8 +1840,8 @@ Proof.
         apply OAV_State; try assumption.
         apply store_update_correspondence.
         {
-          rewrite H10 in H2.
-          rewrite <- H2.
+          rewrite H11 in H3.
+          rewrite <- H3.
           eapply OA_Some; reflexivity.
         }
         { assumption. }
@@ -1886,15 +1880,15 @@ Proof.
     {
       apply eval_exp_correspondence; try assumption.
       inversion Hiss; subst.
-      inversion H5; subst.
+      inversion H6; subst.
       assumption.
     }
     inversion L; subst.
-    { rewrite H10 in *. discriminate H3. }
+    { rewrite H11 in *. discriminate H4. }
     {
-      rewrite H10 in H2.
-      inversion H2; subst.
-      apply infer_sort_generic in H5.
+      rewrite H11 in H3.
+      inversion H3; subst.
+      apply infer_sort_generic in H6.
       subst.  (* TODO: why rewrite does not work? *)
       exists (mk_sym_state
         (mk_inst_counter (ic_fid c_ic) (bid1) (get_cmd_id c))
@@ -1919,8 +1913,8 @@ Proof.
         exists m.
         apply OAV_State; try assumption.
         simpl.
-        inversion H2; subst.
-        rewrite H28, H5.
+        inversion H3; subst.
+        rewrite H29, H6.
         reflexivity.
       }
     }
@@ -1936,15 +1930,15 @@ Proof.
     {
       apply eval_exp_correspondence; try assumption.
       inversion Hiss; subst.
-      inversion H5; subst.
+      inversion H6; subst.
       assumption.
     }
     inversion L; subst.
-    { rewrite H10 in *. discriminate H3. }
+    { rewrite H11 in *. discriminate H4. }
     {
-      rewrite H10 in H2.
-      inversion H2; subst.
-      apply infer_sort_generic in H5.
+      rewrite H11 in H3.
+      inversion H3; subst.
+      apply infer_sort_generic in H6.
       subst.
       exists (mk_sym_state
         (mk_inst_counter (ic_fid c_ic) (bid2) (get_cmd_id c))
@@ -1969,8 +1963,8 @@ Proof.
         exists m.
         apply OAV_State; try assumption.
         simpl.
-        inversion H2; subst.
-        rewrite H28, H5.
+        inversion H3; subst.
+        rewrite H29, H6.
         reflexivity.
       }
     }
@@ -1986,7 +1980,7 @@ Proof.
     {
       apply create_local_store_correspondence with (c_ls := c_ls) (c_gs := c_gs); try assumption.
       inversion Hiss; subst.
-      inversion H5; subst.
+      inversion H6; subst.
       assumption.
     }
     destruct L as [s_ls' [L_1 L_2]].
@@ -2024,7 +2018,7 @@ Proof.
     {
       apply create_local_store_correspondence with (c_ls := c_ls) (c_gs := c_gs); try assumption.
       inversion Hiss; subst.
-      inversion H5; subst.
+      inversion H6; subst.
       assumption.
     }
     destruct L as [s_ls' [L_1 L_2]].
@@ -2053,8 +2047,8 @@ Proof.
   }
   (* TERM_RetVoid *)
   {
-    inversion H24; subst.
-    inversion H5; subst.
+    inversion H25; subst.
+    inversion H6; subst.
     exists (mk_sym_state
       ic'
       c'0
@@ -2077,8 +2071,8 @@ Proof.
   }
   (* TERM_Ret *)
   {
-    inversion H25; subst.
-    inversion H5; subst.
+    inversion H26; subst.
+    inversion H6; subst.
     assert(L :
       over_approx_via_model
         (eval_exp c_ls c_gs (Some t) e)
@@ -2088,11 +2082,11 @@ Proof.
     {
       apply eval_exp_correspondence; try assumption.
       inversion Hiss; subst.
-      inversion H6; subst.
+      inversion H7; subst.
       assumption.
     }
     inversion L; subst.
-    { rewrite H10 in *. discriminate H3. }
+    { rewrite H11 in *. discriminate H4. }
     {
       exists (mk_sym_state
         ic'
@@ -2118,8 +2112,8 @@ Proof.
         apply OAV_State; try assumption.
         apply store_update_correspondence.
         {
-          rewrite H10 in H2.
-          rewrite <- H2.
+          rewrite H11 in H3.
+          rewrite <- H3.
           eapply OA_Some; reflexivity.
         }
         { assumption. }
@@ -2175,13 +2169,13 @@ Proof.
         apply fresh_name_lemma.
       }
       {
-        rewrite <- H27.
+        rewrite <- H28.
         symmetry.
         apply subexpr_non_interference.
-        inversion H18; subst.
-        specialize (H2 (fresh_name s_syms)).
+        inversion H19; subst.
+        specialize (H3 (fresh_name s_syms)).
         intros Hse.
-        apply H2 in Hse.
+        apply H3 in Hse.
         apply fresh_name_lemma in Hse.
         assumption.
       }
@@ -2197,19 +2191,19 @@ Proof.
     {
       apply eval_exp_correspondence; try assumption.
       inversion Hiss; subst.
-      inversion H5; subst.
-      specialize (H3 (TYPE_I 1, e, attrs)).
+      inversion H6; subst.
+      specialize (H4 (TYPE_I 1, e, attrs)).
       assert(Larg : is_supported_function_arg (TYPE_I 1, e, attrs)).
-      { apply H3. apply in_eq. }
+      { apply H4. apply in_eq. }
       inversion Larg; subst.
       assumption.
     }
     inversion L; subst.
-    { rewrite H13 in *. discriminate H3. }
+    { rewrite H14 in *. discriminate H4. }
     {
-      rewrite H13 in H2.
-      inversion H2; subst.
-      apply infer_sort_generic in H5.
+      rewrite H14 in H3.
+      inversion H3; subst.
+      apply infer_sort_generic in H6.
       subst.
       exists (mk_sym_state
         (next_inst_counter c_ic c)
@@ -2234,8 +2228,8 @@ Proof.
         exists m.
         apply OAV_State; try assumption.
         simpl.
-        inversion H2; subst.
-        rewrite H28, H5.
+        inversion H3; subst.
+        rewrite H29, H6.
         reflexivity.
       }
     }
@@ -2456,7 +2450,6 @@ Proof.
     {
       apply completeness_single_step with (c := init_c).
       { apply (is_supported_init_state mdl fid); assumption. }
-      { apply (has_no_poison_init_state mdl fid). assumption. }
       { assumption. }
       { apply (well_scoped_init_sym_state mdl fid). assumption. }
       { apply (over_approx_init_states mdl fid); assumption. }
@@ -2488,7 +2481,6 @@ Proof.
         { apply multi_ns_step_soundness. assumption. }
         { apply (is_supported_init_state mdl fid); assumption. }
       }
-      { apply has_no_poison_multi_ns_step with (s1 := init_c). assumption. }
       { assumption. }
       {
         apply well_scoped_multi_sym_step with (s := init_s).
