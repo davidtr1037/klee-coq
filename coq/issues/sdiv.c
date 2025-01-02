@@ -1,7 +1,8 @@
 #include <stdio.h>
+#include <stdint.h>
 
-void f(int x, int y) {
-    int z = x / y;
+void f(int32_t x, int32_t y) {
+    int32_t z = x / y;
     printf("%d\n", z);
 }
 
