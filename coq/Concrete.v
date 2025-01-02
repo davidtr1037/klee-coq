@@ -604,6 +604,15 @@ Definition division_error_condition di : bool :=
   di_is_const di 0
 .
 
+Definition division_overflow_error_condition di1 di2 : bool :=
+  match di1, di2 with
+  | DI_I32 n1, DI_I32 n2
+  | DI_I64 n1, DI_I64 n2 =>
+      eq n1 (repr min_signed) && eq n2 (repr (-1))
+  | _, _ => false
+  end
+.
+
 (* TODO: why bitwidth does not work? *)
 Definition shift_error_condition di : bool :=
   match di with
@@ -664,8 +673,22 @@ Inductive error_state : state -> Prop :=
           gs
           mdl
         )
+  | ES_DivisionOverflow : forall ic cid v exact t e1 e2 cs pbid ls stk gs mdl di1 di2,
+      (eval_exp ls gs (Some t) e1) = Some (DV_Int di1) ->
+      (eval_exp ls gs (Some t) e2) = Some (DV_Int di2) ->
+      division_overflow_error_condition di1 di2 = true ->
+      error_state
+        (mk_state
+          ic
+          (CMD_Inst cid (INSTR_Op v (OP_IBinop (SDiv exact) t e1 e2)))
+          cs
+          pbid
+          ls
+          stk
+          gs
+          mdl
+        )
   (* TODO: add assumptions for e1 e2? safe_llvm_expr? *)
-  (* TODO: what happens with other types? *)
   | ES_OverShift : forall ic cid v op w e1 e2 cs pbid ls stk gs mdl di,
       is_shift op ->
       (eval_exp ls gs (Some (TYPE_I w)) e2) = Some (DV_Int di) ->

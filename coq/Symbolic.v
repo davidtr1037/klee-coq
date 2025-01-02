@@ -619,29 +619,39 @@ Inductive sym_step : sym_state -> sym_state -> Prop :=
 
 Definition multi_sym_step := multi sym_step.
 
-Definition sym_division_error_condition pc se :=
+Definition sym_division_error_condition se :=
   match se with
   | Expr sort ast =>
-      AST_BinOp
-        Sort_BV1
-        SMT_And
-        pc
-        (AST_CmpOp sort SMT_Eq ast (AST_Const sort (create_int_by_sort sort 0)))
+      (AST_CmpOp sort SMT_Eq ast (AST_Const sort (create_int_by_sort sort 0)))
   end
 .
 
-Definition sym_shift_error_condition pc se :=
-  match se with
-  | Expr sort ast =>
+Definition sym_division_overflow_error_condition se1 se2 :=
+  match se1, se2 with
+  | Expr Sort_BV32 ast1, Expr Sort_BV32 ast2 =>
       AST_BinOp
         Sort_BV1
         SMT_And
-        pc
-        (AST_CmpOp
-          sort
-          SMT_Uge
-          ast
-          (AST_Const sort (create_int_by_sort sort (Zpos (smt_sort_to_width sort)))))
+        (AST_CmpOp Sort_BV32 SMT_Eq ast1 (AST_Const Sort_BV32 (repr (-2147483648))))
+        (AST_CmpOp Sort_BV32 SMT_Eq ast2 (AST_Const Sort_BV32 (repr (-1))))
+  | Expr Sort_BV64 ast1, Expr Sort_BV64 ast2 =>
+      AST_BinOp
+        Sort_BV1
+        SMT_And
+        (AST_CmpOp Sort_BV64 SMT_Eq ast1 (AST_Const Sort_BV64 (repr (-9223372036854775808))))
+        (AST_CmpOp Sort_BV64 SMT_Eq ast2 (AST_Const Sort_BV64 (repr (-1))))
+  | _, _ => smt_ast_false
+  end
+.
+
+Definition sym_shift_error_condition se :=
+  match se with
+  | Expr sort ast =>
+      AST_CmpOp
+        sort
+        SMT_Uge
+        ast
+        (AST_Const sort (create_int_by_sort sort (Zpos (smt_sort_to_width sort))))
   end
 .
 
@@ -684,7 +694,7 @@ Inductive error_sym_state : sym_state -> Prop :=
   | ESS_DivisionByZero : forall ic cid v op t e1 e2 cs pbid ls stk gs syms pc mdl se,
       is_division op ->
       (sym_eval_exp ls gs (Some t) e2) = Some se ->
-      sat (sym_division_error_condition pc se) ->
+      sat (AST_BinOp Sort_BV1 SMT_And pc (sym_division_error_condition se)) ->
       error_sym_state
         (mk_sym_state
           ic
@@ -698,10 +708,27 @@ Inductive error_sym_state : sym_state -> Prop :=
           pc
           mdl
         )
+  | ESS_DivisionOverflow : forall ic cid v exact t e1 e2 cs pbid ls stk gs syms pc mdl se1 se2,
+      (sym_eval_exp ls gs (Some t) e1) = Some se1 ->
+      (sym_eval_exp ls gs (Some t) e2) = Some se2 ->
+      sat (AST_BinOp Sort_BV1 SMT_And pc (sym_division_overflow_error_condition se1 se2)) ->
+      error_sym_state
+        (mk_sym_state
+          ic
+          (CMD_Inst cid (INSTR_Op v (OP_IBinop (SDiv exact) t e1 e2)))
+          cs
+          pbid
+          ls
+          stk
+          gs
+          syms
+          pc
+          mdl
+        )
   | ESS_OverShift : forall ic cid v op w e1 e2 cs pbid ls stk gs syms pc mdl se,
       is_shift op ->
       (sym_eval_exp ls gs (Some (TYPE_I w)) e2) = Some se ->
-      sat (sym_shift_error_condition pc se) ->
+      sat (AST_BinOp Sort_BV1 SMT_And pc (sym_shift_error_condition se)) ->
       error_sym_state
         (mk_sym_state
           ic

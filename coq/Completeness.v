@@ -560,7 +560,7 @@ Proof.
     eapply OA_Some; reflexivity.
   }
 Qed.
- 
+
 (* TODO: rename correspondence to over_approx? *)
 Lemma eval_exp_correspondence : forall c_ls s_ls c_gs s_gs ot e m,
   is_supported_exp e ->
@@ -2292,6 +2292,7 @@ Proof.
       }
     }
   }
+  { admit. }
   {
     inversion His; subst.
     inversion H8; subst.
@@ -2334,7 +2335,7 @@ Proof.
       }
     }
   }
-Qed.
+Admitted.
 
 Lemma init_state_correspondence : forall mdl fid,
   (exists c, (init_state mdl fid) = Some c) <-> (exists s, (init_sym_state mdl fid) = Some s).

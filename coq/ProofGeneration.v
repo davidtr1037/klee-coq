@@ -67,10 +67,11 @@ Lemma not_error_instr_op : forall ic cid v e cs pbid ls stk gs syms pc mdl,
     ).
 Proof.
   intros ic cid v e cs pbid ls stk gs syms pc mdl His.
-  intros H.
-  inversion H; subst.
-  { inversion His; subst. inversion H3; subst; inversion H7. }
-  { inversion His; subst. inversion H3; subst; inversion H7. }
+  intros Herr.
+  inversion Herr; subst.
+  { inversion His; subst. inversion H2; subst; inversion H6. }
+  { inversion His; subst. inversion H3; subst; inversion H6. }
+  { inversion His; subst. inversion H2; subst; inversion H6. }
 Qed.
 
 Lemma not_error_phi : forall ic cid v t args cs pbid ls stk gs syms pc mdl,
@@ -642,12 +643,12 @@ Lemma safe_subtree_instr_op_division : forall ic cid v op et e1 e2 c cs pbid ls 
       pc
       mdl
     ) in
-  is_unsafe_division op ->
+  is_unsafe_division_non_sdiv op ->
   is_supported_exp e1 ->
   is_supported_exp e2 ->
   equiv_smt_store (v !-> (sym_eval_exp ls gs None (OP_IBinop op et e1 e2)); ls) ls_opt ->
   sym_eval_exp ls gs (Some et) e2 = Some se2 ->
-  unsat (sym_division_error_condition pc se2) ->
+  unsat (AST_BinOp Sort_BV1 SMT_And pc (sym_division_error_condition se2)) ->
   (root t =
     (mk_sym_state
       (next_inst_counter ic c)
@@ -678,6 +679,7 @@ Proof.
       apply Hunsat.
       assumption.
     }
+    { inversion Hop. }
     { inversion Hop; inversion H2; subst; try discriminate. }
   }
   {
@@ -707,7 +709,6 @@ Proof.
   }
 Qed.
 
-
 Lemma safe_subtree_instr_op_udiv : forall ic cid v et e1 e2 c cs pbid ls stk gs syms pc mdl ls_opt se2 t,
   let s_init :=
     (mk_sym_state
@@ -726,7 +727,7 @@ Lemma safe_subtree_instr_op_udiv : forall ic cid v et e1 e2 c cs pbid ls stk gs 
   is_supported_exp e2 ->
   equiv_smt_store (v !-> (sym_eval_exp ls gs None (OP_IBinop (UDiv false) et e1 e2)); ls) ls_opt ->
   sym_eval_exp ls gs (Some et) e2 = Some se2 ->
-  unsat (sym_division_error_condition pc se2) ->
+  unsat (AST_BinOp Sort_BV1 SMT_And pc (sym_division_error_condition se2)) ->
   (root t =
     (mk_sym_state
       (next_inst_counter ic c)
@@ -747,10 +748,10 @@ Proof.
   intros ic cid v et e1 e2 c cs pbid ls stk gs syms pc mdl ls_opt se2 t.
   intros s_init His1 His2 Heq Heval_e2 Hunsat Ht Hsafe.
   eapply safe_subtree_instr_op_division; try eassumption.
-  apply Is_Unsafe_Division_UDiv.
+  apply Is_Unsafe_Division_Non_SDiv_UDiv.
 Qed.
 
-Lemma safe_subtree_instr_op_sdiv : forall ic cid v et e1 e2 c cs pbid ls stk gs syms pc mdl ls_opt se2 t,
+Lemma safe_subtree_instr_op_sdiv : forall ic cid v et e1 e2 c cs pbid ls stk gs syms pc mdl ls_opt se1 se2 t,
   let s_init :=
     (mk_sym_state
       ic
@@ -767,8 +768,14 @@ Lemma safe_subtree_instr_op_sdiv : forall ic cid v et e1 e2 c cs pbid ls stk gs 
   is_supported_exp e1 ->
   is_supported_exp e2 ->
   equiv_smt_store (v !-> (sym_eval_exp ls gs None (OP_IBinop (SDiv false) et e1 e2)); ls) ls_opt ->
+  sym_eval_exp ls gs (Some et) e1 = Some se1 ->
   sym_eval_exp ls gs (Some et) e2 = Some se2 ->
-  unsat (sym_division_error_condition pc se2) ->
+  unsat
+    (AST_BinOp Sort_BV1 SMT_And
+      pc
+      (AST_BinOp Sort_BV1 SMT_Or
+        (sym_division_error_condition se2)
+        (sym_division_overflow_error_condition se1 se2))) ->
   (root t =
     (mk_sym_state
       (next_inst_counter ic c)
@@ -786,11 +793,56 @@ Lemma safe_subtree_instr_op_sdiv : forall ic cid v et e1 e2 c cs pbid ls stk gs 
   (safe_et_opt t) ->
   (safe_et_opt (t_subtree s_init [t])).
 Proof.
-  intros ic cid v et e1 e2 c cs pbid ls stk gs syms pc mdl ls_opt se2 t.
-  intros s_init His1 His2 Heq Heval_e2 Hunsat Ht Hsafe.
-  eapply safe_subtree_instr_op_division; try eassumption.
-  apply Is_Unsafe_Division_SDiv.
-Qed.
+  intros ic cid v et e1 e2 c cs pbid ls stk gs syms pc mdl ls_opt se1 se2 t.
+  intros s_init His1 His2 Heq Heval_e1 Heval_e2 Hunsat Ht Hsafe.
+  apply Safe_Subtree.
+  {
+    intros Herr.
+    inversion Herr; subst.
+    {
+      rewrite Heval_e2 in H15.
+      inversion H15; subst.
+      unfold unsat in Hunsat.
+      apply Hunsat.
+      admit.
+    }
+    {
+      rewrite Heval_e1 in H2.
+      inversion H2; subst.
+      rewrite Heval_e2 in H15.
+      inversion H15; subst.
+      unfold unsat in Hunsat.
+      apply Hunsat.
+      admit.
+    }
+    { inversion H2. }
+  }
+  {
+    intros s' Hstep.
+    left.
+    exists t.
+    split.
+    { apply in_list_0. }
+    {
+      split.
+      { assumption. }
+      {
+        apply inversion_instr_op in Hstep.
+        destruct Hstep as [se [Heval Hs]].
+        rewrite Hs.
+        rewrite Ht.
+        apply EquivSymState.
+        {
+          rewrite <- Heval.
+          assumption.
+        }
+        { apply equiv_sym_stack_refl. }
+        { apply equiv_smt_store_refl. }
+        { apply equiv_smt_expr_refl. }
+      }
+    }
+  }
+Admitted.
 
 Lemma safe_subtree_instr_op_urem : forall ic cid v et e1 e2 c cs pbid ls stk gs syms pc mdl ls_opt se2 t,
   let s_init :=
@@ -810,7 +862,7 @@ Lemma safe_subtree_instr_op_urem : forall ic cid v et e1 e2 c cs pbid ls stk gs 
   is_supported_exp e2 ->
   equiv_smt_store (v !-> (sym_eval_exp ls gs None (OP_IBinop URem et e1 e2)); ls) ls_opt ->
   sym_eval_exp ls gs (Some et) e2 = Some se2 ->
-  unsat (sym_division_error_condition pc se2) ->
+  unsat (AST_BinOp Sort_BV1 SMT_And pc (sym_division_error_condition se2)) ->
   (root t =
     (mk_sym_state
       (next_inst_counter ic c)
@@ -831,7 +883,7 @@ Proof.
   intros ic cid v et e1 e2 c cs pbid ls stk gs syms pc mdl ls_opt se2 t.
   intros s_init His1 His2 Heq Heval_e2 Hunsat Ht Hsafe.
   eapply safe_subtree_instr_op_division; try eassumption.
-  apply Is_Unsafe_Division_URem.
+  apply Is_Unsafe_Division_Non_SDiv_URem.
 Qed.
 
 Lemma safe_subtree_instr_op_srem : forall ic cid v et e1 e2 c cs pbid ls stk gs syms pc mdl ls_opt se2 t,
@@ -852,7 +904,7 @@ Lemma safe_subtree_instr_op_srem : forall ic cid v et e1 e2 c cs pbid ls stk gs 
   is_supported_exp e2 ->
   equiv_smt_store (v !-> (sym_eval_exp ls gs None (OP_IBinop SRem et e1 e2)); ls) ls_opt ->
   sym_eval_exp ls gs (Some et) e2 = Some se2 ->
-  unsat (sym_division_error_condition pc se2) ->
+  unsat (AST_BinOp Sort_BV1 SMT_And pc (sym_division_error_condition se2)) ->
   (root t =
     (mk_sym_state
       (next_inst_counter ic c)
@@ -873,7 +925,7 @@ Proof.
   intros ic cid v et e1 e2 c cs pbid ls stk gs syms pc mdl ls_opt se2 t.
   intros s_init His1 His2 Heq Heval_e2 Hunsat Ht Hsafe.
   eapply safe_subtree_instr_op_division; try eassumption.
-  apply Is_Unsafe_Division_SRem.
+  apply Is_Unsafe_Division_Non_SDiv_SRem.
 Qed.
 
 Lemma safe_subtree_instr_op_shift : forall ic cid v op et e1 e2 c cs pbid ls stk gs syms pc mdl ls_opt se2 t,
@@ -895,7 +947,7 @@ Lemma safe_subtree_instr_op_shift : forall ic cid v op et e1 e2 c cs pbid ls stk
   is_supported_exp e2 ->
   equiv_smt_store (v !-> (sym_eval_exp ls gs None (OP_IBinop op et e1 e2)); ls) ls_opt ->
   sym_eval_exp ls gs (Some et) e2 = Some se2 ->
-  unsat (sym_shift_error_condition pc se2) ->
+  unsat (AST_BinOp Sort_BV1 SMT_And pc (sym_shift_error_condition se2)) ->
   (root t =
     (mk_sym_state
       (next_inst_counter ic c)
@@ -920,6 +972,7 @@ Proof.
     intros Herr.
     inversion Herr; subst.
     { inversion Hop; subst; inversion H2. }
+    { inversion Hop. }
     {
       rewrite Heval_e2 in H15.
       inversion H15; subst.
@@ -973,7 +1026,7 @@ Lemma safe_subtree_instr_op_shl : forall ic cid v et e1 e2 c cs pbid ls stk gs s
   is_supported_exp e2 ->
   equiv_smt_store (v !-> (sym_eval_exp ls gs None (OP_IBinop (Shl false false) et e1 e2)); ls) ls_opt ->
   sym_eval_exp ls gs (Some et) e2 = Some se2 ->
-  unsat (sym_shift_error_condition pc se2) ->
+  unsat (AST_BinOp Sort_BV1 SMT_And pc (sym_shift_error_condition se2)) ->
   (root t =
     (mk_sym_state
       (next_inst_counter ic c)
@@ -1015,7 +1068,7 @@ Lemma safe_subtree_instr_op_lshr : forall ic cid v et e1 e2 c cs pbid ls stk gs 
   is_supported_exp e2 ->
   equiv_smt_store (v !-> (sym_eval_exp ls gs None (OP_IBinop (LShr false) et e1 e2)); ls) ls_opt ->
   sym_eval_exp ls gs (Some et) e2 = Some se2 ->
-  unsat (sym_shift_error_condition pc se2) ->
+  unsat (AST_BinOp Sort_BV1 SMT_And pc (sym_shift_error_condition se2)) ->
   (root t =
     (mk_sym_state
       (next_inst_counter ic c)
@@ -1057,7 +1110,7 @@ Lemma safe_subtree_instr_op_ashr : forall ic cid v et e1 e2 c cs pbid ls stk gs 
   is_supported_exp e2 ->
   equiv_smt_store (v !-> (sym_eval_exp ls gs None (OP_IBinop (AShr false) et e1 e2)); ls) ls_opt ->
   sym_eval_exp ls gs (Some et) e2 = Some se2 ->
-  unsat (sym_shift_error_condition pc se2) ->
+  unsat (AST_BinOp Sort_BV1 SMT_And pc (sym_shift_error_condition se2)) ->
   (root t =
     (mk_sym_state
       (next_inst_counter ic c)

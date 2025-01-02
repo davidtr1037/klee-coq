@@ -19,6 +19,16 @@ Inductive is_supported_ibinop : ibinop -> Prop :=
   | IS_Xor : is_supported_ibinop Xor
 .
 
+Inductive is_unsafe_sdiv : ibinop -> Prop :=
+  | Is_Unsafe_SDiv : is_unsafe_sdiv (SDiv false)
+.
+
+Inductive is_unsafe_division_non_sdiv : ibinop -> Prop :=
+  | Is_Unsafe_Division_Non_SDiv_UDiv : is_unsafe_division_non_sdiv (UDiv false)
+  | Is_Unsafe_Division_Non_SDiv_URem : is_unsafe_division_non_sdiv (URem)
+  | Is_Unsafe_Division_Non_SDiv_SRem : is_unsafe_division_non_sdiv (SRem)
+.
+ 
 Inductive is_unsafe_division : ibinop -> Prop :=
   | Is_Unsafe_Division_UDiv : is_unsafe_division (UDiv false)
   | Is_Unsafe_Division_SDiv : is_unsafe_division (SDiv false)
