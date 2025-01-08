@@ -1082,9 +1082,7 @@ void ProofGenerator::generateDebugScript(llvm::raw_ostream &output) {
 
 bool ProofGenerator::isInstrumented(Instruction *inst) {
   static set<string> functions = {
-    "klee_check_div_zero",
-    "klee_sdiv_check_32",
-    "klee_sdiv_check_64",
+    "klee_div_zero_check",
     "klee_overshift_check",
   };
 
