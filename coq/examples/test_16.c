@@ -35,7 +35,7 @@ void test_lshr_2() {
 }
 
 void test_lshr_3(unsigned x) {
-    unsigned y = 1 >> x;
+    unsigned y = (unsigned)(1) >> x;
 }
 
 void test_lshr_4() {
