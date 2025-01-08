@@ -600,6 +600,16 @@ Lemma equiv_smt_expr_division_error_condition : forall se,
 Proof.
 Admitted.
 
+(* used in the non-optimized mode *)
+Lemma unsat_sym_division_error_condition : forall pc se cond,
+  equiv_smt_expr
+    (Expr Sort_BV1 (AST_BinOp Sort_BV1 SMT_And pc (sym_division_error_condition_opt se)))
+    (Expr Sort_BV1 cond) ->
+  unsat cond ->
+  unsat (AST_BinOp Sort_BV1 SMT_And pc (sym_division_error_condition se)).
+Proof.
+Admitted.
+
 Lemma safe_subtree_instr_op_division_opt : forall ic cid v op et e1 e2 c cs pbid ls stk gs syms pc mdl ls_opt se2 cond t,
   let s_init :=
     (mk_sym_state
@@ -891,6 +901,16 @@ Lemma equiv_smt_expr_shift_error_condition : forall se,
   equiv_smt_expr
     (Expr Sort_BV1 (sym_shift_error_condition se))
     (Expr Sort_BV1 (sym_shift_error_condition_opt se)).
+Proof.
+Admitted.
+
+(* used in the non-optimized mode *)
+Lemma unsat_sym_shift_error_condition : forall pc se cond,
+  equiv_smt_expr
+    (Expr Sort_BV1 (AST_BinOp Sort_BV1 SMT_And pc (sym_shift_error_condition_opt se)))
+    (Expr Sort_BV1 cond) ->
+  unsat cond ->
+  unsat (AST_BinOp Sort_BV1 SMT_And pc (sym_shift_error_condition se)).
 Proof.
 Admitted.
 
