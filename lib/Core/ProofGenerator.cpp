@@ -224,24 +224,21 @@ klee::ref<CoqTactic> ProofGenerator::getTacticForSafety(StateInfo &si,
   if (moduleTranslator->isAssignment(*si.inst)) {
     if (moduleSupport->isUnsafeInstruction(*si.inst)) {
       BinaryOperator *bo = cast<BinaryOperator>(si.inst);
-      Value *v2 = bo->getOperand(1);
-      ref<CoqTactic> t = nullptr;
 
       bool isDivision;
       std::string lemmaName;
       switch (bo->getOpcode()) {
       case Instruction::UDiv:
-      case Instruction::SDiv:
       case Instruction::URem:
       case Instruction::SRem:
-        lemmaName = "unsat_div_condition_bv32";
+        lemmaName = "unsat_sym_division_error_condition";
         isDivision = true;
         break;
 
       case Instruction::Shl:
       case Instruction::LShr:
       case Instruction::AShr:
-        lemmaName = "unsat_shift_condition_bv32";
+        lemmaName = "unsat_sym_shift_error_condition";
         isDivision = false;
         break;
 
@@ -249,34 +246,21 @@ klee::ref<CoqTactic> ProofGenerator::getTacticForSafety(StateInfo &si,
         assert(false);
       }
 
-      if (isa<ConstantInt>(v2)) {
-        t = new Block(
+      ref<CoqTactic> unsatTactic = nullptr;
+      if (isInstrumented(si.inst)) {
+        assert(hint && !hint->lastUnsatAxiomName.empty());
+        unsatTactic = new Block(
           {
-            new Apply("unsat_and_right"),
-            new Apply("unsat_false"),
+            new EApply(lemmaName),
+            new Block({new EApply("equiv_smt_expr_normalize_simplify")}),
+            new Block({new Apply(hint->lastUnsatAxiomName)}),
           }
         );
       } else {
-        assert(hint && !hint->lastUnsatAxiomName.empty());
-        t = new Block(
+        unsatTactic = new Block(
           {
-            new Concat(
-              {
-                /* this block should come first, otherwise the failing tactic is slow... */
-                new Try(
-                  {
-                    new Apply(lemmaName),
-                    new Apply(hint->lastUnsatAxiomName),
-                  }
-                ),
-                new Try(
-                  {
-                    new Apply("unsat_and_right"),
-                    new Apply("unsat_false"),
-                  }
-                ),
-              }
-            )
+            new Apply("unsat_and_right"),
+            new Apply("unsat_false"),
           }
         );
       }
@@ -288,7 +272,7 @@ klee::ref<CoqTactic> ProofGenerator::getTacticForSafety(StateInfo &si,
           new Subst(),
           new EApply("sat_unsat_contradiction"),
           new Block({new EAssumption()}),
-          t,
+          unsatTactic,
         }
       );
       ref<CoqTactic> t2 = new Block(
