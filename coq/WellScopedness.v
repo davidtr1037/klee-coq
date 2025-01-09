@@ -164,6 +164,13 @@ Proof.
   }
 Qed.
 
+Lemma contains_var_select : forall x e1 e2 e3 e4,
+  (sym_eval_select e1 e2 e3) = Some e4 ->
+  contains_var e4 x ->
+  contains_var e1 x \/ contains_var e2 x \/ contains_var e3 x.
+Proof.
+Admitted.
+
 Lemma well_scoped_smt_expr_extended_syms : forall se sym syms,
   well_scoped_smt_expr se syms ->
   well_scoped_smt_expr se (sym :: syms).
@@ -423,7 +430,22 @@ Proof.
     }
     { discriminate Heq. }
   }
-  { admit. }
+  {
+    destruct cnd as [t1 e1].
+    destruct v1 as [t2 e2].
+    destruct v2 as [t3 e3].
+    destruct (sym_eval_exp ls gs (Some t1) e1) as [se1 | ] eqn:E1;
+    try discriminate Heq.
+    destruct (sym_eval_exp ls gs (Some t2) e2) as [se2 | ] eqn:E2;
+    try discriminate Heq.
+    destruct (sym_eval_exp ls gs (Some t3) e3) as [se3 | ] eqn:E3;
+    try discriminate Heq.
+    apply WD_Expr.
+    intros n Hse.
+    apply contains_var_select with (e1 := se1) (e2 := se2) (e3 := se3) in Hse;
+    try assumption.
+    admit.
+  }
 Admitted.
 
 Lemma well_scoped_sym_eval_phi_args : forall s t args pbid se,
