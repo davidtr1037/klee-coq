@@ -363,3 +363,33 @@ Proof.
   apply SubExpr_Extract.
   assumption.
 Qed.
+
+Lemma contains_var_select : forall sort cond (ast1 ast2 : smt_ast sort) x,
+  contains_var (Expr sort (AST_Select sort cond ast1 ast2)) x ->
+  (contains_var (Expr Sort_BV1 cond) x \/ contains_var (Expr sort ast1) x \/ contains_var (Expr sort ast2) x).
+Proof.
+  intros sort cond ast1 ast2 x Hc.
+  inversion Hc; subst.
+  inversion H; subst.
+  {
+    apply inj_pair2 in H5; subst.
+    apply inj_pair2 in H6; subst.
+    left.
+    eapply ContainsVar.
+    eassumption.
+  }
+  {
+    apply inj_pair2 in H5; subst.
+    apply inj_pair2 in H6; subst.
+    right. left.
+    eapply ContainsVar.
+    eassumption.
+  }
+  {
+    apply inj_pair2 in H5; subst.
+    apply inj_pair2 in H6; subst.
+    right. right.
+    eapply ContainsVar.
+    eassumption.
+  }
+Qed.
