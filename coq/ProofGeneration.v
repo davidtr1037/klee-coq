@@ -818,6 +818,89 @@ Proof.
   apply Is_Unsafe_Division_Non_SDiv_SRem.
 Qed.
 
+Definition sym_division_overflow_error_condition_opt se1 se2 :=
+  match se1, se2 with
+  | Expr Sort_BV32 ast1, Expr Sort_BV32 ast2 =>
+      AST_CmpOp
+        Sort_BV1
+        SMT_Eq
+        smt_ast_false
+        (AST_BinOp
+          Sort_BV1
+          SMT_And
+          (AST_BinOp
+            Sort_BV1
+            SMT_Or
+              (AST_CmpOp
+                Sort_BV1
+                SMT_Eq
+                smt_ast_false
+                (AST_CmpOp Sort_BV32 SMT_Eq (AST_Const Sort_BV32 (repr 2147483648)) ast1))
+              (AST_CmpOp
+                Sort_BV1
+                SMT_Eq
+                smt_ast_false
+                (AST_CmpOp Sort_BV32 SMT_Eq (AST_Const Sort_BV32 (repr 4294967295)) ast2)))
+          (AST_CmpOp
+            Sort_BV1
+            SMT_Eq
+            smt_ast_false
+            (AST_CmpOp Sort_BV32 SMT_Eq (AST_Const Sort_BV32 (repr 0)) ast2)))
+  | _, _ => smt_ast_false
+  end
+.
+
+Lemma equiv_smt_expr_division_overflow_error_condition : forall se1 se2,
+  equiv_smt_expr
+    (Expr Sort_BV1 (sym_division_overflow_error_condition se1 se2))
+    (Expr Sort_BV1 (sym_division_overflow_error_condition_opt se1 se2)).
+Proof.
+Admitted.
+
+Lemma safe_subtree_instr_op_sdiv : forall ic cid v et e1 e2 c cs pbid ls stk gs syms pc mdl ls_opt se1 se2 cond t,
+  let s_init :=
+    (mk_sym_state
+      ic
+      (CMD_Inst cid (INSTR_Op v (OP_IBinop (SDiv false) et e1 e2)))
+      (c :: cs)
+      pbid
+      ls
+      stk
+      gs
+      syms
+      pc
+      mdl
+    ) in
+  is_supported_exp e1 ->
+  is_supported_exp e2 ->
+  equiv_smt_store (v !-> (sym_eval_exp ls gs None (OP_IBinop (SDiv false) et e1 e2)); ls) ls_opt ->
+  sym_eval_exp ls gs (Some et) e1 = Some se1 ->
+  sym_eval_exp ls gs (Some et) e2 = Some se2 ->
+  equiv_smt_expr
+    (Expr Sort_BV1 (AST_BinOp Sort_BV1 SMT_And pc (sym_division_overflow_error_condition_opt se1 se2)))
+    (Expr Sort_BV1 cond) ->
+  unsat cond ->
+  (root t =
+    (mk_sym_state
+      (next_inst_counter ic c)
+      c
+      cs
+      pbid
+      ls_opt
+      stk
+      gs
+      syms
+      pc
+      mdl
+    )
+  ) ->
+  (safe_et_opt t) ->
+  (safe_et_opt (t_subtree s_init [t])).
+Proof.
+  intros ic cid v et e1 e2 c cs pbid ls stk gs syms pc mdl ls_opt se1 se2 cond t.
+  intros s_init His1 His2 Heq Heval_e1 Heval_e2 Hcond Hunsat Ht Hsafe.
+Admitted.
+
 Lemma safe_subtree_instr_op_shift : forall ic cid v op et e1 e2 c cs pbid ls stk gs syms pc mdl ls_opt se2 t,
   let s_init :=
     (mk_sym_state
