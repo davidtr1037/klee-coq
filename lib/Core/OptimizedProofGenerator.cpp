@@ -446,15 +446,21 @@ klee::ref<CoqTactic> OptimizedProofGenerator::getTacticForSDiv(StateInfo &si,
   ref<CoqTactic> t1 = moduleSupport->getTacticForValueCached(v1);
   ref<CoqTactic> t2 = moduleSupport->getTacticForValueCached(v2);
 
-  /* TODO: ... */
-  ref<CoqTactic> unsatTactic = new Block({new Admit()});
+  ref<CoqTactic> unsatTactic;
+  if (isInstrumented(si.inst)) {
+    /* in this case, there must be an unsat query */
+    assert(!hint.lastUnsatAxiomName.empty());
+    unsatTactic = new Block({new Apply(hint.lastUnsatAxiomName)});
+  } else {
+    unsatTactic = new Block({new Apply("unsat_false")});
+  }
 
   ref<CoqExpr> ast1 = getEvaluatedSMTExpr(si, v1);
   ref<CoqExpr> ast2 = getEvaluatedSMTExpr(si, v2);
 
   return new Block(
     {
-      new Apply(
+      new EApply(
         "safe_subtree_instr_op_sdiv",
         {
           stateTranslator->getICAlias(si.stepID),
@@ -475,6 +481,7 @@ klee::ref<CoqTactic> OptimizedProofGenerator::getTacticForSDiv(StateInfo &si,
           stateTranslator->getLocalStoreAlias(successor.stepID),
           ast1,
           ast2,
+          createPlaceHolder(), /* cond */
           getTreeAlias(successor.stepID),
         }
       ),
@@ -483,6 +490,7 @@ klee::ref<CoqTactic> OptimizedProofGenerator::getTacticForSDiv(StateInfo &si,
       getTacticForEquivStore(si),
       new Block({new Reflexivity()}),
       new Block({new Reflexivity()}),
+      new Block({new Apply("equiv_smt_expr_normalize_simplify")}),
       unsatTactic, /* unsat */
       new Block({new Reflexivity()}),
       new Block({new Apply("L_" + to_string(successor.stepID))}),
