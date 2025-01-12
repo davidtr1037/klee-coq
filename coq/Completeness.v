@@ -30,6 +30,7 @@ From SE.Utils Require Import IDMap.
 From SE.Utils Require StringMap.
 From SE.Utils Require ListUtil.
 
+(* TODO: remove? *)
 Lemma infer_width : forall s (ast : smt_ast s) w n,
   Some (Expr s ast) = make_smt_const w n -> w = (smt_sort_to_width s).
 Proof.
@@ -62,6 +63,16 @@ Definition dynamic_int_by_sort s (n : smt_sort_to_int_type s) : dynamic_int :=
     end in
   f n
 .
+
+Lemma infer_sort_generic : forall (sort : smt_sort) (x : smt_sort_to_int_type sort) di,
+  make_dynamic_int sort x = di -> sort = get_sort_by_dynamic_int di.
+Proof.
+  intros sort x di H.
+  destruct sort; (
+    destruct di; try discriminate H;
+    reflexivity
+  ).
+Qed.
 
 (* TODO: remove? *)
 Lemma eval_udiv_correspondence : forall m s (ast : smt_ast s) n,
@@ -973,7 +984,78 @@ Proof.
       apply OA_None.
     }
   }
-  { admit. }
+  {
+    rename t3 into t.
+    apply IHe1 with (ot := (Some (TYPE_I 1))) in H2.
+    apply IHe2 with (ot := (Some t)) in H6.
+    apply IHe3 with (ot := (Some t)) in H7.
+    destruct (eval_exp c_ls c_gs (Some (TYPE_I 1)) e1) as [dv1 | ] eqn:E1.
+    {
+      destruct (eval_exp c_ls c_gs (Some t) e2) as [dv2 | ] eqn:E2.
+      {
+        destruct (eval_exp c_ls c_gs (Some t) e3) as [dv3 | ] eqn:E3.
+        {
+          inversion H2; subst.
+          rename sort into sort1, ast into ast1.
+          inversion H6; subst.
+          rename sort into sort2, ast into ast2.
+          inversion H7; subst.
+          rename sort into sort3, ast into ast3.
+          unfold eval_select.
+          destruct (make_dynamic_int sort1 (smt_eval_ast m sort1 ast1)) eqn:Edi1.
+          {
+            assert(L : sort1 = Sort_BV1).
+            { apply infer_sort_generic in Edi1. assumption. }
+            subst.
+            admit.
+          }
+          {
+            assert(L : sort1 = Sort_BV8).
+            { apply infer_sort_generic in Edi1. assumption. }
+            subst.
+            unfold sym_eval_select.
+            apply OA_None.
+          }
+          {
+            assert(L : sort1 = Sort_BV16).
+            { apply infer_sort_generic in Edi1. assumption. }
+            subst.
+            unfold sym_eval_select.
+            apply OA_None.
+          }
+          {
+            assert(L : sort1 = Sort_BV32).
+            { apply infer_sort_generic in Edi1. assumption. }
+            subst.
+            unfold sym_eval_select.
+            apply OA_None.
+          }
+          {
+            assert(L : sort1 = Sort_BV64).
+            { apply infer_sort_generic in Edi1. assumption. }
+            subst.
+            unfold sym_eval_select.
+            apply OA_None.
+          }
+        }
+        {
+          inversion H2; subst.
+          inversion H6; subst.
+          inversion H7; subst.
+          apply OA_None.
+        }
+      }
+      {
+        inversion H2; subst.
+        inversion H6; subst.
+        apply OA_None.
+      }
+    }
+    {
+      inversion H2; subst.
+      apply OA_None.
+    }
+  }
 Admitted.
 
 Lemma empty_store_correspondence : forall m,
@@ -1225,16 +1307,6 @@ Proof.
       inversion Hws; subst; assumption.
     }
   }
-Qed.
-
-Lemma infer_sort_generic : forall (sort : smt_sort) (x : smt_sort_to_int_type sort) di,
-  make_dynamic_int sort x = di -> sort = get_sort_by_dynamic_int di.
-Proof.
-  intros sort x di H.
-  destruct sort; (
-    destruct di; try discriminate H;
-    reflexivity
-  ).
 Qed.
 
 Lemma completeness_single_step_division : forall c cid v op w e1 e2 c' s,
