@@ -602,18 +602,12 @@ ref<CoqExpr> ModuleTranslator::translateSelectInstExpr(SelectInst *inst) {
   return new CoqApplication(
     new CoqVariable("OP_Select"),
     {
-      new CoqPair(
-        translateType(inst->getCondition()->getType()),
-        translateValue(inst->getCondition())
-      ),
-      new CoqPair(
-        translateType(inst->getTrueValue()->getType()),
-        translateValue(inst->getTrueValue())
-      ),
-      new CoqPair(
-        translateType(inst->getFalseValue()->getType()),
-        translateValue(inst->getFalseValue())
-      ),
+      translateType(inst->getCondition()->getType()),
+      translateValue(inst->getCondition()),
+      translateType(inst->getTrueValue()->getType()),
+      translateValue(inst->getTrueValue()),
+      translateType(inst->getFalseValue()->getType()),
+      translateValue(inst->getFalseValue()),
     }
   );
 }
