@@ -423,7 +423,53 @@ Proof.
       { discriminate Heval. }
     }
   }
-  { admit. }
+  {
+    rename se1 into se.
+    destruct (sym_eval_exp ls1 gs1 (Some t1) e1) as [se1 | ] eqn:E1; try discriminate Heval.
+    destruct (sym_eval_exp ls1 gs1 (Some t2) e2) as [se2 | ] eqn:E2; try discriminate Heval.
+    destruct (sym_eval_exp ls1 gs1 (Some t3) e3) as [se3 | ] eqn:E3; try discriminate Heval.
+    apply IHe1 with (ot := Some t1) (se1 := se1) in E1; try assumption.
+    destruct E1 as [se1' [E1_1 E1_2]].
+    apply IHe2 with (ot := Some t2) (se1 := se2) in E2; try assumption.
+    destruct E2 as [se2' [E2_1 E2_2]].
+    apply IHe3 with (ot := Some t3) (se1 := se3) in E3; try assumption.
+    destruct E3 as [se3' [E3_1 E3_2]].
+    destruct se as [sort ast].
+    destruct se1 as [sort1 ast1].
+    destruct se1' as [sort1' ast1'].
+    destruct se2 as [sort2 ast2].
+    destruct se2' as [sort2' ast2'].
+    destruct se3 as [sort3 ast3].
+    destruct se3' as [sort3' ast3'].
+    destruct sort1; try discriminate Heval.
+    destruct sort2, sort3; try discriminate Heval.
+    {
+      assert(Ls1 : sort1' = Sort_BV1).
+      { inversion E1_2. reflexivity. }
+      assert(Ls2 : sort2' = Sort_BV1).
+      { inversion E2_2. reflexivity. }
+      assert(Ls3 : sort3' = Sort_BV1).
+      { inversion E3_2. reflexivity. }
+      subst.
+      exists (Expr Sort_BV1 (AST_Select Sort_BV1 ast1' ast2' ast3')).
+      split.
+      {
+        simpl.
+        rewrite E1_1, E2_1, E3_1.
+        unfold sym_eval_select.
+        reflexivity.
+      }
+      {
+        simpl in Heval.
+        inversion Heval; subst.
+        apply equiv_smt_expr_select; assumption.
+      }
+    }
+    { admit. }
+    { admit. }
+    { admit. }
+    { admit. }
+  }
 Admitted.
 
 Lemma equiv_sym_eval_phi_args : forall ls1 gs1 ls2 gs2 t args pbid se1,
