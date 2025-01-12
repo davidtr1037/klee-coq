@@ -831,7 +831,7 @@ Proof.
   apply Is_Unsafe_Division_Non_SDiv_SRem.
 Qed.
 
-Definition sym_division_overflow_error_condition_opt se1 se2 :=
+Definition sym_sdiv_error_condition_opt se1 se2 :=
   match se1, se2 with
   | Expr Sort_BV32 ast1, Expr Sort_BV32 ast2 =>
       AST_CmpOp
@@ -863,6 +863,15 @@ Definition sym_division_overflow_error_condition_opt se1 se2 :=
   end
 .
 
+Lemma sym_sdiv_error_condition_implies : forall pc se1 se2,
+  unsat (AST_BinOp Sort_BV1 SMT_And pc (sym_sdiv_error_condition_opt se1 se2)) ->
+  (
+    unsat (AST_BinOp Sort_BV1 SMT_And pc (sym_division_error_condition se2)) /\
+    unsat (AST_BinOp Sort_BV1 SMT_And pc (sym_division_overflow_error_condition se1 se2))
+  ).
+Proof.
+Admitted.
+
 Lemma safe_subtree_instr_op_sdiv : forall ic cid v et e1 e2 c cs pbid ls stk gs syms pc mdl ls_opt se1 se2 cond t,
   let s_init :=
     (mk_sym_state
@@ -883,7 +892,7 @@ Lemma safe_subtree_instr_op_sdiv : forall ic cid v et e1 e2 c cs pbid ls stk gs 
   sym_eval_exp ls gs (Some et) e1 = Some se1 ->
   sym_eval_exp ls gs (Some et) e2 = Some se2 ->
   equiv_smt_expr
-    (Expr Sort_BV1 (AST_BinOp Sort_BV1 SMT_And pc (sym_division_overflow_error_condition_opt se1 se2)))
+    (Expr Sort_BV1 (AST_BinOp Sort_BV1 SMT_And pc (sym_sdiv_error_condition_opt se1 se2)))
     (Expr Sort_BV1 cond) ->
   unsat cond ->
   (root t =
@@ -906,16 +915,18 @@ Proof.
   intros ic cid v et e1 e2 c cs pbid ls stk gs syms pc mdl ls_opt se1 se2 cond t.
   intros s_init His1 His2 Heq Heval_e1 Heval_e2 Hcond Hunsat Ht Hsafe.
   eapply safe_subtree_instr_op_generic; try eassumption.
+  assert(L :
+    unsat (AST_BinOp Sort_BV1 SMT_And pc (sym_sdiv_error_condition_opt se1 se2))
+  ).
+  { admit. }
   intros Herr.
   inversion Herr; subst.
   {
     rewrite Heval_e2 in H15.
     inversion H15; subst.
     rename se into se2.
-    assert(L :
-      unsat (AST_BinOp Sort_BV1 SMT_And pc (sym_division_error_condition se2))
-    ).
-    { admit. }
+    apply sym_sdiv_error_condition_implies in L.
+    destruct L as [L _].
     apply L.
     assumption.
   }
@@ -925,10 +936,8 @@ Proof.
     inversion H2; subst.
     inversion H15; subst.
     rename se0 into se1, se3 into se2.
-    assert(L :
-      unsat (AST_BinOp Sort_BV1 SMT_And pc (sym_division_overflow_error_condition se1 se2))
-    ).
-    { admit. }
+    apply sym_sdiv_error_condition_implies in L.
+    destruct L as [_ L].
     apply L.
     assumption.
   }
