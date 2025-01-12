@@ -441,36 +441,29 @@ Proof.
     destruct se2' as [sort2' ast2'].
     destruct se3 as [sort3 ast3].
     destruct se3' as [sort3' ast3'].
+    assert(Ls1 : sort1 = sort1').
+    { apply sort_injection in E1_2. assumption. }
     destruct sort1; try discriminate Heval.
-    destruct sort2, sort3; try discriminate Heval.
-    {
-      assert(Ls1 : sort1' = Sort_BV1).
-      { inversion E1_2. reflexivity. }
-      assert(Ls2 : sort2' = Sort_BV1).
-      { inversion E2_2. reflexivity. }
-      assert(Ls3 : sort3' = Sort_BV1).
-      { inversion E3_2. reflexivity. }
-      subst.
-      exists (Expr Sort_BV1 (AST_Select Sort_BV1 ast1' ast2' ast3')).
-      split.
-      {
-        simpl.
-        rewrite E1_1, E2_1, E3_1.
-        unfold sym_eval_select.
-        reflexivity.
-      }
-      {
-        simpl in Heval.
-        inversion Heval; subst.
-        apply equiv_smt_expr_select; assumption.
-      }
-    }
-    { admit. }
-    { admit. }
-    { admit. }
-    { admit. }
+    assert(Ls2 : sort2 = sort2').
+    { apply sort_injection in E2_2. assumption. }
+    assert(Ls3 : sort3 = sort3').
+    { apply sort_injection in E3_2. assumption. }
+    subst.
+    rename sort2' into sort2, sort3' into sort3.
+    destruct sort2, sort3; try discriminate Heval;
+    (
+      eexists;
+      split; [
+        simpl;
+        rewrite E1_1, E2_1, E3_1;
+        reflexivity |
+        simpl in Heval;
+        inversion Heval; subst;
+        apply equiv_smt_expr_select; assumption
+      ]
+    ).
   }
-Admitted.
+Qed.
 
 Lemma equiv_sym_eval_phi_args : forall ls1 gs1 ls2 gs2 t args pbid se1,
   equiv_smt_store ls1 ls2 ->

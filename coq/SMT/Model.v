@@ -609,6 +609,16 @@ Proof.
   reflexivity.
 Qed.
 
+Lemma equiv_smt_expr_select : forall s (ast1 ast1' : smt_ast_bool) (ast2 ast2' ast3 ast3' : smt_ast s),
+  equiv_smt_expr (Expr Sort_BV1 ast1) (Expr Sort_BV1 ast1') ->
+  equiv_smt_expr (Expr s ast2) (Expr s ast2') ->
+  equiv_smt_expr (Expr s ast3) (Expr s ast3') ->
+  equiv_smt_expr
+    (Expr s (AST_Select s ast1 ast2 ast3))
+    (Expr s (AST_Select s ast1' ast2' ast3')).
+Proof.
+Admitted.
+
 (* TODO: refactor *)
 Lemma equiv_smt_expr_eq_symmetry : forall s (ast1 ast2 : smt_ast s),
   equiv_smt_expr
