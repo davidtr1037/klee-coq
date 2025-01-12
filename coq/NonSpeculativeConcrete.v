@@ -309,8 +309,23 @@ Proof.
       { discriminate Heval. }
     }
   }
-  { admit. }
-Admitted.
+  {
+    destruct
+      (eval_exp ls gs (Some (TYPE_I 1)) e1) as [dv1 | ] eqn:E1,
+      (eval_exp ls gs (Some t2) e2) as [dv2 | ] eqn:E2,
+      (eval_exp ls gs (Some t3) e3) as [dv3 | ] eqn:E3;
+    try discriminate Heval.
+    apply IHe1 with (dv := dv1) (ot := Some (TYPE_I 1)) in H2; try assumption.
+    apply IHe2 with (dv := dv2) (ot := Some t2) in H6; try assumption.
+    apply IHe3 with (dv := dv3) (ot := Some t3) in H7; try assumption.
+    unfold eval_select in Heval.
+    destruct dv1 as [di1 | | ] eqn:Edv1; try discriminate Heval.
+    destruct di1 as [n1 | n1 | n1 | n1 | n1]; try discriminate Heval.
+    destruct (eq n1 one) eqn:Eeq.
+    { inversion Heval; subst. assumption. }
+    { inversion Heval; subst. assumption. }
+  }
+Qed.
 
 Lemma has_no_poison_eval_exp_division : forall ls gs op w e1 e2 dv,
   store_has_no_poison ls ->
