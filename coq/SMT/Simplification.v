@@ -1147,45 +1147,73 @@ Proof.
   }
 Qed.
 
+Lemma equiv_smt_expr_select_property_1 : forall ast1 ast2,
+  equiv_smt_expr
+    (Expr Sort_BV1
+       (AST_BinOp Sort_BV1 SMT_And
+          (AST_CmpOp Sort_BV1 SMT_Eq smt_ast_false ast1) ast2))
+    (Expr Sort_BV1
+       (AST_Select Sort_BV1 ast1 (AST_Const Sort_BV1 Int1.zero) ast2)).
+Proof.
+Admitted.
+
+Lemma equiv_smt_expr_select_property_2 : forall ast1 ast2,
+  equiv_smt_expr (Expr Sort_BV1 (AST_BinOp Sort_BV1 SMT_Or ast1 ast2))
+    (Expr Sort_BV1
+       (AST_Select Sort_BV1 ast1 (AST_Const Sort_BV1 Int1.one) ast2)).
+Proof.
+Admitted.
+
+Lemma equiv_smt_expr_select_property_3 : forall ast1 ast2,
+  equiv_smt_expr
+    (Expr Sort_BV1 (AST_BinOp Sort_BV1 SMT_And ast1 ast2))
+    (Expr Sort_BV1 (AST_Select Sort_BV1 ast1 ast2 (AST_Const Sort_BV1 Int1.zero))).
+Proof.
+Admitted.
+
+Lemma equiv_smt_expr_select_property_4 : forall ast1 ast2,
+  equiv_smt_expr
+    (Expr
+      Sort_BV1
+      (AST_BinOp Sort_BV1 SMT_Or (AST_CmpOp Sort_BV1 SMT_Eq smt_ast_false ast1) ast2))
+    (Expr
+      Sort_BV1
+      (AST_Select Sort_BV1 ast1 ast2 (AST_Const Sort_BV1 Int1.one))).
+Proof.
+Admitted.
+
+Lemma equiv_smt_expr_normalize_select_bv1_const_l : forall n ast1 ast2,
+  equiv_smt_expr
+    (Expr Sort_BV1 (normalize_select Sort_BV1 ast1 (AST_Const Sort_BV1 n) ast2))
+    (Expr Sort_BV1 (AST_Select Sort_BV1 ast1 (AST_Const Sort_BV1 n) ast2)).
+Proof.
+  intros n ast1 ast2.
+  pose proof (int1_destruct n) as Ln.
+  simpl.
+  destruct Ln as [Ln | Ln]; rewrite Ln; simpl.
+  { apply equiv_smt_expr_select_property_1. }
+  { apply equiv_smt_expr_select_property_2. }
+Qed.
+
 Lemma equiv_smt_expr_normalize_select_bv1 : forall (cond ast1 ast2 : smt_ast Sort_BV1),
   equiv_smt_expr
     (Expr Sort_BV1 (normalize_select Sort_BV1 cond ast1 ast2))
     (Expr Sort_BV1 (AST_Select Sort_BV1 cond ast1 ast2)).
 Proof.
   intros cond ast1 ast2.
-  dependent destruction ast1.
-  {
-    pose proof (int1_destruct n) as Ln.
-    simpl.
-    destruct Ln as [Ln | Ln]; rewrite Ln; simpl.
-    {
-      admit.
-    }
-    {
-      admit.
-    }
-  }
-  {
-    dependent destruction ast2;
-    try apply equiv_smt_expr_refl.
-    pose proof (int1_destruct n) as Ln.
-    simpl.
-    destruct Ln as [Ln | Ln]; rewrite Ln; simpl.
-    {
-      admit.
-    }
-    {
-      admit.
-    }
-  }
-  { admit. }
-  { admit. }
-  { admit. }
-  { admit. }
-  { admit. }
-  { admit. }
-  { admit. }
-Admitted.
+  dependent destruction ast1;
+  try apply equiv_smt_expr_normalize_select_bv1_const_l;
+  try (
+    dependent destruction ast2; (
+      try apply equiv_smt_expr_refl;
+      pose proof (int1_destruct n) as Ln;
+      simpl;
+      destruct Ln as [Ln | Ln]; rewrite Ln; simpl;
+      try apply equiv_smt_expr_select_property_3;
+      try apply equiv_smt_expr_select_property_4
+    )
+  ).
+Qed.
 
 Lemma equiv_smt_expr_normalize_select : forall s cond (ast1 ast2 : smt_ast s),
   equiv_smt_expr
