@@ -1147,6 +1147,43 @@ Proof.
   }
 Qed.
 
+Lemma equiv_smt_expr_normalize_select_bv1 : forall (cond ast1 ast2 : smt_ast Sort_BV1),
+  equiv_smt_expr
+    (Expr Sort_BV1 (normalize_select Sort_BV1 cond ast1 ast2))
+    (Expr Sort_BV1 (AST_Select Sort_BV1 cond ast1 ast2)).
+Proof.
+  intros cond ast1 ast2.
+Admitted.
+
+Lemma equiv_smt_expr_normalize_select : forall s cond (ast1 ast2 : smt_ast s),
+  equiv_smt_expr
+    (Expr s (normalize_select s cond ast1 ast2))
+    (Expr s (AST_Select s cond ast1 ast2)).
+Proof.
+  intros s cond ast1 ast2.
+  destruct s;
+  try apply equiv_smt_expr_refl.
+  apply equiv_smt_expr_normalize_select_bv1.
+Qed.
+
+Lemma equiv_smt_expr_normalize_select_args : forall s cond (ast1 ast2 : smt_ast s),
+  equiv_smt_expr (Expr Sort_BV1 cond) (Expr Sort_BV1 (normalize Sort_BV1 cond)) ->
+  equiv_smt_expr (Expr s ast1) (Expr s (normalize s ast1)) ->
+  equiv_smt_expr (Expr s ast2) (Expr s (normalize s ast2)) ->
+  equiv_smt_expr
+    (Expr s (AST_Select s cond ast1 ast2))
+    (Expr s (normalize_select s (normalize Sort_BV1 cond) (normalize s ast1) (normalize s ast2))).
+Proof.
+  intros s cond ast1 ast2 Hcond Heq2 Heq3.
+  apply equiv_smt_expr_symmetry.
+  eapply equiv_smt_expr_transitivity.
+  { apply equiv_smt_expr_normalize_select. }
+  {
+    apply equiv_smt_expr_select;
+    apply equiv_smt_expr_symmetry; assumption.
+  }
+Qed.
+
 Lemma equiv_smt_expr_normalize: forall (sort : smt_sort) (ast : smt_ast sort),
   equiv_smt_expr
     (Expr sort ast)
@@ -1230,8 +1267,10 @@ Proof.
     apply equiv_smt_expr_extract.
     assumption.
   }
-  { admit. }
-Admitted.
+  {
+    apply equiv_smt_expr_normalize_select_args; try assumption.
+  }
+Qed.
 
 Definition sort_to_add s : (smt_sort_to_int_type s) -> (smt_sort_to_int_type s) -> (smt_sort_to_int_type s) :=
   match s with
