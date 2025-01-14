@@ -422,7 +422,16 @@ Proof.
   }
 Qed.
 
-Lemma int1_and_one_left : forall (n1 n2 : Int1.int),
+Lemma int1_and_one_right : forall (n : Int1.int),
+  and n one = n.
+Proof.
+  intros n.
+  replace one with Int1.mone.
+  { apply Int1.and_mone. }
+  { apply int1_eqb_eq. reflexivity. }
+Qed.
+
+Lemma int1_and_one_infer_left : forall (n1 n2 : Int1.int),
   Int1.and n1 n2 = Int1.one -> n1 = Int1.one.
 Proof.
   intros n1 n2 H.
@@ -438,7 +447,7 @@ Proof.
   { assumption. }
 Qed.
 
-Lemma int1_and_one_right : forall (n1 n2 : Int1.int),
+Lemma int1_and_one_infer_right : forall (n1 n2 : Int1.int),
   Int1.and n1 n2 = Int1.one -> n2 = Int1.one.
 Proof.
   intros n1 n2 H.

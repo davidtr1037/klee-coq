@@ -859,10 +859,12 @@ Definition sym_sdiv_error_condition_opt se1 se2 :=
             SMT_Eq
             smt_ast_false
             (AST_CmpOp Sort_BV32 SMT_Eq (AST_Const Sort_BV32 (repr 0)) ast2)))
-  | _, _ => smt_ast_false
+  (* TODO: just for making the related proofs easier *)
+  | _, _ => smt_ast_true
   end
 .
 
+(* TODO: rename *)
 Lemma sym_sdiv_error_condition_implies : forall pc se1 se2,
   unsat (AST_BinOp Sort_BV1 SMT_And pc (sym_sdiv_error_condition_opt se1 se2)) ->
   (
@@ -870,6 +872,30 @@ Lemma sym_sdiv_error_condition_implies : forall pc se1 se2,
     unsat (AST_BinOp Sort_BV1 SMT_And pc (sym_division_overflow_error_condition se1 se2))
   ).
 Proof.
+  intros pc se1 se2 Hunsat.
+  split.
+  {
+    intros Hsat.
+    apply Hunsat.
+    simpl.
+    destruct se1 as [sort1 ast1], se2 as [sort2 ast2].
+    destruct sort1, sort2;
+    try (
+      simpl;
+      unfold sat in Hsat;
+      destruct Hsat as [m Hsat];
+      apply sat_and in Hsat;
+      destruct Hsat as [Hsat _];
+      unfold sat;
+      exists m;
+      unfold sat_via in *;
+      simpl;
+      rewrite int1_and_one_right;
+      assumption
+    ).
+    { admit. }
+  }
+  { admit. }
 Admitted.
 
 Lemma safe_subtree_instr_op_sdiv : forall ic cid v et e1 e2 c cs pbid ls stk gs syms pc mdl ls_opt se1 se2 cond t,

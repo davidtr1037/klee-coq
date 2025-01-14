@@ -242,11 +242,11 @@ Proof.
  simpl in Hsat.
  split.
  {
-   apply int1_and_one_left in Hsat.
+   apply int1_and_one_infer_left in Hsat.
    assumption.
  }
  {
-   apply int1_and_one_right in Hsat.
+   apply int1_and_one_infer_right in Hsat.
    assumption.
  }
 Qed.
@@ -290,7 +290,7 @@ Proof.
   exists m.
   unfold sat_via in *.
   simpl in Hsat.
-  apply int1_and_one_left in Hsat.
+  apply int1_and_one_infer_left in Hsat.
   assumption.
 Qed.
 
@@ -307,7 +307,7 @@ Proof.
   exists m.
   unfold sat_via in *.
   simpl in Hsat.
-  apply int1_and_one_right in Hsat.
+  apply int1_and_one_infer_right in Hsat.
   assumption.
 Qed.
 
