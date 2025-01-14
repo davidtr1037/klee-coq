@@ -1932,6 +1932,21 @@ Proof.
   reflexivity.
 Qed.
 
+Lemma equiv_smt_expr_simplify_select : forall s (cond : smt_ast Sort_BV1) (ast1 ast2 : smt_ast s),
+  equiv_smt_expr
+    (Expr s (simplify_select s cond ast1 ast2))
+    (Expr s (AST_Select s cond ast1 ast2)).
+Proof.
+  intros s cond ast1 ast2.
+  dependent destruction cond;
+  try apply equiv_smt_expr_refl.
+  simpl.
+  apply EquivExpr.
+  intros m.
+  pose proof (int1_destruct n) as Ln.
+  destruct Ln as [Ln | Ln]; rewrite Ln; reflexivity.
+Qed.
+
 Lemma equiv_smt_expr_simplify: forall s (ast : smt_ast s),
   equiv_smt_expr
     (Expr s ast)
@@ -1993,8 +2008,17 @@ Proof.
       assumption.
     }
   }
-  { admit. }
-Admitted.
+  {
+    apply equiv_smt_expr_symmetry.
+    eapply equiv_smt_expr_transitivity.
+    { apply equiv_smt_expr_simplify_select. }
+    {
+      apply equiv_smt_expr_select; (
+        apply equiv_smt_expr_symmetry; assumption
+      ).
+    }
+  }
+Qed.
 
 Lemma equiv_smt_expr_normalize_simplify: forall s (ast : smt_ast s),
   equiv_smt_expr
