@@ -1153,6 +1153,38 @@ Lemma equiv_smt_expr_normalize_select_bv1 : forall (cond ast1 ast2 : smt_ast Sor
     (Expr Sort_BV1 (AST_Select Sort_BV1 cond ast1 ast2)).
 Proof.
   intros cond ast1 ast2.
+  dependent destruction ast1.
+  {
+    pose proof (int1_destruct n) as Ln.
+    simpl.
+    destruct Ln as [Ln | Ln]; rewrite Ln; simpl.
+    {
+      admit.
+    }
+    {
+      admit.
+    }
+  }
+  {
+    dependent destruction ast2;
+    try apply equiv_smt_expr_refl.
+    pose proof (int1_destruct n) as Ln.
+    simpl.
+    destruct Ln as [Ln | Ln]; rewrite Ln; simpl.
+    {
+      admit.
+    }
+    {
+      admit.
+    }
+  }
+  { admit. }
+  { admit. }
+  { admit. }
+  { admit. }
+  { admit. }
+  { admit. }
+  { admit. }
 Admitted.
 
 Lemma equiv_smt_expr_normalize_select : forall s cond (ast1 ast2 : smt_ast s),
