@@ -11,6 +11,8 @@ From SE.SMT Require Import Expr.
 
 From SE.Utils Require Import StringMap.
 
+(* TODO: use equiv_smt_expr_property to shorten proofs *)
+
 Inductive symbol : Type :=
   | Symbol_BV (s : string)
 .
@@ -629,7 +631,16 @@ Lemma equiv_smt_expr_select : forall s (ast1 ast1' : smt_ast_bool) (ast2 ast2' a
     (Expr s (AST_Select s ast1 ast2 ast3))
     (Expr s (AST_Select s ast1' ast2' ast3')).
 Proof.
-Admitted.
+  intros s ast1 ast1' ast2 ast2' ast3 ast3' Heq1 Heq2 Heq3.
+  apply EquivExpr.
+  intros m.
+  simpl.
+  apply equiv_smt_expr_property with (m := m) in Heq1.
+  apply equiv_smt_expr_property with (m := m) in Heq2.
+  apply equiv_smt_expr_property with (m := m) in Heq3.
+  rewrite Heq1, Heq2, Heq3.
+  reflexivity.
+Qed.
 
 (* TODO: refactor *)
 Lemma equiv_smt_expr_eq_symmetry : forall s (ast1 ast2 : smt_ast s),
