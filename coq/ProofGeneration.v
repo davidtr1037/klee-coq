@@ -17,6 +17,8 @@ From SE Require Import ModuleAssumptions.
 From SE Require Import Symbolic.
 From SE Require Import Relation.
 
+From SE.Numeric Require Import Integers.
+
 From SE.SMT Require Import Expr.
 From SE.SMT Require Import Model.
 
@@ -611,6 +613,25 @@ Lemma equiv_smt_expr_division_error_condition : forall se,
     (Expr Sort_BV1 (sym_division_error_condition se))
     (Expr Sort_BV1 (sym_division_error_condition_opt se)).
 Proof.
+  intros se.
+  destruct se as [sort ast].
+  simpl.
+  apply EquivExpr.
+  intros m.
+  simpl.
+  destruct sort.
+  { admit. }
+  { admit. }
+  { admit. }
+  {
+    unfold smt_eval_cmpop_by_sort.
+    unfold smt_eval_cmpop_generic.
+    simpl.
+    rewrite eq_zero_zext_i32_i64.
+    rewrite Int64.eq_sym.
+    reflexivity.
+  }
+  { admit. }
 Admitted.
 
 (* used in the non-optimized mode *)
