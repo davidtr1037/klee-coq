@@ -948,21 +948,30 @@ Proof.
           repeat (destruct w; try apply OA_None);
           destruct (make_dynamic_int sort (smt_eval_ast m sort ast)); apply OA_None
         ).
-        {
-          rename w into w1, w0 into w2.
-          repeat (destruct w1; try apply OA_None);
+        rename w into w1, w0 into w2.
+        repeat (destruct w1; try apply OA_None);
+        (
+          simpl;
+          destruct sort; try apply OA_None;
           (
-            simpl;
-            destruct sort; try apply OA_None;
+            repeat (destruct w2; try apply OA_None);
             (
-              repeat (destruct w2; try apply OA_None);
-              (
+              simpl;
+              eapply OA_Some; [
+                reflexivity |
                 simpl;
-                eapply OA_Some; reflexivity
-              )
+                f_equal;
+                symmetry;
+                (* TODO: find a better solution *)
+                try apply Int1.repr_mod_modulus;
+                try apply Int8.repr_mod_modulus;
+                try apply Int16.repr_mod_modulus;
+                try apply Int32.repr_mod_modulus;
+                try apply Int64.repr_mod_modulus
+              ]
             )
-          ).
-        }
+          )
+        ).
       }
       {
         inversion H4; subst.
