@@ -196,6 +196,16 @@ public:
   OptNonePass() : llvm::ModulePass(ID) {}
   bool runOnModule(llvm::Module &M) override;
 };
+
+class UndefCleanerPass : public llvm::FunctionPass {
+  static char ID;
+
+public:
+  UndefCleanerPass() : llvm::FunctionPass(ID) {}
+
+  bool runOnFunction(llvm::Function &f) override;
+};
+
 } // namespace klee
 
 #endif /* KLEE_PASSES_H */

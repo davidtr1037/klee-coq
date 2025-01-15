@@ -32,6 +32,12 @@ DISABLE_WARNING_POP
 using namespace llvm;
 using namespace klee;
 
+cl::opt<bool> EliminateUndef(
+  "eliminate-undef",
+  cl::init(true),
+  cl::desc("Replace undef values with constants")
+);
+
 void klee::instrument(bool CheckDivZero, bool CheckOvershift,
                       llvm::Module *module) {
   // Inject checks prior to optimization... we also perform the
@@ -83,6 +89,12 @@ void klee::optimiseAndPrepare(bool OptimiseKLEECall, bool Optimize,
                               SwitchImplType SwitchType, std::string EntryPoint,
                               llvm::ArrayRef<const char *> preservedFunctions,
                               llvm::Module *module) {
+  if (EliminateUndef) {
+    legacy::PassManager pm;
+    pm.add(new UndefCleanerPass());
+    pm.run(*module);
+  }
+
   // Preserve all functions containing klee-related function calls from being
   // optimised around
   if (!OptimiseKLEECall) {

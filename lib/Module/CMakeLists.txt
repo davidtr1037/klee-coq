@@ -19,6 +19,7 @@ set(KLEE_MODULE_COMPONENT_SRCS
   OptNone.cpp
   PhiCleaner.cpp
   RaiseAsm.cpp
+  UndefCleaner.cpp
 )
 
 if ("${LLVM_VERSION_MAJOR}" LESS 17)
