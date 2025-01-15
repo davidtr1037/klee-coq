@@ -163,23 +163,23 @@ Definition signed_by_sort s (x : (smt_sort_to_int_type s)) : Z :=
 .
 
 Definition smt_eval_sext_by_sort s (x : (smt_sort_to_int_type s)) cast_sort : (smt_sort_to_int_type cast_sort) :=
-    match cast_sort with
-    | Sort_BV1 => (Int1.repr (signed_by_sort s x))
-    | Sort_BV8 => (Int8.repr (signed_by_sort s x))
-    | Sort_BV16 => (Int16.repr (signed_by_sort s x))
-    | Sort_BV32 => (Int32.repr (signed_by_sort s x))
-    | Sort_BV64 => (Int64.repr (signed_by_sort s x))
-    end
+  match cast_sort with
+  | Sort_BV1 => (Int1.repr (signed_by_sort s x))
+  | Sort_BV8 => (Int8.repr (signed_by_sort s x))
+  | Sort_BV16 => (Int16.repr (signed_by_sort s x))
+  | Sort_BV32 => (Int32.repr (signed_by_sort s x))
+  | Sort_BV64 => (Int64.repr (signed_by_sort s x))
+  end
 .
 
 Definition smt_eval_extract_by_sort s (x : (smt_sort_to_int_type s)) cast_sort : (smt_sort_to_int_type cast_sort) :=
-    match cast_sort with
-    | Sort_BV1 => Int1.repr (Int1.unsigned (Int1.repr (unsigned_by_sort s x)))
-    | Sort_BV8 => Int8.repr (Int8.unsigned (Int8.repr (unsigned_by_sort s x)))
-    | Sort_BV16 => Int16.repr (Int16.unsigned (Int16.repr (unsigned_by_sort s x)))
-    | Sort_BV32 => Int32.repr (Int32.unsigned (Int32.repr (unsigned_by_sort s x)))
-    | Sort_BV64 => Int64.repr (Int64.unsigned (Int64.repr (unsigned_by_sort s x)))
-    end
+  match cast_sort with
+  | Sort_BV1 => Int1.repr (Int1.unsigned (Int1.repr (unsigned_by_sort s x)))
+  | Sort_BV8 => Int8.repr (Int8.unsigned (Int8.repr (unsigned_by_sort s x)))
+  | Sort_BV16 => Int16.repr (Int16.unsigned (Int16.repr (unsigned_by_sort s x)))
+  | Sort_BV32 => Int32.repr (Int32.unsigned (Int32.repr (unsigned_by_sort s x)))
+  | Sort_BV64 => Int64.repr (Int64.unsigned (Int64.repr (unsigned_by_sort s x)))
+  end
 .
 
 Definition smt_eval_select s (cond : int1) (x y : (smt_sort_to_int_type s)) :=
