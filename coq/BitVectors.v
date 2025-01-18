@@ -431,6 +431,15 @@ Proof.
   { apply int1_eqb_eq. reflexivity. }
 Qed.
 
+Lemma int1_and_one_left : forall (n : Int1.int),
+  and one n = n.
+Proof.
+  intros n.
+  replace one with Int1.mone.
+  { apply Int1.and_mone_l. }
+  { apply int1_eqb_eq. reflexivity. }
+Qed.
+
 Lemma int1_and_one_infer_left : forall (n1 n2 : Int1.int),
   Int1.and n1 n2 = Int1.one -> n1 = Int1.one.
 Proof.
