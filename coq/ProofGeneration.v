@@ -903,21 +903,133 @@ Proof.
     destruct sort1, sort2;
     try (
       simpl;
-      unfold sat in Hsat;
       destruct Hsat as [m Hsat];
-      apply sat_and in Hsat;
-      destruct Hsat as [Hsat _];
-      unfold sat;
+      apply sat_and_left in Hsat;
       exists m;
-      unfold sat_via in *;
-      simpl;
-      rewrite int1_and_one_right;
-      assumption
+      apply sat_intro_and; [
+        assumption |
+        reflexivity
+      ]
     ).
-    { admit. }
+    {
+      simpl.
+      simpl in Hsat.
+      destruct Hsat as [m Hsat].
+      exists m.
+      apply sat_intro_and.
+      {
+        apply sat_and_left in Hsat.
+        assumption.
+      }
+      {
+        eapply equiv_smt_expr_sat_via.
+        { eapply equiv_smt_expr_not_rewrite. }
+        {
+          eapply equiv_smt_expr_sat_via.
+          {
+            eapply equiv_smt_expr_symmetry.
+            eapply equiv_smt_expr_de_morgan_and.
+          }
+          {
+            apply sat_intro_or_right.
+            eapply equiv_smt_expr_sat_via.
+            {
+              eapply equiv_smt_expr_symmetry.
+              eapply equiv_smt_expr_not_eq_zero.
+            }
+            {
+              apply sat_and_right in Hsat.
+              eapply equiv_smt_expr_sat_via.
+              {
+                eapply equiv_smt_expr_symmetry.
+                eapply equiv_smt_expr_eq_symmetry.
+              }
+              { assumption. }
+            }
+          }
+        }
+      }
+    }
   }
-  { admit. }
-Admitted.
+  {
+    intros Hsat.
+    apply Hunsat.
+    simpl.
+    destruct se1 as [sort1 ast1], se2 as [sort2 ast2].
+    destruct sort1, sort2;
+    try (
+      simpl;
+      destruct Hsat as [m Hsat];
+      apply sat_and_left in Hsat;
+      exists m;
+      apply sat_intro_and; [
+        assumption |
+        reflexivity
+      ]
+    ).
+    {
+      simpl.
+      simpl in Hsat.
+      destruct Hsat as [m Hsat].
+      exists m.
+      apply sat_intro_and.
+      {
+        apply sat_and_left in Hsat.
+        assumption.
+      }
+      {
+        eapply equiv_smt_expr_sat_via.
+        { eapply equiv_smt_expr_not_rewrite. }
+        {
+          eapply equiv_smt_expr_sat_via.
+          {
+            eapply equiv_smt_expr_symmetry.
+            eapply equiv_smt_expr_de_morgan_and.
+          }
+          {
+            apply sat_intro_or_left.
+            eapply equiv_smt_expr_sat_via.
+            {
+              eapply equiv_smt_expr_symmetry.
+              eapply equiv_smt_expr_de_morgan_or.
+            }
+            {
+              apply sat_intro_and.
+              {
+                eapply equiv_smt_expr_sat_via.
+                {
+                  eapply equiv_smt_expr_symmetry.
+                  eapply equiv_smt_expr_not_eq_zero.
+                }
+                {
+                  apply sat_and_right in Hsat.
+                  apply sat_and_left in Hsat.
+                  eapply equiv_smt_expr_sat_via.
+                  { eapply equiv_smt_expr_eq_symmetry. }
+                  { assumption. }
+                }
+              }
+              {
+                eapply equiv_smt_expr_sat_via.
+                {
+                  eapply equiv_smt_expr_symmetry.
+                  eapply equiv_smt_expr_not_eq_zero.
+                }
+                {
+                  apply sat_and_right in Hsat.
+                  apply sat_and_right in Hsat.
+                  eapply equiv_smt_expr_sat_via.
+                  { eapply equiv_smt_expr_eq_symmetry. }
+                  { assumption. }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+Qed.
 
 Lemma safe_subtree_instr_op_sdiv : forall ic cid v et e1 e2 c cs pbid ls stk gs syms pc mdl ls_opt se1 se2 cond t,
   let s_init :=
@@ -1105,7 +1217,7 @@ Proof.
     simpl.
     rewrite ltu_zext_i32_i64.
     remember
-      (Int64.ltu (Int64.repr (Int32.unsigned (smt_eval_ast m Sort_BV32 ast))) (Int64.repr 32)).
+      (Int64.ltu (Int64.repr (Int32.unsigned (smt_eval_ast m Sort_BV32 ast))) (Int64.repr 32)) as b.
     destruct b; reflexivity.
   }
   { admit. }

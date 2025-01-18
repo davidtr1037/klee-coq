@@ -263,6 +263,37 @@ Proof.
  reflexivity.
 Qed.
 
+Lemma sat_intro_and : forall (ast1 ast2 : smt_ast_bool) (m : smt_model),
+  sat_via ast1 m ->
+  sat_via ast2 m ->
+  sat_via (AST_BinOp Sort_BV1 SMT_And ast1 ast2) m.
+Proof.
+Admitted.
+
+Lemma sat_and_left : forall (ast1 ast2 : smt_ast_bool) (m : smt_model),
+  sat_via (AST_BinOp Sort_BV1 SMT_And ast1 ast2) m ->
+  sat_via ast1 m.
+Proof.
+Admitted.
+
+Lemma sat_and_right : forall (ast1 ast2 : smt_ast_bool) (m : smt_model),
+  sat_via (AST_BinOp Sort_BV1 SMT_And ast1 ast2) m ->
+  sat_via ast2 m.
+Proof.
+Admitted.
+
+Lemma sat_intro_or_left : forall (ast1 ast2 : smt_ast_bool) (m : smt_model),
+  sat_via ast1 m ->
+  sat_via (AST_BinOp Sort_BV1 SMT_Or ast1 ast2) m.
+Proof.
+Admitted.
+
+Lemma sat_intro_or_right : forall (ast1 ast2 : smt_ast_bool) (m : smt_model),
+  sat_via ast2 m ->
+  sat_via (AST_BinOp Sort_BV1 SMT_Or ast1 ast2) m.
+Proof.
+Admitted.
+
 Definition unsat (ast : smt_ast_bool) := ~ sat ast.
 
 Lemma unsat_false :
@@ -679,3 +710,44 @@ Proof.
     reflexivity.
   }
 Qed.
+
+(* TODO: rename *)
+Lemma equiv_smt_expr_not_rewrite : forall (ast : smt_ast_bool),
+  equiv_smt_expr
+    (Expr Sort_BV1 (AST_Not Sort_BV1 ast))
+    (Expr Sort_BV1 (AST_CmpOp Sort_BV1 SMT_Eq smt_ast_false ast)).
+Proof.
+Admitted.
+
+(* TODO: rename *)
+(* TODO: use double not? *)
+Lemma equiv_smt_expr_not_eq_zero : forall (ast : smt_ast_bool),
+  equiv_smt_expr
+    (Expr
+      Sort_BV1
+      (AST_Not Sort_BV1 (AST_CmpOp Sort_BV1 SMT_Eq smt_ast_false ast)))
+    (Expr Sort_BV1 ast).
+Proof.
+Admitted.
+
+Lemma equiv_smt_expr_de_morgan_and : forall (ast1 ast2 : smt_ast_bool),
+  equiv_smt_expr
+    (Expr
+      Sort_BV1
+      (AST_Not Sort_BV1 (AST_BinOp Sort_BV1 SMT_And ast1 ast2)))
+    (Expr
+      Sort_BV1
+      (AST_BinOp Sort_BV1 SMT_Or (AST_Not Sort_BV1 ast1) (AST_Not Sort_BV1 ast2))).
+Proof.
+Admitted.
+
+Lemma equiv_smt_expr_de_morgan_or : forall (ast1 ast2 : smt_ast_bool),
+  equiv_smt_expr
+    (Expr
+      Sort_BV1
+      (AST_Not Sort_BV1 (AST_BinOp Sort_BV1 SMT_Or ast1 ast2)))
+    (Expr
+      Sort_BV1
+      (AST_BinOp Sort_BV1 SMT_And (AST_Not Sort_BV1 ast1) (AST_Not Sort_BV1 ast2))).
+Proof.
+Admitted.
