@@ -364,22 +364,6 @@ Proof.
   { assumption. }
 Qed.
 
-Lemma equiv_smt_expr_not_not : forall (ast : smt_ast Sort_BV1),
-  equiv_smt_expr
-    (Expr Sort_BV1 ast)
-    (Expr Sort_BV1 (AST_Not Sort_BV1 (AST_Not Sort_BV1 ast))).
-Proof.
-  intros ast.
-  apply EquivExpr.
-  intros m.
-  simpl.
-  assert(L :
-    (smt_eval_ast m Sort_BV1 ast) = Int1.zero \/ (smt_eval_ast m Sort_BV1 ast) = Int1.one
-  ).
-  { apply int1_destruct. }
-  destruct L as [L | L]; rewrite L; reflexivity.
-Qed.
-
 Lemma implied_negated_condition: forall ast1 ast2 ast3,
   equiv_smt_expr
     (Expr Sort_BV1 (AST_BinOp Sort_BV1 SMT_And ast1 ast2))
@@ -397,10 +381,7 @@ Proof.
     {
       apply equiv_smt_expr_binop.
       { apply equiv_smt_expr_refl. }
-      {
-        apply equiv_smt_expr_symmetry.
-        apply equiv_smt_expr_not_not.
-      }
+      { apply equiv_smt_expr_not_not. }
     }
     { assumption. }
   }
@@ -934,17 +915,24 @@ Proof.
             apply sat_intro_or_right.
             eapply equiv_smt_expr_sat_via.
             {
-              eapply equiv_smt_expr_symmetry.
-              eapply equiv_smt_expr_not_eq_zero.
+              eapply equiv_smt_expr_not.
+              { apply equiv_smt_expr_not_rewrite. }
             }
             {
-              apply sat_and_right in Hsat.
               eapply equiv_smt_expr_sat_via.
               {
                 eapply equiv_smt_expr_symmetry.
-                eapply equiv_smt_expr_eq_symmetry.
+                apply equiv_smt_expr_not_not.
               }
-              { assumption. }
+              {
+                apply sat_and_right in Hsat.
+                eapply equiv_smt_expr_sat_via.
+                {
+                  eapply equiv_smt_expr_symmetry.
+                  eapply equiv_smt_expr_eq_symmetry.
+                }
+                { assumption. }
+              }
             }
           }
         }
@@ -998,29 +986,43 @@ Proof.
               {
                 eapply equiv_smt_expr_sat_via.
                 {
-                  eapply equiv_smt_expr_symmetry.
-                  eapply equiv_smt_expr_not_eq_zero.
+                  eapply equiv_smt_expr_not.
+                  { apply equiv_smt_expr_not_rewrite. }
                 }
                 {
-                  apply sat_and_right in Hsat.
-                  apply sat_and_left in Hsat.
                   eapply equiv_smt_expr_sat_via.
-                  { eapply equiv_smt_expr_eq_symmetry. }
-                  { assumption. }
+                  {
+                    eapply equiv_smt_expr_symmetry.
+                    apply equiv_smt_expr_not_not.
+                  }
+                  {
+                    apply sat_and_right in Hsat.
+                    apply sat_and_left in Hsat.
+                    eapply equiv_smt_expr_sat_via.
+                    { eapply equiv_smt_expr_eq_symmetry. }
+                    { assumption. }
+                  }
                 }
               }
               {
                 eapply equiv_smt_expr_sat_via.
                 {
-                  eapply equiv_smt_expr_symmetry.
-                  eapply equiv_smt_expr_not_eq_zero.
+                  eapply equiv_smt_expr_not.
+                  { apply equiv_smt_expr_not_rewrite. }
                 }
                 {
-                  apply sat_and_right in Hsat.
-                  apply sat_and_right in Hsat.
                   eapply equiv_smt_expr_sat_via.
-                  { eapply equiv_smt_expr_eq_symmetry. }
-                  { assumption. }
+                  {
+                    eapply equiv_smt_expr_symmetry.
+                    apply equiv_smt_expr_not_not.
+                  }
+                  {
+                    apply sat_and_right in Hsat.
+                    apply sat_and_right in Hsat.
+                    eapply equiv_smt_expr_sat_via.
+                    { eapply equiv_smt_expr_eq_symmetry. }
+                    { assumption. }
+                  }
                 }
               }
             }

@@ -752,13 +752,11 @@ Proof.
   destruct L as [L | L]; rewrite L; reflexivity.
 Qed.
 
-(* TODO: rename *)
-(* TODO: use double not? *)
-Lemma equiv_smt_expr_not_eq_zero : forall (ast : smt_ast_bool),
+Lemma equiv_smt_expr_not_not : forall (ast : smt_ast_bool),
   equiv_smt_expr
     (Expr
       Sort_BV1
-      (AST_Not Sort_BV1 (AST_CmpOp Sort_BV1 SMT_Eq smt_ast_false ast)))
+      (AST_Not Sort_BV1 (AST_Not Sort_BV1 ast)))
     (Expr Sort_BV1 ast).
 Proof.
   intros ast.
