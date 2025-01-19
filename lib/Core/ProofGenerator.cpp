@@ -15,6 +15,8 @@ using namespace std;
 using namespace llvm;
 using namespace klee;
 
+cl::opt<bool> TraceLemmas("trace-lemmas", cl::desc(""), cl::init(false));
+
 /* TODO: decide how to handle assertions */
 
 ProofGenerator::ProofGenerator(Module &m, raw_ostream &output) : m(m), output(output) {
@@ -921,6 +923,15 @@ klee::ref<CoqTactic> ProofGenerator::getTacticForSubtree(ref<CoqTactic> safetyTa
 klee::ref<CoqLemma> ProofGenerator::createLemma(uint64_t stepID,
                                                 ref<CoqTactic> tactic,
                                                 bool isAdmitted) {
+  if (TraceLemmas) {
+    tactic = new Block(
+      {
+        new Idtac(createLemmaName(stepID)),
+        tactic,
+      }
+    );
+  }
+
   return new CoqLemma(
     createLemmaName(stepID),
     new CoqApplication(
