@@ -268,31 +268,56 @@ Lemma sat_intro_and : forall (ast1 ast2 : smt_ast_bool) (m : smt_model),
   sat_via ast2 m ->
   sat_via (AST_BinOp Sort_BV1 SMT_And ast1 ast2) m.
 Proof.
-Admitted.
+  intros ast1 ast2 m Hsat1 Hsat2.
+  unfold sat_via in *.
+  simpl.
+  rewrite Hsat1, Hsat2.
+  reflexivity.
+Qed.
 
 Lemma sat_and_left : forall (ast1 ast2 : smt_ast_bool) (m : smt_model),
   sat_via (AST_BinOp Sort_BV1 SMT_And ast1 ast2) m ->
   sat_via ast1 m.
 Proof.
-Admitted.
+  intros ast1 ast2 m Hsat.
+  unfold sat_via in *.
+  simpl in Hsat.
+  apply int1_and_one_infer_left in Hsat.
+  assumption.
+Qed.
 
 Lemma sat_and_right : forall (ast1 ast2 : smt_ast_bool) (m : smt_model),
   sat_via (AST_BinOp Sort_BV1 SMT_And ast1 ast2) m ->
   sat_via ast2 m.
 Proof.
-Admitted.
+  intros ast1 ast2 m Hsat.
+  unfold sat_via in *.
+  simpl in Hsat.
+  apply int1_and_one_infer_right in Hsat.
+  assumption.
+Qed.
 
 Lemma sat_intro_or_left : forall (ast1 ast2 : smt_ast_bool) (m : smt_model),
   sat_via ast1 m ->
   sat_via (AST_BinOp Sort_BV1 SMT_Or ast1 ast2) m.
 Proof.
-Admitted.
+  intros ast1 ast2 m Hsat.
+  unfold sat_via in *.
+  simpl.
+  rewrite Hsat.
+  apply int1_or_one_left.
+Qed.
 
 Lemma sat_intro_or_right : forall (ast1 ast2 : smt_ast_bool) (m : smt_model),
   sat_via ast2 m ->
   sat_via (AST_BinOp Sort_BV1 SMT_Or ast1 ast2) m.
 Proof.
-Admitted.
+  intros ast1 ast2 m Hsat.
+  unfold sat_via in *.
+  simpl.
+  rewrite Hsat.
+  apply int1_or_one_right.
+Qed.
 
 Definition unsat (ast : smt_ast_bool) := ~ sat ast.
 
