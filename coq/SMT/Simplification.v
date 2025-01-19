@@ -1834,7 +1834,19 @@ Lemma equiv_smt_expr_or_zero_left_bv32 : forall n ast,
          AST_BinOp Sort_BV32 SMT_Or (AST_Const Sort_BV32 n) ast))
     (Expr Sort_BV32 (AST_BinOp Sort_BV32 SMT_Or (AST_Const Sort_BV32 n) ast)).
 Proof.
-Admitted.
+  intros n ast.
+  apply EquivExpr.
+  intros m.
+  destruct (Int32.eq n Int32.zero) eqn:E.
+  {
+    simpl.
+    apply int32_eqb_eq in E.
+    rewrite E.
+    rewrite Int32.or_zero_l.
+    reflexivity.
+  }
+  { reflexivity. }
+Qed.
 
 Lemma equiv_smt_expr_or_zero_right_bv32 : forall n ast,
   equiv_smt_expr
