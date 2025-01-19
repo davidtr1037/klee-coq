@@ -742,7 +742,15 @@ Lemma equiv_smt_expr_not_rewrite : forall (ast : smt_ast_bool),
     (Expr Sort_BV1 (AST_Not Sort_BV1 ast))
     (Expr Sort_BV1 (AST_CmpOp Sort_BV1 SMT_Eq smt_ast_false ast)).
 Proof.
-Admitted.
+  intros ast.
+  apply EquivExpr.
+  intros m.
+  simpl.
+  unfold smt_eval_cmpop_by_sort.
+  remember (smt_eval_ast m Sort_BV1 ast) as b.
+  pose proof (int1_destruct b) as L.
+  destruct L as [L | L]; rewrite L; reflexivity.
+Qed.
 
 (* TODO: rename *)
 (* TODO: use double not? *)
@@ -753,7 +761,15 @@ Lemma equiv_smt_expr_not_eq_zero : forall (ast : smt_ast_bool),
       (AST_Not Sort_BV1 (AST_CmpOp Sort_BV1 SMT_Eq smt_ast_false ast)))
     (Expr Sort_BV1 ast).
 Proof.
-Admitted.
+  intros ast.
+  apply EquivExpr.
+  intros m.
+  simpl.
+  unfold smt_eval_cmpop_by_sort.
+  remember (smt_eval_ast m Sort_BV1 ast) as b.
+  pose proof (int1_destruct b) as L.
+  destruct L as [L | L]; rewrite L; reflexivity.
+Qed.
 
 Lemma equiv_smt_expr_de_morgan_and : forall (ast1 ast2 : smt_ast_bool),
   equiv_smt_expr
@@ -764,7 +780,16 @@ Lemma equiv_smt_expr_de_morgan_and : forall (ast1 ast2 : smt_ast_bool),
       Sort_BV1
       (AST_BinOp Sort_BV1 SMT_Or (AST_Not Sort_BV1 ast1) (AST_Not Sort_BV1 ast2))).
 Proof.
-Admitted.
+  intros ast1 ast2.
+  apply EquivExpr.
+  intros m.
+  simpl.
+  remember (smt_eval_ast m Sort_BV1 ast1) as b1.
+  remember (smt_eval_ast m Sort_BV1 ast2) as b2.
+  pose proof (int1_destruct b1) as L1.
+  pose proof (int1_destruct b2) as L2.
+  destruct L1 as [L1 | L1]; rewrite L1; destruct L2 as [L2 | L2]; rewrite L2; reflexivity.
+Qed.
 
 Lemma equiv_smt_expr_de_morgan_or : forall (ast1 ast2 : smt_ast_bool),
   equiv_smt_expr
@@ -775,4 +800,13 @@ Lemma equiv_smt_expr_de_morgan_or : forall (ast1 ast2 : smt_ast_bool),
       Sort_BV1
       (AST_BinOp Sort_BV1 SMT_And (AST_Not Sort_BV1 ast1) (AST_Not Sort_BV1 ast2))).
 Proof.
-Admitted.
+  intros ast1 ast2.
+  apply EquivExpr.
+  intros m.
+  simpl.
+  remember (smt_eval_ast m Sort_BV1 ast1) as b1.
+  remember (smt_eval_ast m Sort_BV1 ast2) as b2.
+  pose proof (int1_destruct b1) as L1.
+  pose proof (int1_destruct b2) as L2.
+  destruct L1 as [L1 | L1]; rewrite L1; destruct L2 as [L2 | L2]; rewrite L2; reflexivity.
+Qed.
