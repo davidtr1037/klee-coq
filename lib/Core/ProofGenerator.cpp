@@ -1096,6 +1096,24 @@ klee::ref<CoqVariable> ProofGenerator::getTreeAlias(uint64_t stepID) {
   return new CoqVariable(getTreeAliasName(stepID));
 }
 
+klee::ref<CoqExpr> ProofGenerator::getEvaluatedAST(StateInfo &stateInfo,
+                                                   Value *v) {
+  return new CoqApplication(
+    new CoqVariable("extract_ast"),
+    {
+      new CoqApplication(
+        new CoqVariable("sym_eval_exp"),
+        {
+          stateTranslator->getLocalStoreAlias(stateInfo.stepID),
+          stateTranslator->createGlobalStore(),
+          createSome(moduleTranslator->translateType(v->getType())),
+          moduleTranslator->translateValue(v),
+        }
+      ),
+    }
+  );
+}
+
 klee::ref<CoqExpr> ProofGenerator::getEvaluatedSMTExpr(StateInfo &stateInfo,
                                                        Value *v) {
   return new CoqApplication(
@@ -1113,7 +1131,6 @@ klee::ref<CoqExpr> ProofGenerator::getEvaluatedSMTExpr(StateInfo &stateInfo,
     }
   );
 }
-
 void ProofGenerator::generateTreeDefs() {
   for (ref<CoqExpr> def : treeDefs) {
     output << def->dump() << "\n";

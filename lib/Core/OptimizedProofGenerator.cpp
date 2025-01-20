@@ -874,20 +874,7 @@ klee::ref<CoqTactic> OptimizedProofGenerator::getTacticForSubtree(StateInfo &sta
   assert(functionLemmas.find(f) != functionLemmas.end());
   string functionLemma = functionLemmas[f];
 
-  ref<CoqExpr> cond = new CoqApplication(
-    new CoqVariable("extract_ast"),
-    {
-      new CoqApplication(
-        new CoqVariable("sym_eval_exp"),
-        {
-          stateTranslator->getLocalStoreAlias(stateInfo.stepID),
-          stateTranslator->createGlobalStore(),
-          createSome(moduleTranslator->createTypeI(1)),
-          moduleTranslator->translateBranchInstExpr(bi),
-        }
-      ),
-    }
-  );
+  ref<CoqExpr> cond = getEvaluatedAST(stateInfo, bi->getCondition());
 
   if (si1.isSat && !si2.isSat) {
     ref<CoqExpr> unsatPC = exprTranslator->translate(si2.unsatPC,

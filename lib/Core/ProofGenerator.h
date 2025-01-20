@@ -232,6 +232,8 @@ public:
 
   ref<CoqVariable> getTreeAlias(uint64_t stepID);
 
+  ref<CoqExpr> getEvaluatedAST(StateInfo &stateInfo, llvm::Value *v);
+
   ref<CoqExpr> getEvaluatedSMTExpr(StateInfo &stateInfo, llvm::Value *v);
 
   void generateTreeDefs();
