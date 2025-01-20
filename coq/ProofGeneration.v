@@ -1033,6 +1033,38 @@ Proof.
   }
 Qed.
 
+(* used in the non-optimized mode *)
+Lemma unsat_sym_sdiv_division_error_condition : forall pc se1 se2 cond,
+  equiv_smt_expr
+    (Expr Sort_BV1 (AST_BinOp Sort_BV1 SMT_And pc (sym_sdiv_error_condition_opt se1 se2)))
+    (Expr Sort_BV1 cond) ->
+  unsat cond ->
+  unsat (AST_BinOp Sort_BV1 SMT_And pc (sym_division_error_condition se2)).
+Proof.
+  intros pc se1 se2 cond Heq Hunsat.
+  apply equiv_smt_expr_symmetry in Heq.
+  apply equiv_smt_expr_unsat in Heq; try assumption.
+  apply sym_sdiv_error_condition_implies in Heq.
+  destruct Heq as [Heq _].
+  assumption.
+Qed.
+
+(* used in the non-optimized mode *)
+Lemma unsat_sym_sdiv_overflow_error_condition : forall pc se1 se2 cond,
+  equiv_smt_expr
+    (Expr Sort_BV1 (AST_BinOp Sort_BV1 SMT_And pc (sym_sdiv_error_condition_opt se1 se2)))
+    (Expr Sort_BV1 cond) ->
+  unsat cond ->
+  unsat (AST_BinOp Sort_BV1 SMT_And pc (sym_division_overflow_error_condition se1 se2)).
+Proof.
+  intros pc se1 se2 cond Heq Hunsat.
+  apply equiv_smt_expr_symmetry in Heq.
+  apply equiv_smt_expr_unsat in Heq; try assumption.
+  apply sym_sdiv_error_condition_implies in Heq.
+  destruct Heq as [_ Heq].
+  assumption.
+Qed.
+
 Lemma safe_subtree_instr_op_sdiv : forall ic cid v et e1 e2 c cs pbid ls stk gs syms pc mdl ls_opt se1 se2 cond t,
   let s_init :=
     (mk_sym_state
