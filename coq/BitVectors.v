@@ -83,7 +83,8 @@ Class VInt I : Type := {
   repr : Z -> I;
 
   (* Lemmas *)
-  eq_sym : forall x y : I, eq x y = eq y x;
+  add_commut : forall x y : I, add x y = add y x;
+  add_assoc : forall x y z : I, add (add x y) z = add x (add y z);
 }.
 
 Global Instance VInt1 : VInt Int1.int := {
@@ -137,7 +138,8 @@ Global Instance VInt1 : VInt Int1.int := {
   repr := Int1.repr;
 
   (* Lemmas *)
-  eq_sym := Int1.eq_sym;
+  add_commut := Int1.add_commut;
+  add_assoc := Int1.add_assoc;
 }.
 
 Global Instance VInt8 : VInt Int8.int := {
@@ -191,7 +193,8 @@ Global Instance VInt8 : VInt Int8.int := {
   repr := Int8.repr;
 
   (* Lemmas *)
-  eq_sym := Int8.eq_sym;
+  add_commut := Int8.add_commut;
+  add_assoc := Int8.add_assoc;
 }.
 
 Global Instance VInt16 : VInt Int16.int := {
@@ -245,7 +248,8 @@ Global Instance VInt16 : VInt Int16.int := {
   repr := Int16.repr;
 
   (* Lemmas *)
-  eq_sym := Int16.eq_sym;
+  add_commut := Int16.add_commut;
+  add_assoc := Int16.add_assoc;
 }.
 
 Global Instance VInt32 : VInt Int32.int := {
@@ -299,7 +303,8 @@ Global Instance VInt32 : VInt Int32.int := {
   repr := Int32.repr;
 
   (* Lemmas *)
-  eq_sym := Int32.eq_sym;
+  add_commut := Int32.add_commut;
+  add_assoc := Int32.add_assoc;
 }.
 
 Global Instance VInt64 : VInt Int64.int := {
@@ -353,7 +358,8 @@ Global Instance VInt64 : VInt Int64.int := {
   repr := Int64.repr;
 
   (* Lemmas *)
-  eq_sym := Int64.eq_sym;
+  add_commut := Int64.add_commut;
+  add_assoc := Int64.add_assoc;
 }.
 
 Definition di_is_const (di : dynamic_int) (n : Z) : bool :=
