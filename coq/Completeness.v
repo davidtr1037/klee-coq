@@ -1532,10 +1532,13 @@ Proof.
       inversion L1; subst.
       inversion L2; subst.
       rename sort into sort1, ast into ast1, sort0 into sort2, ast0 into ast2.
-      assert(Lsort1 : sort1 = Sort_BV1).
-      { apply infer_sort_generic in H9. assumption. }
-      assert(Lsort2 : sort2 = Sort_BV1).
-      { apply infer_sort_generic in H12. assumption. }
+      pose proof infer_sort_generic as L.
+      pose proof H9 as Ls1.
+      apply L in Ls1.
+      simpl in Ls1.
+      pose proof H12 as Ls2.
+      apply L in Ls2.
+      simpl in Ls2.
       subst.
       eexists.
       split.
@@ -1650,10 +1653,13 @@ Proof.
       inversion L1; subst.
       inversion L2; subst.
       rename sort into sort1, ast into ast1, sort0 into sort2, ast0 into ast2.
-      assert(Lsort1 : sort1 = Sort_BV8).
-      { apply infer_sort_generic in H9. assumption. }
-      assert(Lsort2 : sort2 = Sort_BV8).
-      { apply infer_sort_generic in H12. assumption. }
+      pose proof infer_sort_generic as L.
+      pose proof H9 as Ls1.
+      apply L in Ls1.
+      simpl in Ls1.
+      pose proof H12 as Ls2.
+      apply L in Ls2.
+      simpl in Ls2.
       subst.
       eexists.
       split.
