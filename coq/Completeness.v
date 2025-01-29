@@ -1442,6 +1442,23 @@ Proof.
   }
 Qed.
 
+Lemma destruct_ite_in_over_approx_via_model : forall (b : bool) odv1 odv2 ose m,
+  (b = true -> over_approx_via_model odv1 ose m) ->
+  (b = false -> over_approx_via_model odv2 ose m) ->
+  over_approx_via_model (if b then odv1 else odv2) ose m.
+Proof.
+  intros b odv1 odv2 ose m H1 H2.
+  destruct b eqn:E.
+  {
+    apply H1.
+    reflexivity.
+  }
+  {
+    apply H2.
+    reflexivity.
+  }
+Qed.
+
 Lemma completeness_single_step_shift : forall c cid v op w e1 e2 c' s,
   is_unsafe_shift op ->
   Concrete.cmd c = CMD_Inst cid (INSTR_Op v (OP_IBinop op (TYPE_I w) e1 e2)) ->
@@ -1493,23 +1510,23 @@ Proof.
       destruct E2; reflexivity
     ).
     unfold eval_ibinop in H11.
+    assert(L1 :
+      over_approx_via_model
+        (eval_exp c_ls c_gs (Some (TYPE_I w)) e1)
+        (sym_eval_exp s_ls s_gs (Some (TYPE_I w)) e1)
+        m
+    ).
+    { apply eval_exp_correspondence; assumption. }
+    assert(L2 :
+      over_approx_via_model
+        (eval_exp c_ls c_gs (Some (TYPE_I w)) e2)
+        (sym_eval_exp s_ls s_gs (Some (TYPE_I w)) e2)
+        m
+    ).
+    { apply eval_exp_correspondence; assumption. }
     destruct di1 as [n1 | n1 | n1 | n1 | n1], di2 as [n2 | n2 | n2 | n2 | n2];
     try (discriminate H11).
     {
-      assert(L1 :
-        over_approx_via_model
-          (eval_exp c_ls c_gs (Some (TYPE_I w)) e1)
-          (sym_eval_exp s_ls s_gs (Some (TYPE_I w)) e1)
-          m
-      ).
-      { apply eval_exp_correspondence; assumption. }
-      assert(L2 :
-        over_approx_via_model
-          (eval_exp c_ls c_gs (Some (TYPE_I w)) e2)
-          (sym_eval_exp s_ls s_gs (Some (TYPE_I w)) e2)
-          m
-      ).
-      { apply eval_exp_correspondence; assumption. }
       rewrite E1 in L1.
       rewrite E2 in L2.
       inversion L1; subst.
@@ -1628,20 +1645,6 @@ Proof.
       }
     }
     {
-      assert(L1 :
-        over_approx_via_model
-          (eval_exp c_ls c_gs (Some (TYPE_I w)) e1)
-          (sym_eval_exp s_ls s_gs (Some (TYPE_I w)) e1)
-          m
-      ).
-      { apply eval_exp_correspondence; assumption. }
-      assert(L2 :
-        over_approx_via_model
-          (eval_exp c_ls c_gs (Some (TYPE_I w)) e2)
-          (sym_eval_exp s_ls s_gs (Some (TYPE_I w)) e2)
-          m
-      ).
-      { apply eval_exp_correspondence; assumption. }
       rewrite E1 in L1.
       rewrite E2 in L2.
       inversion L1; subst.
@@ -1670,9 +1673,9 @@ Proof.
         (
           rewrite <- H11;
           simpl;
-          destruct (Int8.unsigned n2 >=? 8)%Z eqn:En2; [
+          apply destruct_ite_in_over_approx_via_model; intros E; [
             simpl in H11;
-            rewrite En2 in H11;
+            rewrite E in H11;
             inversion H11; subst;
             inversion H1; subst;
             inversion H20; subst;
@@ -1680,11 +1683,13 @@ Proof.
             rewrite update_map_eq in H3;
             destruct H3;
             reflexivity |
-            eapply OA_Some; try reflexivity;
-            simpl;
-            inversion H9; subst;
-            inversion H12; subst;
-            reflexivity
+            eapply OA_Some; [
+              reflexivity |
+              simpl;
+              inversion H9; subst;
+              inversion H12; subst;
+              reflexivity
+            ]
           ]
         ).
       }
