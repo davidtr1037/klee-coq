@@ -1652,3 +1652,23 @@ Proof.
   inversion Hf; subst.
   reflexivity.
 Qed.
+
+Lemma destruct_ite_in_eq : forall {A : Type} (b : bool) (x y z : A),
+  (if b then x else y) = z ->
+  ((b = true /\ x = z) \/ (b = false /\ y = z)).
+Proof.
+  intros A b x y z.
+  destruct b eqn:E.
+  {
+    left.
+    split.
+    { reflexivity. }
+    { assumption. }
+  }
+  {
+    right.
+    split.
+    { reflexivity. }
+    { assumption. }
+  }
+Qed.
