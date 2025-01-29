@@ -1349,23 +1349,23 @@ Proof.
       destruct E1; reflexivity
     ).
     unfold eval_ibinop in H12.
+    assert(L1 :
+      over_approx_via_model
+        (eval_exp c_ls c_gs (Some (TYPE_I w)) e1)
+        (sym_eval_exp s_ls s_gs (Some (TYPE_I w)) e1)
+        m
+    ).
+    { apply eval_exp_correspondence; assumption. }
+    assert(L2 :
+      over_approx_via_model
+        (eval_exp c_ls c_gs (Some (TYPE_I w)) e2)
+        (sym_eval_exp s_ls s_gs (Some (TYPE_I w)) e2)
+        m
+    ).
+    { apply eval_exp_correspondence; assumption. }
     destruct di1 as [n1 | n1 | n1 | n1 | n1], di2 as [n2 | n2 | n2 | n2 | n2];
     try (discriminate H12).
     {
-      assert(L1 :
-        over_approx_via_model
-          (eval_exp c_ls c_gs (Some (TYPE_I w)) e1)
-          (sym_eval_exp s_ls s_gs (Some (TYPE_I w)) e1)
-          m
-      ).
-      { apply eval_exp_correspondence; assumption. }
-      assert(L2 :
-        over_approx_via_model
-          (eval_exp c_ls c_gs (Some (TYPE_I w)) e2)
-          (sym_eval_exp s_ls s_gs (Some (TYPE_I w)) e2)
-          m
-      ).
-      { apply eval_exp_correspondence; assumption. }
       rewrite E1 in L1.
       rewrite E2 in L2.
       inversion L1; subst.
