@@ -1304,10 +1304,10 @@ Lemma eval_division_correspondence : forall op sort (ast1 ast2 : smt_ast sort) (
   smt_eval_ast m sort ast1 = n1 ->
   smt_eval_ast m sort ast2 = n2 ->
   (eval_ibinop op (DV_Int (make_dynamic_int sort n1)) (DV_Int (make_dynamic_int sort n2))) = Some dv ->
-  over_approx_via_model (Some dv)
-    (Some
-       (Expr sort
-          (AST_BinOp sort (ibinop_to_smt_binop op) ast1 ast2))) m.
+  over_approx_via_model
+    (Some dv)
+    (Some (Expr sort (AST_BinOp sort (ibinop_to_smt_binop op) ast1 ast2)))
+    m.
 Proof.
   intros op sort ast1 ast2 n1 n2 dv m Hop He1 He2 He.
   destruct sort;
@@ -1442,20 +1442,125 @@ Proof.
   }
 Qed.
 
-Lemma destruct_ite_in_over_approx_via_model : forall (b : bool) odv1 odv2 ose m,
-  (b = true -> over_approx_via_model odv1 ose m) ->
-  (b = false -> over_approx_via_model odv2 ose m) ->
-  over_approx_via_model (if b then odv1 else odv2) ose m.
+Lemma eval_shift_correspondence : forall op sort (ast1 ast2 : smt_ast sort) (n1 n2 : smt_sort_to_int_type sort) dv m,
+  is_unsafe_shift op ->
+  smt_eval_ast m sort ast1 = n1 ->
+  smt_eval_ast m sort ast2 = n2 ->
+  (eval_ibinop op (DV_Int (make_dynamic_int sort n1)) (DV_Int (make_dynamic_int sort n2))) = Some dv ->
+  dv <> DV_Poison ->
+  over_approx_via_model
+    (Some dv)
+    (Some (Expr sort (AST_BinOp sort (ibinop_to_smt_binop op) ast1 ast2)))
+    m.
 Proof.
-  intros b odv1 odv2 ose m H1 H2.
-  destruct b eqn:E.
+  intros op sort ast1 ast2 n1 n2 dv m Hop He1 He2 He Hdv.
+  destruct sort;
+  try (
+    simpl in He;
+    inversion Hop; rewrite <- H in *;
+    (
+      unfold eval_ibinop, eval_ibinop_generic in He;
+      simpl in n1, n2;
+      simpl in He;
+      apply destruct_ite_in_eq in He;
+      destruct He as [[_ He] | [_ He]]; [
+        inversion He; subst;
+        destruct Hdv;
+        reflexivity |
+        rewrite <- He;
+        eapply OA_Some; [
+          reflexivity |
+          simpl;
+          subst;
+          reflexivity
+        ]
+      ]
+    )
+  ).
   {
-    apply H1.
-    reflexivity.
-  }
-  {
-    apply H2.
-    reflexivity.
+    simpl in He.
+    inversion Hop; rewrite <- H in *.
+    {
+      unfold eval_ibinop, eval_ibinop_generic in He.
+      simpl in n1, n2.
+      simpl in He.
+      apply destruct_ite_in_eq in He.
+      destruct He as [[E He] | [E He]].
+      {
+        inversion He; subst.
+        destruct Hdv.
+        reflexivity.
+      }
+      {
+        rewrite <- He.
+        eapply OA_Some.
+        { reflexivity. }
+        {
+          simpl.
+          replace n2 with (Int1.repr 0) in He2.
+          {
+            rewrite He1, He2.
+            rewrite Int1.shl_zero.
+            reflexivity.
+          }
+          { symmetry. apply int1_lt_one. assumption. }
+        }
+      }
+    }
+    {
+      unfold eval_ibinop, eval_ibinop_generic in He.
+      simpl in n1, n2.
+      simpl in He.
+      apply destruct_ite_in_eq in He.
+      destruct He as [[E He] | [E He]].
+      {
+        inversion He; subst.
+        destruct Hdv.
+        reflexivity.
+      }
+      {
+        rewrite <- He.
+        eapply OA_Some.
+        { reflexivity. }
+        {
+          simpl.
+          replace n2 with (Int1.repr 0) in He2.
+          {
+            rewrite He1, He2.
+            rewrite Int1.shru_zero.
+            reflexivity.
+          }
+          { symmetry. apply int1_lt_one. assumption. }
+        }
+      }
+    }
+    {
+      unfold eval_ibinop, eval_ibinop_generic in He.
+      simpl in n1, n2.
+      simpl in He.
+      apply destruct_ite_in_eq in He.
+      destruct He as [[E He] | [E He]].
+      {
+        inversion He; subst.
+        destruct Hdv.
+        reflexivity.
+      }
+      {
+        rewrite <- He.
+        eapply OA_Some.
+        { reflexivity. }
+        {
+          simpl.
+          replace n2 with (Int1.repr 0) in He2.
+          {
+            rewrite He1, He2.
+            rewrite Int1.shr_zero.
+            reflexivity.
+          }
+          { symmetry. apply int1_lt_one. assumption. }
+        }
+      }
+    }
   }
 Qed.
 
@@ -1525,189 +1630,51 @@ Proof.
     ).
     { apply eval_exp_correspondence; assumption. }
     destruct di1 as [n1 | n1 | n1 | n1 | n1], di2 as [n2 | n2 | n2 | n2 | n2];
-    try (discriminate H11).
-    {
-      rewrite E1 in L1.
-      rewrite E2 in L2.
-      inversion L1; subst.
-      inversion L2; subst.
-      rename sort into sort1, ast into ast1, sort0 into sort2, ast0 into ast2.
-      pose proof infer_sort_generic as L.
-      pose proof H9 as Ls1.
-      apply L in Ls1.
-      simpl in Ls1.
-      pose proof H12 as Ls2.
-      apply L in Ls2.
-      simpl in Ls2.
-      subst.
-      eexists.
-      split.
-      {
-        apply Sym_Step_OP.
-        simpl.
-        rewrite <- H4.
-        rewrite <- H5.
-        reflexivity.
-      }
-      {
-        apply OA_State.
-        exists m.
-        apply OAV_State; try assumption.
-        apply store_update_correspondence; try assumption.
-        destruct op; inversion Hop; subst.
-        (* Shl *)
-        {
-          rewrite <- H11.
-          simpl.
-          destruct (Int1.unsigned n2 >=? 1)%Z eqn:En2.
-          {
-            simpl in H11.
-            rewrite En2 in H11.
-            inversion H11; subst.
-            inversion H1; subst.
-            inversion H20; subst.
-            specialize (H3 v).
-            rewrite update_map_eq in H3.
-            destruct H3.
-            reflexivity.
-          }
-          {
-            eapply OA_Some; try reflexivity.
-            simpl.
-            replace n2 with (Int1.repr 0) in H12.
-            {
-              inversion H9; subst.
-              inversion H12; subst.
-              rewrite H10.
-              rewrite Int1.shl_zero.
-              reflexivity.
-            }
-            { symmetry. apply int1_lt_one. assumption. }
-          }
-        }
-        (* LShr *)
-        {
-          rewrite <- H11.
-          simpl.
-          destruct (Int1.unsigned n2 >=? 1)%Z eqn:En2.
-          {
-            simpl in H11.
-            rewrite En2 in H11.
-            inversion H11; subst.
-            inversion H1; subst.
-            inversion H20; subst.
-            specialize (H3 v).
-            rewrite update_map_eq in H3.
-            destruct H3.
-            reflexivity.
-          }
-          {
-            eapply OA_Some; try reflexivity.
-            simpl.
-            replace n2 with (Int1.repr 0) in H12.
-            {
-              inversion H12; subst.
-              rewrite H10.
-              rewrite Int1.shru_zero.
-              inversion H9; subst.
-              reflexivity.
-            }
-            { symmetry. apply int1_lt_one. assumption. }
-          }
-        }
-        (* AShr *)
-        {
-          rewrite <- H11.
-          simpl.
-          destruct (Int1.unsigned n2 >=? 1)%Z eqn:En2.
-          {
-            simpl in H11.
-            rewrite En2 in H11.
-            inversion H11; subst.
-            inversion H1; subst.
-            inversion H20; subst.
-            specialize (H3 v).
-            rewrite update_map_eq in H3.
-            destruct H3.
-            reflexivity.
-          }
-          {
-            eapply OA_Some; try reflexivity.
-            simpl.
-            replace n2 with (Int1.repr 0) in H12.
-            {
-              inversion H12; subst.
-              rewrite H10.
-              rewrite Int1.shr_zero.
-              inversion H9; subst.
-              reflexivity.
-            }
-            { symmetry. apply int1_lt_one. assumption. }
-          }
-        }
-      }
-    }
-    {
-      rewrite E1 in L1.
-      rewrite E2 in L2.
-      inversion L1; subst.
-      inversion L2; subst.
-      rename sort into sort1, ast into ast1, sort0 into sort2, ast0 into ast2.
-      pose proof infer_sort_generic as L.
-      pose proof H9 as Ls1.
-      apply L in Ls1.
-      simpl in Ls1.
-      pose proof H12 as Ls2.
-      apply L in Ls2.
-      simpl in Ls2.
-      subst.
-      eexists.
-      split.
-      {
-        apply Sym_Step_OP.
-        simpl.
-        rewrite <- H4.
-        rewrite <- H5.
-        reflexivity.
-      }
-      {
-        apply OA_State.
-        exists m.
-        apply OAV_State; try assumption.
-        apply store_update_correspondence; try assumption.
-        destruct op; inversion Hop; subst;
-        (
-          rewrite <- H11;
-          simpl;
-          apply destruct_ite_in_over_approx_via_model; intros E; [
-            simpl in H11;
-            rewrite E in H11;
-            inversion H11; subst;
+    try (discriminate H11);
+    (
+      rewrite E1 in L1;
+      rewrite E2 in L2;
+      inversion L1; subst;
+      inversion L2; subst;
+      rename sort into sort1, ast into ast1, sort0 into sort2, ast0 into ast2;
+      pose proof infer_sort_generic as L;
+      pose proof H9 as Ls1;
+      apply L in Ls1;
+      simpl in Ls1;
+      pose proof H12 as Ls2;
+      apply L in Ls2;
+      simpl in Ls2;
+      subst;
+      eexists;
+      split; [
+        apply Sym_Step_OP;
+        simpl;
+        rewrite <- H4;
+        rewrite <- H5;
+        reflexivity |
+        apply OA_State;
+        exists m;
+        apply OAV_State; try assumption;
+        apply store_update_correspondence; [
+          eapply eval_shift_correspondence; [
+            assumption |
+            reflexivity |
+            reflexivity |
+            rewrite H9, H12;
+            assumption |
             inversion H1; subst;
             inversion H20; subst;
             specialize (H3 v);
             rewrite update_map_eq in H3;
-            destruct H3;
-            reflexivity |
-            eapply OA_Some; [
-              reflexivity |
-              simpl;
-              inversion H9; subst;
-              inversion H12; subst;
-              reflexivity
-            ]
-          ]
-        ).
-      }
-    }
-    (* TODO: similar to the Sort_BV8 case *)
-    { admit. }
-    (* TODO: similar to the Sort_BV8 case *)
-    { admit. }
-    (* TODO: similar to the Sort_BV8 case *)
-    { admit. }
+            apply injection_some_neq in H3;
+            assumption
+          ] |
+          assumption
+        ]
+      ]
+    ).
   }
-Admitted.
+Qed.
 
 Lemma completeness_single_step :
   forall c c' s,
