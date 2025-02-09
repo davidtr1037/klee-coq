@@ -4,8 +4,8 @@ ROOT=$(realpath ${CURRENT_PATH}/../..)
 KLEE=klee
 
 function run_klee_no_opt {
-    output=${ROOT}/coq/out.v
     bc_file=$1
+    output=$2
     echo "testing ${bc_file}"
     $KLEE \
         -search=dfs \
@@ -18,8 +18,8 @@ function run_klee_no_opt {
 }
 
 function run_klee {
-    output=${ROOT}/coq/out.v
     bc_file=$1
+    output=$2
     echo "testing ${bc_file}"
     $KLEE \
         -search=dfs \
@@ -36,4 +36,4 @@ function run_klee {
     ls -lh ${output}
 }
 
-run_klee $1
+run_klee $1 ${ROOT}/coq/out.v
