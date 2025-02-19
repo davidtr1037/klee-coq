@@ -459,7 +459,7 @@ Proof.
         reflexivity |
         simpl in Heval;
         inversion Heval; subst;
-        apply equiv_smt_expr_select; assumption
+        apply equiv_smt_expr_ite; assumption
       ]
     ).
   }

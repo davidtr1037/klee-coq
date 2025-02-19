@@ -182,7 +182,7 @@ Definition smt_eval_extract_by_sort s (x : (smt_sort_to_int_type s)) cast_sort :
   end
 .
 
-Definition smt_eval_select s (cond : int1) (x y : (smt_sort_to_int_type s)) :=
+Definition smt_eval_ite s (cond : int1) (x y : (smt_sort_to_int_type s)) :=
   if eq cond one then x else y
 .
 
@@ -211,7 +211,7 @@ Fixpoint smt_eval_ast (m : smt_model) (s : smt_sort) (ast : smt_ast s) : (smt_so
   | AST_Extract arg_sort ast cast_sort =>
       smt_eval_extract_by_sort arg_sort (smt_eval_ast m arg_sort ast) cast_sort
   | AST_ITE arg_sort cond e1 e2 =>
-      smt_eval_select
+      smt_eval_ite
         arg_sort
         (smt_eval_ast m Sort_BV1 cond)
         (smt_eval_ast m arg_sort e1)
@@ -439,11 +439,11 @@ Proof.
   }
   {
     assert(L1 : ~ contains_var (Expr Sort_BV1 ast1) x).
-    { intros Hse. apply H. apply contains_var_select_intro_cond. assumption. }
+    { intros Hse. apply H. apply contains_var_ite_intro_cond. assumption. }
     assert(L2 : ~ contains_var (Expr s ast2) x).
-    { intros Hse. apply H. apply contains_var_select_intro_l. assumption. }
+    { intros Hse. apply H. apply contains_var_ite_intro_l. assumption. }
     assert(L3 : ~ contains_var (Expr s ast3) x).
-    { intros Hse. apply H. apply contains_var_select_intro_r. assumption. }
+    { intros Hse. apply H. apply contains_var_ite_intro_r. assumption. }
     apply IHast1 in L1.
     apply IHast2 in L2.
     apply IHast3 in L3.
@@ -679,7 +679,7 @@ Proof.
   reflexivity.
 Qed.
 
-Lemma equiv_smt_expr_select : forall s (ast1 ast1' : smt_ast_bool) (ast2 ast2' ast3 ast3' : smt_ast s),
+Lemma equiv_smt_expr_ite : forall s (ast1 ast1' : smt_ast_bool) (ast2 ast2' ast3 ast3' : smt_ast s),
   equiv_smt_expr (Expr Sort_BV1 ast1) (Expr Sort_BV1 ast1') ->
   equiv_smt_expr (Expr s ast2) (Expr s ast2') ->
   equiv_smt_expr (Expr s ast3) (Expr s ast3') ->

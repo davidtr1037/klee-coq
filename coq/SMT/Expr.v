@@ -170,13 +170,13 @@ Inductive subexpr : smt_expr -> smt_expr -> Prop :=
   | SubExpr_Extract : forall e sort (a : (smt_ast sort)) cast_sort,
       subexpr e (Expr sort a) ->
       subexpr e (Expr cast_sort (AST_Extract sort a cast_sort))
-  | SubExpr_Select_Cond : forall e sort cond (ast1 ast2 : (smt_ast sort)),
+  | SubExpr_ITE_Cond : forall e sort cond (ast1 ast2 : (smt_ast sort)),
       subexpr e (Expr Sort_BV1 cond) ->
       subexpr e (Expr sort (AST_ITE sort cond ast1 ast2))
-  | SubExpr_Select_L : forall e sort cond (ast1 ast2 : (smt_ast sort)),
+  | SubExpr_ITE_L : forall e sort cond (ast1 ast2 : (smt_ast sort)),
       subexpr e (Expr sort ast1) ->
       subexpr e (Expr sort (AST_ITE sort cond ast1 ast2))
-  | SubExpr_Select_R : forall e sort cond (ast1 ast2 : (smt_ast sort)),
+  | SubExpr_ITE_R : forall e sort cond (ast1 ast2 : (smt_ast sort)),
       subexpr e (Expr sort ast2) ->
       subexpr e (Expr sort (AST_ITE sort cond ast1 ast2))
 .
@@ -364,7 +364,7 @@ Proof.
   assumption.
 Qed.
 
-Lemma contains_var_select : forall sort cond (ast1 ast2 : smt_ast sort) x,
+Lemma contains_var_ite : forall sort cond (ast1 ast2 : smt_ast sort) x,
   contains_var (Expr sort (AST_ITE sort cond ast1 ast2)) x ->
   (contains_var (Expr Sort_BV1 cond) x \/ contains_var (Expr sort ast1) x \/ contains_var (Expr sort ast2) x).
 Proof.
@@ -394,35 +394,35 @@ Proof.
   }
 Qed.
 
-Lemma contains_var_select_intro_cond : forall sort cond (ast1 ast2 : smt_ast sort) x,
+Lemma contains_var_ite_intro_cond : forall sort cond (ast1 ast2 : smt_ast sort) x,
   contains_var (Expr Sort_BV1 cond) x ->
   contains_var (Expr sort (AST_ITE sort cond ast1 ast2)) x.
 Proof.
   intros sort cond ast1 ast2 x Hc.
   inversion Hc; subst.
   eapply ContainsVar.
-  apply SubExpr_Select_Cond.
+  apply SubExpr_ITE_Cond.
   eassumption.
 Qed.
 
-Lemma contains_var_select_intro_l : forall sort cond (ast1 ast2 : smt_ast sort) x,
+Lemma contains_var_ite_intro_l : forall sort cond (ast1 ast2 : smt_ast sort) x,
   contains_var (Expr sort ast1) x ->
   contains_var (Expr sort (AST_ITE sort cond ast1 ast2)) x.
 Proof.
   intros sort cond ast1 ast2 x Hc.
   inversion Hc; subst.
   eapply ContainsVar.
-  apply SubExpr_Select_L.
+  apply SubExpr_ITE_L.
   eassumption.
 Qed.
 
-Lemma contains_var_select_intro_r : forall sort cond (ast1 ast2 : smt_ast sort) x,
+Lemma contains_var_ite_intro_r : forall sort cond (ast1 ast2 : smt_ast sort) x,
   contains_var (Expr sort ast2) x ->
   contains_var (Expr sort (AST_ITE sort cond ast1 ast2)) x.
 Proof.
   intros sort cond ast1 ast2 x Hc.
   inversion Hc; subst.
   eapply ContainsVar.
-  apply SubExpr_Select_R.
+  apply SubExpr_ITE_R.
   eassumption.
 Qed.

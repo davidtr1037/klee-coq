@@ -164,8 +164,8 @@ Proof.
   }
 Qed.
 
-Lemma contains_var_select : forall x e1 e2 e3 e4,
-  (sym_eval_select e1 e2 e3) = Some e4 ->
+Lemma contains_var_ite : forall x e1 e2 e3 e4,
+  (sym_eval_ite e1 e2 e3) = Some e4 ->
   contains_var e4 x ->
   contains_var e1 x \/ contains_var e2 x \/ contains_var e3 x.
 Proof.
@@ -177,7 +177,7 @@ Proof.
   destruct s2, s3; try discriminate Heq; (
     simpl in Heq;
     inversion Heq; subst;
-    apply contains_var_select;
+    apply contains_var_ite;
     assumption
   ).
 Qed.
@@ -450,7 +450,7 @@ Proof.
     try discriminate Heq.
     apply WD_Expr.
     intros n Hse.
-    apply contains_var_select with (e1 := se1) (e2 := se2) (e3 := se3) in Hse;
+    apply contains_var_ite with (e1 := se1) (e2 := se2) (e3 := se3) in Hse;
     try assumption.
     destruct Hse as [Hse | [Hse | Hse]].
     {

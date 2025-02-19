@@ -221,7 +221,7 @@ Definition sym_eval_convert (conv : conversion_type) t1 (e : smt_expr) t2 : opti
   end
 .
 
-Definition sym_eval_select (e1 e2 e3 : smt_expr) : option smt_expr :=
+Definition sym_eval_ite (e1 e2 e3 : smt_expr) : option smt_expr :=
   match e1 with
   | (Expr Sort_BV1 ast1) =>
       match e2, e3 with
@@ -274,7 +274,7 @@ Fixpoint sym_eval_exp (s : smt_store) (g : smt_store) (t : option typ) (e : llvm
              sym_eval_exp s g (Some t2) v2,
              sym_eval_exp s g (Some t3) v3) with
       | (Some e1, Some e2, Some e3) =>
-          sym_eval_select e1 e2 e3
+          sym_eval_ite e1 e2 e3
       | _ => None
       end
   end
