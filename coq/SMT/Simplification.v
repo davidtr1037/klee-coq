@@ -270,25 +270,25 @@ Definition normalize_select_bv1 (cond ast1 ast2 : smt_ast Sort_BV1) :=
               ast1
           else
             AST_BinOp Sort_BV1 SMT_And cond ast1
-      | _ => AST_Select Sort_BV1 cond ast1 ast2
+      | _ => AST_ITE Sort_BV1 cond ast1 ast2
       end
   end
 .
 
 Definition normalize_select_bv8 cond (ast1 ast2 : smt_ast Sort_BV8) :=
-  AST_Select Sort_BV8 cond ast1 ast2
+  AST_ITE Sort_BV8 cond ast1 ast2
 .
 
 Definition normalize_select_bv16 cond (ast1 ast2 : smt_ast Sort_BV16) :=
-  AST_Select Sort_BV16 cond ast1 ast2
+  AST_ITE Sort_BV16 cond ast1 ast2
 .
 
 Definition normalize_select_bv32 cond (ast1 ast2 : smt_ast Sort_BV32) :=
-  AST_Select Sort_BV32 cond ast1 ast2
+  AST_ITE Sort_BV32 cond ast1 ast2
 .
 
 Definition normalize_select_bv64 cond (ast1 ast2 : smt_ast Sort_BV64) :=
-  AST_Select Sort_BV64 cond ast1 ast2
+  AST_ITE Sort_BV64 cond ast1 ast2
 .
 
 Definition normalize_select (s : smt_sort) cond (ast1 ast2 : smt_ast s) : smt_ast s :=
@@ -319,7 +319,7 @@ Fixpoint normalize (s : smt_sort) (ast : smt_ast s) : smt_ast s :=
       normalize_sext sort (normalize sort ast) cast_sort
   | AST_Extract sort ast cast_sort =>
       normalize_extract sort (normalize sort ast) cast_sort
-  | AST_Select sort cond ast1 ast2 =>
+  | AST_ITE sort cond ast1 ast2 =>
       normalize_select sort (normalize Sort_BV1 cond) (normalize sort ast1) (normalize sort ast2)
   end
 .
@@ -519,7 +519,7 @@ Definition simplify_select (s : smt_sort) (cond : smt_ast_bool) (ast1 ast2 : smt
   | AST_Const Sort_BV1 n =>
       if eq n one then ast1 else ast2
   | _ =>
-      AST_Select s cond ast1 ast2
+      AST_ITE s cond ast1 ast2
   end
 .
 
@@ -538,7 +538,7 @@ Fixpoint simplify (s : smt_sort) (ast : smt_ast s) : smt_ast s :=
       simplify_sext sort (simplify sort ast) cast_sort
   | AST_Extract sort ast cast_sort =>
       simplify_extract sort (simplify sort ast) cast_sort
-  | AST_Select sort cond ast1 ast2 =>
+  | AST_ITE sort cond ast1 ast2 =>
       simplify_select sort (simplify Sort_BV1 cond) (simplify sort ast1) (simplify sort ast2)
   end
 .
@@ -1130,7 +1130,7 @@ Lemma equiv_smt_expr_select_property_1 : forall ast1 ast2,
        (AST_BinOp Sort_BV1 SMT_And
           (AST_CmpOp Sort_BV1 SMT_Eq smt_ast_false ast1) ast2))
     (Expr Sort_BV1
-       (AST_Select Sort_BV1 ast1 (AST_Const Sort_BV1 Int1.zero) ast2)).
+       (AST_ITE Sort_BV1 ast1 (AST_Const Sort_BV1 Int1.zero) ast2)).
 Proof.
   intros ast1 ast2.
   apply EquivExpr.
@@ -1148,7 +1148,7 @@ Qed.
 Lemma equiv_smt_expr_select_property_2 : forall ast1 ast2,
   equiv_smt_expr (Expr Sort_BV1 (AST_BinOp Sort_BV1 SMT_Or ast1 ast2))
     (Expr Sort_BV1
-       (AST_Select Sort_BV1 ast1 (AST_Const Sort_BV1 Int1.one) ast2)).
+       (AST_ITE Sort_BV1 ast1 (AST_Const Sort_BV1 Int1.one) ast2)).
 Proof.
   intros ast1 ast2.
   apply EquivExpr.
@@ -1166,7 +1166,7 @@ Qed.
 Lemma equiv_smt_expr_select_property_3 : forall ast1 ast2,
   equiv_smt_expr
     (Expr Sort_BV1 (AST_BinOp Sort_BV1 SMT_And ast1 ast2))
-    (Expr Sort_BV1 (AST_Select Sort_BV1 ast1 ast2 (AST_Const Sort_BV1 Int1.zero))).
+    (Expr Sort_BV1 (AST_ITE Sort_BV1 ast1 ast2 (AST_Const Sort_BV1 Int1.zero))).
 Proof.
   intros ast1 ast2.
   apply EquivExpr.
@@ -1188,7 +1188,7 @@ Lemma equiv_smt_expr_select_property_4 : forall ast1 ast2,
       (AST_BinOp Sort_BV1 SMT_Or (AST_CmpOp Sort_BV1 SMT_Eq smt_ast_false ast1) ast2))
     (Expr
       Sort_BV1
-      (AST_Select Sort_BV1 ast1 ast2 (AST_Const Sort_BV1 Int1.one))).
+      (AST_ITE Sort_BV1 ast1 ast2 (AST_Const Sort_BV1 Int1.one))).
 Proof.
   intros ast1 ast2.
   apply EquivExpr.
@@ -1206,7 +1206,7 @@ Qed.
 Lemma equiv_smt_expr_normalize_select_bv1_const_l : forall n ast1 ast2,
   equiv_smt_expr
     (Expr Sort_BV1 (normalize_select Sort_BV1 ast1 (AST_Const Sort_BV1 n) ast2))
-    (Expr Sort_BV1 (AST_Select Sort_BV1 ast1 (AST_Const Sort_BV1 n) ast2)).
+    (Expr Sort_BV1 (AST_ITE Sort_BV1 ast1 (AST_Const Sort_BV1 n) ast2)).
 Proof.
   intros n ast1 ast2.
   pose proof (int1_destruct n) as Ln.
@@ -1219,7 +1219,7 @@ Qed.
 Lemma equiv_smt_expr_normalize_select_bv1 : forall (cond ast1 ast2 : smt_ast Sort_BV1),
   equiv_smt_expr
     (Expr Sort_BV1 (normalize_select Sort_BV1 cond ast1 ast2))
-    (Expr Sort_BV1 (AST_Select Sort_BV1 cond ast1 ast2)).
+    (Expr Sort_BV1 (AST_ITE Sort_BV1 cond ast1 ast2)).
 Proof.
   intros cond ast1 ast2.
   dependent destruction ast1;
@@ -1239,7 +1239,7 @@ Qed.
 Lemma equiv_smt_expr_normalize_select : forall s cond (ast1 ast2 : smt_ast s),
   equiv_smt_expr
     (Expr s (normalize_select s cond ast1 ast2))
-    (Expr s (AST_Select s cond ast1 ast2)).
+    (Expr s (AST_ITE s cond ast1 ast2)).
 Proof.
   intros s cond ast1 ast2.
   destruct s;
@@ -1252,7 +1252,7 @@ Lemma equiv_smt_expr_normalize_select_args : forall s cond (ast1 ast2 : smt_ast 
   equiv_smt_expr (Expr s ast1) (Expr s (normalize s ast1)) ->
   equiv_smt_expr (Expr s ast2) (Expr s (normalize s ast2)) ->
   equiv_smt_expr
-    (Expr s (AST_Select s cond ast1 ast2))
+    (Expr s (AST_ITE s cond ast1 ast2))
     (Expr s (normalize_select s (normalize Sort_BV1 cond) (normalize s ast1) (normalize s ast2))).
 Proof.
   intros s cond ast1 ast2 Hcond Heq2 Heq3.
@@ -2094,7 +2094,7 @@ Qed.
 Lemma equiv_smt_expr_simplify_select : forall s (cond : smt_ast Sort_BV1) (ast1 ast2 : smt_ast s),
   equiv_smt_expr
     (Expr s (simplify_select s cond ast1 ast2))
-    (Expr s (AST_Select s cond ast1 ast2)).
+    (Expr s (AST_ITE s cond ast1 ast2)).
 Proof.
   intros s cond ast1 ast2.
   dependent destruction cond;

@@ -210,7 +210,7 @@ Fixpoint smt_eval_ast (m : smt_model) (s : smt_sort) (ast : smt_ast s) : (smt_so
       smt_eval_sext_by_sort arg_sort (smt_eval_ast m arg_sort ast) cast_sort
   | AST_Extract arg_sort ast cast_sort =>
       smt_eval_extract_by_sort arg_sort (smt_eval_ast m arg_sort ast) cast_sort
-  | AST_Select arg_sort cond e1 e2 =>
+  | AST_ITE arg_sort cond e1 e2 =>
       smt_eval_select
         arg_sort
         (smt_eval_ast m Sort_BV1 cond)
@@ -684,8 +684,8 @@ Lemma equiv_smt_expr_select : forall s (ast1 ast1' : smt_ast_bool) (ast2 ast2' a
   equiv_smt_expr (Expr s ast2) (Expr s ast2') ->
   equiv_smt_expr (Expr s ast3) (Expr s ast3') ->
   equiv_smt_expr
-    (Expr s (AST_Select s ast1 ast2 ast3))
-    (Expr s (AST_Select s ast1' ast2' ast3')).
+    (Expr s (AST_ITE s ast1 ast2 ast3))
+    (Expr s (AST_ITE s ast1' ast2' ast3')).
 Proof.
   intros s ast1 ast1' ast2 ast2' ast3 ast3' Heq1 Heq2 Heq3.
   apply EquivExpr.

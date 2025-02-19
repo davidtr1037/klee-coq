@@ -226,15 +226,15 @@ Definition sym_eval_select (e1 e2 e3 : smt_expr) : option smt_expr :=
   | (Expr Sort_BV1 ast1) =>
       match e2, e3 with
       | (Expr Sort_BV1 ast2), (Expr Sort_BV1 ast3) =>
-          Some (Expr Sort_BV1 (AST_Select Sort_BV1 ast1 ast2 ast3))
+          Some (Expr Sort_BV1 (AST_ITE Sort_BV1 ast1 ast2 ast3))
       | (Expr Sort_BV8 ast2), (Expr Sort_BV8 ast3) =>
-          Some (Expr Sort_BV8 (AST_Select Sort_BV8 ast1 ast2 ast3))
+          Some (Expr Sort_BV8 (AST_ITE Sort_BV8 ast1 ast2 ast3))
       | (Expr Sort_BV16 ast2), (Expr Sort_BV16 ast3) =>
-          Some (Expr Sort_BV16 (AST_Select Sort_BV16 ast1 ast2 ast3))
+          Some (Expr Sort_BV16 (AST_ITE Sort_BV16 ast1 ast2 ast3))
       | (Expr Sort_BV32 ast2), (Expr Sort_BV32 ast3) =>
-          Some (Expr Sort_BV32 (AST_Select Sort_BV32 ast1 ast2 ast3))
+          Some (Expr Sort_BV32 (AST_ITE Sort_BV32 ast1 ast2 ast3))
       | (Expr Sort_BV64 ast2), (Expr Sort_BV64 ast3) =>
-          Some (Expr Sort_BV64 (AST_Select Sort_BV64 ast1 ast2 ast3))
+          Some (Expr Sort_BV64 (AST_ITE Sort_BV64 ast1 ast2 ast3))
       | _, _ => None
       end
   | _ => None
