@@ -192,15 +192,15 @@ Definition signed_by_sort s (x : (smt_sort_to_int_type s)) : Z :=
 
 Definition smt_eval_sext_by_sort s (x : (smt_sort_to_int_type s)) cast_sort : (smt_sort_to_int_type cast_sort) :=
   match cast_sort with
-  | Sort_BV1 => (Int1.repr (signed_by_sort s x))
-  | Sort_BV8 => (Int8.repr (signed_by_sort s x))
-  | Sort_BV16 => (Int16.repr (signed_by_sort s x))
-  | Sort_BV24 => (Int24.repr (signed_by_sort s x))
-  | Sort_BV32 => (Int32.repr (signed_by_sort s x))
-  | Sort_BV40 => (Int40.repr (signed_by_sort s x))
-  | Sort_BV48 => (Int48.repr (signed_by_sort s x))
-  | Sort_BV56 => (Int56.repr (signed_by_sort s x))
-  | Sort_BV64 => (Int64.repr (signed_by_sort s x))
+  | Sort_BV1 => (Int1.repr (unsigned (Int1.sign_ext (Zpos (smt_sort_to_width s)) (Int1.repr (unsigned_by_sort s x)))))
+  | Sort_BV8 => (Int8.repr (unsigned (Int8.sign_ext (Zpos (smt_sort_to_width s)) (Int8.repr (unsigned_by_sort s x)))))
+  | Sort_BV16 => (Int16.repr (unsigned (Int16.sign_ext (Zpos (smt_sort_to_width s)) (Int16.repr (unsigned_by_sort s x)))))
+  | Sort_BV24 => (Int24.repr (unsigned (Int24.sign_ext (Zpos (smt_sort_to_width s)) (Int24.repr (unsigned_by_sort s x)))))
+  | Sort_BV32 => (Int32.repr (unsigned (Int32.sign_ext (Zpos (smt_sort_to_width s)) (Int32.repr (unsigned_by_sort s x)))))
+  | Sort_BV40 => (Int40.repr (unsigned (Int40.sign_ext (Zpos (smt_sort_to_width s)) (Int40.repr (unsigned_by_sort s x)))))
+  | Sort_BV48 => (Int48.repr (unsigned (Int48.sign_ext (Zpos (smt_sort_to_width s)) (Int48.repr (unsigned_by_sort s x)))))
+  | Sort_BV56 => (Int56.repr (unsigned (Int56.sign_ext (Zpos (smt_sort_to_width s)) (Int56.repr (unsigned_by_sort s x)))))
+  | Sort_BV64 => (Int64.repr (unsigned (Int64.sign_ext (Zpos (smt_sort_to_width s)) (Int64.repr (unsigned_by_sort s x)))))
   end
 .
 

@@ -272,28 +272,28 @@ Definition convert conv x t1 t2 : option dynamic_value :=
       match t1, x, t2 with
       (* i8 *)
       | TYPE_I 1, DV_Int (DI_I1 i1), TYPE_I 8 =>
-          Some (DV_Int (DI_I8 (repr (signed i1))))
+          Some (DV_Int (DI_I8 (repr (unsigned (Int8.sign_ext 1 (repr (unsigned i1)))))))
       (* i16 *)
       | TYPE_I 1, DV_Int (DI_I1 i1), TYPE_I 16 =>
-          Some (DV_Int (DI_I16 (repr (signed i1))))
+          Some (DV_Int (DI_I16 (repr (unsigned (Int16.sign_ext 1 (repr (unsigned i1)))))))
       | TYPE_I 8, DV_Int (DI_I8 i1), TYPE_I 16 =>
-          Some (DV_Int (DI_I16 (repr (signed i1))))
+          Some (DV_Int (DI_I16 (repr (unsigned (Int16.sign_ext 8 (repr (unsigned i1)))))))
       (* i32 *)
       | TYPE_I 1, DV_Int (DI_I1 i1), TYPE_I 32 =>
-          Some (DV_Int (DI_I32 (repr (signed i1))))
+          Some (DV_Int (DI_I32 (repr (unsigned (Int32.sign_ext 1 (repr (unsigned i1)))))))
       | TYPE_I 8, DV_Int (DI_I8 i1), TYPE_I 32 =>
-          Some (DV_Int (DI_I32 (repr (signed i1))))
+          Some (DV_Int (DI_I32 (repr (unsigned (Int32.sign_ext 8 (repr (unsigned i1)))))))
       | TYPE_I 16, DV_Int (DI_I16 i1), TYPE_I 32 =>
-          Some (DV_Int (DI_I32 (repr (signed i1))))
+          Some (DV_Int (DI_I32 (repr (unsigned (Int32.sign_ext 16 (repr (unsigned i1)))))))
       (* i64 *)
       | TYPE_I 1, DV_Int (DI_I1 i1), TYPE_I 64 =>
-          Some (DV_Int (DI_I64 (repr (signed i1))))
+          Some (DV_Int (DI_I64 (repr (unsigned (Int64.sign_ext 1 (repr (unsigned i1)))))))
       | TYPE_I 8, DV_Int (DI_I8 i1), TYPE_I 64 =>
-          Some (DV_Int (DI_I64 (repr (signed i1))))
+          Some (DV_Int (DI_I64 (repr (unsigned (Int64.sign_ext 8 (repr (unsigned i1)))))))
       | TYPE_I 16, DV_Int (DI_I16 i1), TYPE_I 64 =>
-          Some (DV_Int (DI_I64 (repr (signed i1))))
+          Some (DV_Int (DI_I64 (repr (unsigned (Int64.sign_ext 16 (repr (unsigned i1)))))))
       | TYPE_I 32, DV_Int (DI_I32 i1), TYPE_I 64 =>
-          Some (DV_Int (DI_I64 (repr (signed i1))))
+          Some (DV_Int (DI_I64 (repr (unsigned (Int64.sign_ext 32 (repr (unsigned i1)))))))
       | _, DV_Poison _, t => Some (DV_Poison t)
       | _, _, _ => None
       end
