@@ -1351,12 +1351,6 @@ Proof.
     congruence.
 Qed.
 
-Lemma Nth_map_In_iff:
-  forall {X Y : Type} (xs : list X) (f : forall x : X, In x xs -> Y) (i : nat) (y : Y),
-    Nth (map_In xs f) i y <-> (exists (x : X) IN, f x IN = y /\ Nth xs i x).
-Proof.
-Admitted.
-
 Lemma in_map_In :
   forall {A B} l x (f : forall (a : A) (INA : In a l), B) (INX : In x l),
     In (f x INX) (map_In l f).
