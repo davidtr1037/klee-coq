@@ -127,10 +127,10 @@ void ProofGenerator::generateImports() {
 
 vector<klee::ref<CoqExpr>> ProofGenerator::getImports() {
   return {
-    new CoqRequire("Coq", "ZArith"),
-    new CoqRequire("Coq", "Strings.String"),
-    new CoqRequire("Coq", "Lia"),
-    new CoqRequire("Coq", "List"),
+    new CoqRequire("Stdlib", "ZArith"),
+    new CoqRequire("Stdlib", "Strings.String"),
+    new CoqRequire("Stdlib", "Lia"),
+    new CoqRequire("Stdlib", "List"),
     new CoqImport("ListNotations"),
     new CoqRequire("SE", "BitVectors"),
     new CoqRequire("SE", "CFG"),
